@@ -6,7 +6,7 @@
 *********************************************************************/
  
 /* Author: Justin Kottinger */
-
+#pragma once
 #include <yaml.h>
 
 
@@ -30,11 +30,11 @@ public:
         start_ = s;
         goal_ = g;
     }
-    std::string getName(){return name_;};
-    std::string getDynamics(){return dynamics_;};
-    std::vector<double> getShape(){return shape_;};
-    std::vector<double> getStartLocation(){return start_;};
-    std::vector<double> getGoalLocation(){return goal_;};
+    std::string getName() const {return name_;};
+    std::string getDynamics() const {return dynamics_;};
+    std::vector<double> getShape() const {return shape_;};
+    std::vector<double> getStartLocation() const {return start_;};
+    std::vector<double> getGoalLocation() const {return goal_;};
 private:
     std::string name_;
     std::string dynamics_;
@@ -99,9 +99,9 @@ World* yaml2world(std::string file)
     World *w = new World();
     try
     {
-        
         OMPL_INFORM("Path to Problem File: %s", file.c_str());
         config = YAML::LoadFile(file);
+        std::cout << "" << std::endl;
         OMPL_INFORM("File loaded successfully. Parsing...");
     }
     catch (const std::exception& e) 
@@ -141,6 +141,7 @@ World* yaml2world(std::string file)
             w->addAgent(a);
         }
         OMPL_INFORM("Parsing Complete.");
+        std::cout << "" << std::endl;
         w->printWorld();
 
     }

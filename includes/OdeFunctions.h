@@ -1,22 +1,32 @@
 /*********************************************************************
 * ARIA SYSTEMS RESEARCH GROUP
 * 
-* This file contains dynamics models for many common robotic systems.
-* They are used by OMPL to plan kinodynamically feasible motion plans
+* This file contains Dynamics models for many common robotic systems.
+* 
+* These methods are used by OMPL to plan kinodynamically feasible 
+* motion plans.
 * 
 * Current Capabilities Include:
 *       * Kinematic Car (KinematicCar)
+* 
+* Requirements for adding new capabilities:
+*       * an ODE that works with ODESolver objects
+*       * Post integration proceedure (if neccessary)
+*       * State validity function that takes World object as an input
 *********************************************************************/
  
 /* Author: Justin Kottinger */
 
+#pragma once
 #include <ompl/control/ODESolver.h>
+#include "../includes/World.h"
 
 namespace ob = ompl::base;
 namespace oc = ompl::control;
 
-/********* Definition of the ODE for the Kinematic Car *********/
 
+/********* Definition of the ODE for the Kinematic Car *********/
+// the ODE
 void KinematicCarODE (const oc::ODESolver::StateType& q, const oc::Control* control, oc::ODESolver::StateType& qdot)
 {
     // q: [x, y, theta]
@@ -33,24 +43,11 @@ void KinematicCarODE (const oc::ODESolver::StateType& q, const oc::Control* cont
     qdot[2] = u[0] * tan(u[1]) / carLength;
 }
  
-// This is a callback method invoked after numerical integration.
+// callback for putting angle [0, 2pi]
 void KinematicCarPostIntegration (const ob::State* /*state*/, const oc::Control* /*control*/, const double /*duration*/, ob::State *result)
 {
     // Normalize orientation between 0 and 2*pi
     ob::SO2StateSpace SO2;
     SO2.enforceBounds(result->as<ob::SE2StateSpace::StateType>()->as<ob::SO2StateSpace::StateType>(1));
 }
-
-bool isKinematicCarStateValid(const oc::SpaceInformation *si, const ob::State *state)
-{
-    const auto *se2state = state->as<ob::SE2StateSpace::StateType>();
- 
-    const auto *pos = se2state->as<ob::RealVectorStateSpace::StateType>(0);
- 
-    const auto *rot = se2state->as<ob::SO2StateSpace::StateType>(1);
-
-    // return a value that is always true but uses the two variables we define, so we avoid compiler warnings
-    return si->satisfiesBounds(state) && (const void*)rot != (const void*)pos;
-}
-
-/********* Definition of the ODE for the Kinematic Car *********/
+/********* END ODE for the Kinematic Car *********/

@@ -1,3 +1,11 @@
+# Mac Finder Cache
+.DS_Store
+
+# Everything related to yml
+*.py
+*.yml
+/yaml
+
 # Prerequisites
 *.d
 
@@ -30,3 +38,4 @@
 *.exe
 *.out
 *.app
+Planner

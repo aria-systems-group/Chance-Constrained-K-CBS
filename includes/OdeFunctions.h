@@ -19,7 +19,9 @@
 
 #pragma once
 #include <ompl/control/ODESolver.h>
-#include "../includes/World.h"
+#include <ompl/control/spaces/RealVectorControlSpace.h>
+#include <ompl/base/spaces/SE2StateSpace.h>
+
 
 namespace ob = ompl::base;
 namespace oc = ompl::control;

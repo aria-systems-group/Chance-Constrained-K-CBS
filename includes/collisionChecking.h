@@ -16,9 +16,8 @@
 
 /* Author: Justin Kottinger */
 
-#pragma once
-#include <ompl/control/ODESolver.h>
-#include "../includes/World.h"
+// #pragma once
+
 
 /********* Definition of 2D State Validity Checker *********/
 bool isStateValid_2D(const oc::SpaceInformation *si, const World *w, const Agent *a, const ob::State *state)

@@ -6,6 +6,7 @@
 *********************************************************************/
  
 /* Author: Justin Kottinger */
+
 #pragma once
 #include <yaml.h>
 

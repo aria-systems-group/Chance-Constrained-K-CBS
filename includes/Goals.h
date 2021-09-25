@@ -17,8 +17,8 @@
 /* Author: Justin Kottinger */
 
 #pragma once
-#include <ompl/control/ODESolver.h>
-#include "../includes/World.h"
+#include <ompl/control/SimpleSetup.h>
+
 
 /********* Arbirtrary 2D Goal Class *********/
 // Defines a circular goal region centered at goal, with radius toll

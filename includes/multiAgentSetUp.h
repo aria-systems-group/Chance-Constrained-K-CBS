@@ -7,8 +7,15 @@
 *********************************************************************/
  
 /* Author: Justin Kottinger */
+
 #pragma once
+#include "../includes/World.h"
+#include "../includes/Goals.h"
+#include "../includes/OdeFunctions.h"
+#include "../includes/collisionChecking.h"
 #include <ompl/control/planners/rrt/RRT.h>
+#include <ompl/control/SimpleSetup.h>
+
 
 namespace ob = ompl::base;
 namespace oc = ompl::control;
@@ -64,10 +71,11 @@ std::vector<oc::SimpleSetup> multiAgentSimpleSetUp(const World *w)
             oc::SimpleSetup ss(cspace);
 
             // set state validity checking for this space
-            oc::SpaceInformationPtr siPtr = ss.getSpaceInformation();
             oc::SpaceInformation *si = ss.getSpaceInformation().get();
-            ss.setStateValidityChecker(
-                [si, w, a](const ob::State *state) { return isStateValid_2D(si, w, a, state); });
+            // ss.setStateValidityChecker(
+                // [si, w, a](const ob::State *state) { return isStateValid_2D(si, w, a, state); });
+            // std::vector<int> constrin;
+            ss.setStateValidityChecker(std::make_shared<isStateValid_2D_Test>(ss.getSpaceInformation(), w, a));
     
             // Use the ODESolver to propagate the system.  Call KinematicCarPostIntegration
             // when integration has finished to normalize the orientation values.
@@ -79,7 +87,7 @@ std::vector<oc::SimpleSetup> multiAgentSimpleSetUp(const World *w)
             start->setY(a->getStartLocation()[1]);
             start->setYaw(0.0);  // start yaw is set manually (TODO)
 
-            ob::GoalPtr goal (new ArbirtryGoal_2D(siPtr, a->getGoalLocation(), goalRadius));
+            ob::GoalPtr goal (new ArbirtryGoal_2D(ss.getSpaceInformation(), a->getGoalLocation(), goalRadius));
 
             ss.setStartState(start);
             ss.setGoal(goal);

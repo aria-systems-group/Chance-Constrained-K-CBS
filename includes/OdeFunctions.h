@@ -26,7 +26,6 @@
 namespace ob = ompl::base;
 namespace oc = ompl::control;
 
-
 /********* Definition of the ODE for the Kinematic Car *********/
 // the ODE
 void KinematicCarODE (const oc::ODESolver::StateType& q, const oc::Control* control, oc::ODESolver::StateType& qdot)
@@ -35,7 +34,7 @@ void KinematicCarODE (const oc::ODESolver::StateType& q, const oc::Control* cont
     // u: [v, steering rate]
     const double *u = control->as<oc::RealVectorControlSpace::ControlType>()->values;
     const double theta = q[2];
-    double carLength = 0.2;
+    const double carLength = 0.2;
  
     // Zero out qdot
     qdot.resize (q.size (), 0);

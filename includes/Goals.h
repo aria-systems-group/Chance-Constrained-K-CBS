@@ -18,14 +18,18 @@
 
 #pragma once
 #include <ompl/control/SimpleSetup.h>
+#include <ompl/base/spaces/RealVectorStateSpace.h>
 
+
+namespace ob = ompl::base;
+namespace oc = ompl::control;
 
 /********* Arbirtrary 2D Goal Class *********/
 // Defines a circular goal region centered at goal, with radius toll
 class ArbirtryGoal_2D : public ompl::base::Goal
 {
 public:
-    ArbirtryGoal_2D(oc::SpaceInformationPtr &si, std::vector<double> goal, const double toll) : ompl::base::Goal(si)
+    ArbirtryGoal_2D(const oc::SpaceInformationPtr &si, std::vector<double> goal, const double toll) : ompl::base::Goal(si)
     {
       goal_ = goal;
       toll_ = toll;

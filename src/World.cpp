@@ -14,7 +14,7 @@
 // printing methods for usability
 void World::printObstacles()
 {
-    OMPL_INFORM("%d Obstacles (xMin, yMin, xMax, yMax): ", Obstacles_.size());
+    OMPL_INFORM("%d Obstacle(s) (xMin, yMin, xMax, yMax): ", Obstacles_.size());
     for (Obstacle o: Obstacles_)
     {
         OMPL_INFORM("   - Obstacle: [%0.2f, %0.2f, %0.2f, %0.2f]", o.xMin_, o.yMin_, o.xMax_, o.yMax_);
@@ -82,7 +82,7 @@ World* yaml2world(std::string file)
             std::string bottom_right = std::to_string(maxX) + " " + std::to_string(minY);
 
             // convert to string for easy initializataion
-            std::string points = "POLYGON((" + bottom_left + "," + bottom_right + "," + top_right + "," + top_left + "))";
+            std::string points = "POLYGON((" + bottom_left + "," + bottom_right + "," + top_right + "," + top_left + "," + bottom_left + "))";
             polygon poly;
             boost::geometry::read_wkt(points,poly);
             Obstacle o = {minX, minY, maxX, maxY, poly};

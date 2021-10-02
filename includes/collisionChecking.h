@@ -3,7 +3,7 @@
 * 
 * This file contains State validity Checks
 * 
-* These methods are used by OMPL to plan kinodynamically feasible 
+* These classes are used by OMPL to plan kinodynamically feasible 
 * motion plans.
 * 
 * Current Capabilities Include:
@@ -82,10 +82,10 @@ public:
         std::string bottom_right = std::to_string(BR_x) + " " + std::to_string(BR_y);
 
         // convert to string for easy initializataion
-        std::string points = "POLYGON((" + bottom_left + "," + bottom_right + "," + top_right + "," + top_left + "))";
+        std::string points = "POLYGON((" + bottom_left + "," + bottom_right + "," + top_right + "," + top_left + "," + bottom_left + "))";
         polygon agent;
         boost::geometry::read_wkt(points,agent);
-
+        
         // check agent is disjoint from all obstacles
         for (Obstacle o: w_->getObstacles())
         {

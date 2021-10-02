@@ -24,6 +24,19 @@ struct Obstacle {
     const double xMax_;
     const double yMax_;
     const polygon poly_;
+
+    void printPoints() const
+    {
+        auto exterior_points = boost::geometry::exterior_ring(poly_);
+        for (int i=0; i<exterior_points.size(); i++)
+        {
+            std::cout << boost::geometry::get<0>(exterior_points[i]) << " " << boost::geometry::get<1>(exterior_points[i]) <<std::endl;
+        }
+    }
+    polygon::ring_type getPoints() const
+    {
+        return boost::geometry::exterior_ring(poly_);
+    }
 };
 
 // An agent has a name, shape, dynamics, start and goal regions

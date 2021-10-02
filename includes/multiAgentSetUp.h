@@ -81,7 +81,8 @@ std::vector<oc::SimpleSetup> multiAgentSimpleSetUp(const World *w)
             // when integration has finished to normalize the orientation values.
             auto odeSolver(std::make_shared<oc::ODEBasicSolver<>>(ss.getSpaceInformation(), &KinematicCarODE));
             ss.setStatePropagator(oc::ODESolver::getStatePropagator(odeSolver, &KinematicCarPostIntegration));
-    
+            // assume that planner integrates dynamics at steps of 0.1 seconds (need each agent to be the same)
+            si->setPropagationStepSize(0.1);
             ob::ScopedState<ob::SE2StateSpace> start(space);
             start->setX(a->getStartLocation()[0]);
             start->setY(a->getStartLocation()[1]);

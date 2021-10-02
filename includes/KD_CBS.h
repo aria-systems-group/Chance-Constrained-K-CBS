@@ -14,11 +14,14 @@
 
 #pragma once
 #include "../includes/World.h"
+#include "../includes/Constraint.h"
 #include <ompl/control/PathControl.h>
+#include <ompl/control/SimpleSetup.h>
 #include "../includes/collisionChecking.h"
 #include <ompl/control/SpaceInformation.h>
-#include <ompl/control/SimpleSetup.h>
 #include <ompl/tools/config/SelfConfig.h>
+#include <math.h>
+#include <stdlib.h>
 
 
 namespace ompl
@@ -32,7 +35,7 @@ namespace ompl
         {
         public:
             /** \brief Constructor */
-            KD_CBS(const std::vector<SimpleSetup> &mmpp);
+            KD_CBS(const std::vector<SimpleSetup> mmpp);
 
             ~KD_CBS() override;
 
@@ -62,12 +65,24 @@ namespace ompl
 
             void setWorld(World *world) {w_ = world;};
 
+            /* OMPL returns PathControl objects with different
+            control durations. This makes it difficult to evaluate conflicts
+            since time is not syncronized between agents. OMPL provides a PathControl
+            method that interpolates the trajectories but the function 
+            does not allow the user to use such interpolation. This method 
+            borrows much of that code but is implemented in such a way that enables
+            the user to use the interpolated trajectory. */
+            void interpolate(PathControl &p);
+            
+            /*method that checks for conflicts (collisions) within the plan*/
+            std::unordered_set <Conflict> validatePlan(Plan pl);
+
             /*method deletes outdated state validity function and 
             creates a new one with updated constraints c for simplesetup 
             object cooresponding to agentIdx */
             void updateConstraints(std::vector<int> c, int agentIdx)
             {
-                SimpleSetup ss = (*mmpp_)[agentIdx];
+                SimpleSetup ss = (mmpp_)[agentIdx];
                 ss.getStateValidityChecker()->~StateValidityChecker();
                 ss.setStateValidityChecker(std::make_shared<isStateValid_2D_Test>
                     (ss.getSpaceInformation(), w_, w_->getAgents()[agentIdx], c));
@@ -76,7 +91,7 @@ namespace ompl
             /* Replan for agent agentIdx for new set of constraints c */
             PathControl replanSingleAgent(std::vector<int> c, int agentIdx, PathControl solution, bool &isUpdated)
             {
-                SimpleSetup ss = (*mmpp_)[agentIdx];
+                SimpleSetup ss = mmpp_[agentIdx];
                 updateConstraints(c, agentIdx);
                 base::PlannerStatus solved = ss.solve(planningTime_);
                 if (solved)
@@ -117,7 +132,7 @@ namespace ompl
                 void updateParent(conflictNode* &c) {parent_ = c;};
 
                 // get the plan, but cannot change it
-                const Plan getPlan() const {return plan_;};
+                Plan getPlan() const {return plan_;};
 
                 // get the parent, but no not change it
                 const conflictNode* getParent() const {return parent_;};
@@ -160,8 +175,8 @@ namespace ompl
             // void freeMemory();
 
             /** \brief The vector of control::SpaceInformation, for convenience */
-            // this is the Multi-agnet motion planning problem
-            const std::vector<SimpleSetup> *mmpp_;
+            // this is the Multi-agent motion planning problem
+            std::vector<SimpleSetup> mmpp_;
 
             Queue queue_;
 
@@ -172,7 +187,7 @@ namespace ompl
 
             World *w_{nullptr};
 
-            double planningTime_{2.0};
+            double planningTime_{1};
         };
     }
 }

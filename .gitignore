@@ -6,6 +6,9 @@
 *.yml
 /yaml
 
+# Exverthing related to saved solutions
+/solutions
+
 # Prerequisites
 *.d
 

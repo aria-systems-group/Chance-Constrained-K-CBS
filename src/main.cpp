@@ -9,8 +9,10 @@
 #include "../includes/World.h"
 #include "../includes/multiAgentSetUp.h"
 #include "../includes/KD_CBS.h"
+#include "../includes/postProcessing.h"
 
 
+namespace fs = std::filesystem;
 namespace ob = ompl::base;
 namespace oc = ompl::control;
 
@@ -27,9 +29,11 @@ int main(int argc, char ** argv)
     oc::KD_CBS *p = new oc::KD_CBS(allAgentSetUp);
     p->setWorld(w);
     ob::PlannerPtr planner(p);
+    oc::Plan solution;
     OMPL_INFORM("Set-Up Complete. Press ENTER to begin planning.");
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
-    
-    planner->solve(1.0);
+    bool solved = planner->solve(1.0);
+    if (solved)
+        write2sys(allAgentSetUp, w->getAgents());
     return 0;
 }

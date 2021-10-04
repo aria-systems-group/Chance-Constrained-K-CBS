@@ -349,25 +349,25 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
       for (int i = 0; i < mmpp_.size(); i++)
       {
          base::ProblemDefinition *pdef = mmpp_[i].getProblemDefinition().get();
-         auto path(std::make_shared<PathControl>(mmpp_[i].getSpaceInformation()));
-         PathControl mpath = solution->getPlan()[i];
+         auto path(std::make_shared<PathControl>(solution->getPlan()[i]));
+         // PathControl mpath = solution->getPlan()[i];
          // std::cout << mpath.getStates().size() << std::endl;
          // std::cout << mpath.getControls().size() << std::endl;
          // std::cout << mpath.getControlDurations().size() << std::endl;
          // std::cout << mpath.getStateCount() << std::endl;
          // std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
-         for (int j = 0; j < mpath.getStateCount() - 1; j++)
-         {
-            if (j > 0)
-            {
-               // std::cout << mpath.getState(j) << std::endl;
-               // std::cout << mpath.getControl(j) << std::endl;
-               // std::cout << mpath.getControlDuration(j) << std::endl;
-               path->append(mpath.getState(j), mpath.getControl(j), mpath.getControlDuration(j));
-            }
-            else
-               path->append(mpath.getState(j));
-         }
+         // for (int j = 0; j < mpath.getStateCount() - 1; j++)
+         // {
+         //    if (j > 0)
+         //    {
+         //       // std::cout << mpath.getState(j) << std::endl;
+         //       // std::cout << mpath.getControl(j) << std::endl;
+         //       // std::cout << mpath.getControlDuration(j) << std::endl;
+         //       path->append(mpath.getState(j), mpath.getControl(j), mpath.getControlDuration(j));
+         //    }
+         //    else
+         //       path->append(mpath.getState(j));
+         // }
          solved = true;
          pdef->addSolutionPath(path, false, -1.0, w_->getAgents()[i]->getName());
       }

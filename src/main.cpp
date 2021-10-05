@@ -6,7 +6,7 @@
  
 /* Author: Justin Kottinger */
 
-#include "../includes/World.h"
+// #include "../includes/World.h"
 #include "../includes/multiAgentSetUp.h"
 #include "../includes/KD_CBS.h"
 #include "../includes/postProcessing.h"
@@ -32,7 +32,7 @@ int main(int argc, char ** argv)
     oc::Plan solution;
     OMPL_INFORM("Set-Up Complete. Press ENTER to begin planning.");
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
-    bool solved = planner->solve(1.0);
+    bool solved = planner->solve(30.0);
     if (solved)
         write2sys(allAgentSetUp, w->getAgents());
     return 0;

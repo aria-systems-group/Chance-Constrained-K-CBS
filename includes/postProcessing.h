@@ -14,7 +14,7 @@
 
 namespace fs = std::filesystem;
 
-// can include date/time information to solutions, if desired
+// generate date/time information to solutions or solution directories
 std::string GetCurrentTimeForFileName()
 {
     auto time = std::time(nullptr);
@@ -25,7 +25,7 @@ std::string GetCurrentTimeForFileName()
     return s;
 }
 
-// parent function for including date/time information
+// parent function for including date/time information to files
 fs::path appendTimeToFileName(const fs::path& fileName)
 {
     return fileName.stem().string() + "_" + GetCurrentTimeForFileName() + fileName.extension().string();
@@ -34,12 +34,12 @@ fs::path appendTimeToFileName(const fs::path& fileName)
 // write solultion to the system
 void write2sys(const std::vector<oc::SimpleSetup> problem, const std::vector<Agent*> agents)
 {
-	fs::create_directories("solution");
+    fs::path sol_dir = "solutions/" + GetCurrentTimeForFileName();
+    fs::create_directories(sol_dir);
     for (int i = 0; i < problem.size(); i++)
     {
-        std::string fileName = "solutions/sol_" + agents[i]->getName() + ".txt";
-        auto filePath = fs::current_path() / fs::path(fileName); /// appendTimeToFileName(fileName); // e.g. MyPrettyFile_2018-06-09_01-42-00.txt
-        std::cout << filePath << std::endl;
+        std::string fileName = agents[i]->getName() + ".txt";
+        auto filePath = fs::current_path() / sol_dir / fs::path(fileName); /// appendTimeToFileName(fileName); // e.g. MyPrettyFile_2018-06-09_01-42-00.txt
         std::ofstream file(filePath);
         const oc::PathControl p = problem[i].getSolutionPath();
         p.printAsMatrix(file);

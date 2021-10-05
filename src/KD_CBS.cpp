@@ -81,10 +81,10 @@ void ompl::control::KD_CBS::interpolate(PathControl &p)
 
 
 
-std::unordered_set <Conflict> ompl::control::KD_CBS::validatePlan(Plan pl)
+std::vector <Conflict> ompl::control::KD_CBS::validatePlan(Plan pl)
 {
    // init the conflict set to be (possibly) filled
-   std::unordered_set <Conflict> c;
+   std::vector <Conflict> c;
    
    // get minimum step size
    const auto *si = static_cast<const SpaceInformation *>(pl[0].getSpaceInformation().get());
@@ -166,7 +166,7 @@ std::unordered_set <Conflict> ompl::control::KD_CBS::validatePlan(Plan pl)
                {
                   // agent ai and aj are in conflict, only care about those now
                   Conflict conf{ai, aj, shapes[ai], shapes[aj], (k * minStepSize)};
-                  c.insert(conf);
+                  c.push_back(conf);
                   bool inConflict = true;
                   while (inConflict)
                   {
@@ -252,7 +252,7 @@ std::unordered_set <Conflict> ompl::control::KD_CBS::validatePlan(Plan pl)
                         {
                            // agent ai and aj are in conflict, only care about those now
                            Conflict conf{ai, aj, agent1, agent2, (k * minStepSize)};
-                           c.insert(conf);
+                           c.push_back(conf);
                         }
                         else
                            inConflict = false;
@@ -286,7 +286,10 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
    }
 
    // begin planning -- timing should start after this statement
-   OMPL_INFORM("%s: Starting planning with %u states already in datastructure", getName().c_str(), queue_.size());
+   OMPL_INFORM("%s: Starting planning. ", getName().c_str());
+
+   // init min heap
+   std::priority_queue <conflictNode*, std::vector<conflictNode*>, LessThanNodeK > open_heap;
 
    // create initial solution
    Plan root_sol;
@@ -302,10 +305,10 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
    if (root_sol.size() == mmpp_.size())
    {
       rootNode->updatePlanAndCost(root_sol);
-      queue_.insert(rootNode);
+      open_heap.emplace(rootNode);
    }
    // if no root node exists, tell user and return invalid start
-   if (queue_.size() == 0)
+   if (open_heap.empty())
    {
        OMPL_ERROR("%s: There are no valid initial states! Increase planning time.", getName().c_str(), planningTime_);
        return base::PlannerStatus::INVALID_START;
@@ -314,96 +317,103 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
    // initialize solution, approximate solution, and approximate difference between approx and sol.
    conflictNode *solution = nullptr;
    conflictNode *approxsol = nullptr;
-  
-   while (ptc == false && !queue_.empty())
+   int i = 1;
+   while (ptc == false && !open_heap.empty())
    { 
       // /* find loswest cost in Queue */
-      conflictNode *curr = popHead();
+      conflictNode *curr = open_heap.top();
 
-      std::unordered_set <Conflict> c = validatePlan(curr->getPlan());
+      // if (i == 2)
+      // {
+      //    std::cout << curr->getCost() <<std::endl;
+      //    open_heap.pop();
+      //    conflictNode *curr1 = open_heap.top();
+      //    std::cout << curr1->getCost() <<std::endl;
+      //    std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
 
-      if (c.empty())
+      // }
+
+      std::vector <Conflict> conf = validatePlan(curr->getPlan());
+
+      if (conf.empty())
       {
          solution = curr;
          break;
       }
       else
       {
-         // create constraint for each agent and resolve them
-         OMPL_WARN("%s: Original solution had %i conflicts.", getName().c_str(), c.size());
-         exit(1);
+         open_heap.pop();
+         // store time range of constraint
+         const std::pair<double, double> *times = new std::pair{conf.front().time, conf.back().time};
+         // store both agent idx
+         const std::vector<int> agentIndices{conf.front().agent1, conf.front().agent2};
+         // store set of polygons for each agent
+         std::vector<const polygon> p1;
+         std::vector<const polygon> p2;
+         for (Conflict c: conf)
+         {
+            p1.push_back(c.p1);
+            p2.push_back(c.p2);
+         }
+
+         // c is a set of conflicts for two agents
+         for (int a = 0; a < 2; a++)
+         {
+            // for each agent in the set
+            // create a single constraint for each agent
+            Constraint *constraint;
+            PathControl *new_sol;
+            if (a == 0)
+            {
+               constraint = new Constraint(p1, agentIndices[a], times);
+               new_sol = new PathControl(mmpp_[agentIndices[a]].getSpaceInformation());
+            }
+            else
+            {
+               constraint = new Constraint(p2, agentIndices[a], times);
+               new_sol = new PathControl(mmpp_[agentIndices[a]].getSpaceInformation());
+            }
+            conflictNode *n = new conflictNode();
+            n->updateParent(curr);
+            n->addConstraint(constraint);
+            replanSingleAgent(n, agentIndices[a], *new_sol);
+            if (new_sol->length() > 0)
+            {
+               Plan new_plan(curr->getPlan());
+               new_plan[agentIndices[a]] = *new_sol;
+               n->updatePlanAndCost(new_plan);
+               open_heap.emplace(n);
+            }
+            else
+               delete n;
+
+         }
       }
+      i++;
    }
-   // end main algorithm -- begin ompl bookkeeping 
+   // end main algorithm -- begin ompl bookkeeping
+   // planning time stops here 
    bool solved = false;
    if (solution == nullptr)
    {
-      OMPL_INFORM("%s: No solution found.", getName().c_str());
+      if (ptc == true)
+         OMPL_INFORM("%s: No solution found due to time.", getName().c_str());
+      else if (open_heap.empty())
+         OMPL_INFORM("%s: No solution found due to queue.", getName().c_str());
       return {solved, false};
    }
    else
    {
-      // recognize solution, planning time stops here
+      solved = true;
       OMPL_INFORM("%s: Found Solution!", getName().c_str());
       // add correct path to all problem instances
       for (int i = 0; i < mmpp_.size(); i++)
       {
          base::ProblemDefinition *pdef = mmpp_[i].getProblemDefinition().get();
          auto path(std::make_shared<PathControl>(solution->getPlan()[i]));
-         // PathControl mpath = solution->getPlan()[i];
-         // std::cout << mpath.getStates().size() << std::endl;
-         // std::cout << mpath.getControls().size() << std::endl;
-         // std::cout << mpath.getControlDurations().size() << std::endl;
-         // std::cout << mpath.getStateCount() << std::endl;
-         // std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
-         // for (int j = 0; j < mpath.getStateCount() - 1; j++)
-         // {
-         //    if (j > 0)
-         //    {
-         //       // std::cout << mpath.getState(j) << std::endl;
-         //       // std::cout << mpath.getControl(j) << std::endl;
-         //       // std::cout << mpath.getControlDuration(j) << std::endl;
-         //       path->append(mpath.getState(j), mpath.getControl(j), mpath.getControlDuration(j));
-         //    }
-         //    else
-         //       path->append(mpath.getState(j));
-         // }
-         solved = true;
          pdef->addSolutionPath(path, false, -1.0, w_->getAgents()[i]->getName());
       }
       OMPL_INFORM("%s: Planning Complete.", getName().c_str());
       return {solved, false};
    }
-
-   // // solution is either approxsol or solution from main loop
-   // if (solution != nullptr)
-   // {
-   //    // set last node to solution
-   //    lastGoalNode_ = solution;
- 
-   //    /* construct the solution path */
-   //    std::vector<Motion *> mpath;
-   //    while (solution != nullptr)
-   //    {
-   //       mpath.push_back(solution);
-   //       solution = solution->parent;
-   //    }
- 
-   //    /* set the solution path */
-   //    auto path(std::make_shared<PathControl>(si_));
-   //    for (int i = mpath.size() - 1; i >= 0; --i)
-   //       if (mpath[i]->parent)
-   //          path->append(mpath[i]->state, mpath[i]->control, mpath[i]->steps * siC_->getPropagationStepSize());
-   //       else
-   //          path->append(mpath[i]->state);
-   //    solved = true;
-   //    pdef_->addSolutionPath(path, approximate, approxdif, getName());
-   // }
- 
-   // if (rmotion->state)
-   //    si_->freeState(rmotion->state);
-   // if (rmotion->control)
-   //    siC_->freeControl(rmotion->control);
-   // delete rmotion;
-   // si_->freeState(xstate);
 }

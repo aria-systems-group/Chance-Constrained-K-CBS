@@ -15,12 +15,14 @@
 #pragma once
 #include "../includes/World.h"
 #include "../includes/Constraint.h"
+#include "../includes/constraintRRT.h"
 #include <ompl/control/PathControl.h>
 #include <ompl/control/SimpleSetup.h>
 #include "../includes/collisionChecking.h"
 #include <ompl/control/SpaceInformation.h>
 #include <ompl/tools/config/SelfConfig.h>
 #include <math.h>
+#include <vector>
 #include <stdlib.h>
 
 
@@ -75,31 +77,18 @@ namespace ompl
             void interpolate(PathControl &p);
             
             /*method that checks for conflicts (collisions) within the plan*/
-            std::unordered_set <Conflict> validatePlan(Plan pl);
+            std::vector <Conflict> validatePlan(Plan pl);
 
-            /*method deletes outdated state validity function and 
-            creates a new one with updated constraints c for simplesetup 
+            /*method deletes outdated planner object and 
+            creates new one with updated constraints for simplesetup 
             object cooresponding to agentIdx */
-            void updateConstraints(std::vector<int> c, int agentIdx)
+            void updateOMPLConstraints(SimpleSetup &ss, std::vector<const Constraint*> c, const int agentIdx)
             {
-                SimpleSetup ss = (mmpp_)[agentIdx];
-                ss.getStateValidityChecker()->~StateValidityChecker();
-                ss.setStateValidityChecker(std::make_shared<isStateValid_2D_Test>
-                    (ss.getSpaceInformation(), w_, w_->getAgents()[agentIdx], c));
-            }
-
-            /* Replan for agent agentIdx for new set of constraints c */
-            PathControl replanSingleAgent(std::vector<int> c, int agentIdx, PathControl solution, bool &isUpdated)
-            {
-                SimpleSetup ss = mmpp_[agentIdx];
-                updateConstraints(c, agentIdx);
-                base::PlannerStatus solved = ss.solve(planningTime_);
-                if (solved)
-                {
-                    solution = ss.getSolutionPath();
-                    isUpdated = true;
-                }
-                return solution;
+                ss.getPlanner()->clear();
+                auto planner(std::make_shared<constraintRRT>(ss.getSpaceInformation()));
+                planner->updateConstraints(c);
+                planner->provideAgent(w_->getAgents()[agentIdx]);
+                ss.setPlanner(planner);
             }
 
         protected:
@@ -115,7 +104,7 @@ namespace ompl
                 ~conflictNode() = default;
 
                 // update plan and cost at same time to avoid bad bookkeeping
-                void updatePlanAndCost(Plan p) 
+                void updatePlanAndCost(Plan &p) 
                 {
                     plan_ = p; 
                     double total = 0;
@@ -131,14 +120,20 @@ namespace ompl
                 // update parent node
                 void updateParent(conflictNode* &c) {parent_ = c;};
 
+                // add constraint
+                void addConstraint(Constraint *constraint) {constraint_ = constraint;};
+
                 // get the plan, but cannot change it
                 Plan getPlan() const {return plan_;};
 
                 // get the parent, but no not change it
-                const conflictNode* getParent() const {return parent_;};
+                conflictNode* getParent() const {return parent_;};
 
                 // get the cost, but do not alter it
                 const double getCost() const {return cost_;};
+
+                // get the constraint within a node
+                const Constraint* getConstraint() const {return constraint_;};
             
             private:
                 /** \brief The state contained by the motion */
@@ -149,6 +144,9 @@ namespace ompl
 
                 /** \brief The total length (sum of cost) of the plan */
                 double cost_{std::numeric_limits<double>::infinity()};
+
+                /** \brief the constraint that the node was created to resolve*/
+                Constraint *constraint_; 
             };
 
             // function that orders priority queue
@@ -156,20 +154,49 @@ namespace ompl
             {
                 bool operator()(const conflictNode *n1, const conflictNode *n2) const
                 {
-                    return n1->getCost() < n2->getCost();
+                    // std::cout << n1->getCost() << std::endl;
+                    // std::cout << n2->getCost() << std::endl;
+                    // if (n1->getCost() < n2->getCost())
+                        // std::cout << "n1 is smaller" << std::endl;
+                    // else
+                        // std::cout << "n2 is smaller" << std::endl;
+                    // std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+                    return n1->getCost() > n2->getCost();
                 }
             };
 
             // define the queue -- using multiset since it is more versatile than priority queue
-            using Queue = std::multiset<conflictNode*, LessThanNodeK>;
+            // using Queue = std::multiset<conflictNode*, LessThanNodeK>;
 
-            // Queue utilities
-            conflictNode* popHead()
+            
+            /* Replan for agent agentIdx for new set of constraints c */
+            void replanSingleAgent(conflictNode* &n, const int agentIdx, PathControl &solution)
             {
-                conflictNode *n = *queue_.begin();
-                queue_.erase(queue_.begin());
-                return n;
+                SimpleSetup ss = mmpp_[agentIdx];
+                // get all agent specific constratints within a branch
+                std::vector<const Constraint*> c{};
+                conflictNode *nCopy = n;
+                while (nCopy->getParent())
+                {
+                    if (nCopy->getConstraint()->getAgent() == agentIdx)
+                        c.push_back(nCopy->getConstraint());
+                    nCopy = nCopy->getParent();
+                }
+                // update the constraints with OMPL
+                updateOMPLConstraints(ss, c, agentIdx);
+                // solve new problem
+                base::PlannerStatus solved = ss.solve(planningTime_);
+                if (solved)
+                    solution = ss.getSolutionPath();
             }
+
+            // // Queue utilities
+            // conflictNode* popHead()
+            // {
+            //     conflictNode *n = *queue_.begin();
+            //     queue_.erase(queue_.begin());
+            //     return n;
+            // }
 
             /** \brief Free the memory allocated by this planner */
             // void freeMemory();
@@ -178,7 +205,7 @@ namespace ompl
             // this is the Multi-agent motion planning problem
             std::vector<SimpleSetup> mmpp_;
 
-            Queue queue_;
+            // Queue queue_;
 
             int replanningAgent_{0};
 
@@ -187,7 +214,7 @@ namespace ompl
 
             World *w_{nullptr};
 
-            double planningTime_{1};
+            double planningTime_{5};
         };
     }
 }

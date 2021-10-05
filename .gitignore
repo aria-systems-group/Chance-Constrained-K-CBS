@@ -9,6 +9,9 @@
 # Exverthing related to saved solutions
 /solutions
 
+# Everything related to visualizing plans
+/visTools
+
 # Prerequisites
 *.d
 

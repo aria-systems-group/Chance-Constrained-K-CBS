@@ -13,6 +13,7 @@
 #include "../includes/Goals.h"
 #include "../includes/OdeFunctions.h"
 #include "../includes/collisionChecking.h"
+#include "../includes/constraintRRT.h"
 #include <ompl/control/planners/rrt/RRT.h>
 #include <ompl/control/SimpleSetup.h>
 
@@ -69,7 +70,6 @@ std::vector<oc::SimpleSetup> multiAgentSimpleSetUp(const World *w)
  
             // define a simple setup class
             oc::SimpleSetup ss(cspace);
-
             // set state validity checking for this space
             oc::SpaceInformation *si = ss.getSpaceInformation().get();
             // ss.setStateValidityChecker(
@@ -94,7 +94,8 @@ std::vector<oc::SimpleSetup> multiAgentSimpleSetUp(const World *w)
             ss.setGoal(goal);
 
             // initialize and set planner
-            auto planner(std::make_shared<oc::RRT>(ss.getSpaceInformation()));
+            auto planner(std::make_shared<oc::constraintRRT>(ss.getSpaceInformation()));
+            planner->provideAgent(a);
             ss.setPlanner(planner);
 
             ssVec.push_back(ss);

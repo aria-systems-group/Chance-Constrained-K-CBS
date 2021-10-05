@@ -38,13 +38,12 @@ typedef boost::geometry::model::polygon<point> polygon;
 class isStateValid_2D_Test : public ob::StateValidityChecker
 {
 public:
-    isStateValid_2D_Test(const oc::SpaceInformationPtr &si, const World *w, const Agent *a, const std::vector<int> constraints = {}) :
+    isStateValid_2D_Test(const oc::SpaceInformationPtr &si, const World *w, const Agent *a) :
         ob::StateValidityChecker(si)
         {
             si_ = si.get();
             w_ = w;
             a_ = a;
-            constraints_ = constraints;
         }
  
     virtual bool isValid(const ob::State *state) const
@@ -92,21 +91,14 @@ public:
             if (! boost::geometry::disjoint(agent, o.poly_))
                 return false;
         }
-        if (constraints_.size() > 0)
-        {
-            OMPL_ERROR("SUCCESSFULLY ADDED CONSTRAINT");
-        }
-
         return true;
     }
 
-    void updateConstraints(std::vector<int> c) {constraints_ = c;};
-    
 private:
     const ob::SpaceInformation *si_;
     const World *w_;
     const Agent *a_;
-    std::vector<int> constraints_;
+    
 };
 /********* END 2D State Validity Checker *********/
 

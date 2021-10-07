@@ -97,6 +97,8 @@ std::vector<oc::SimpleSetup> multiAgentSimpleSetUp(const World *w)
             auto planner(std::make_shared<oc::constraintRRT>(ss.getSpaceInformation()));
             planner->provideAgent(a);
             ss.setPlanner(planner);
+            ss.setup();
+            ss.getPlanner()->setup();
 
             ssVec.push_back(ss);
         }

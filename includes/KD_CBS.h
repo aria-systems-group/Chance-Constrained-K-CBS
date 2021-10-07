@@ -84,12 +84,14 @@ namespace ompl
             object cooresponding to agentIdx */
             void updateOMPLConstraints(SimpleSetup &ss, std::vector<const Constraint*> c, const int agentIdx)
             {
-                ss.getPlanner()->clear();
-                auto planner(std::make_shared<constraintRRT>(ss.getSpaceInformation()));
-                planner->updateConstraints(c);
-                planner->provideAgent(w_->getAgents()[agentIdx]);
-                ss.setPlanner(planner);
+                // ss.getPlanner()->clear();
+                // auto planner(std::make_shared<constraintRRT>(ss.getSpaceInformation()));
+                ss.getPlanner().get()->updateOMPLConstraints(c);
+                // ss.getPlanner()->provideAgent(w_->getAgents()[agentIdx]);
+                // ss.setPlanner(planner);
             }
+
+            void updateOMPLConstraints(std::vector<const Constraint*> c) override {OMPL_ERROR("Using useless function! Terminating prematurely."); exit(1);};
 
         protected:
             /** \brief Representation of a conflict node

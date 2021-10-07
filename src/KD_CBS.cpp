@@ -296,7 +296,6 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
    for (SimpleSetup ss: mmpp_)
    {
       base::PlannerStatus solved = ss.solve(planningTime_);
-      ss.getPlanner()->clear();
       if (solved)
          root_sol.push_back(ss.getSolutionPath());
    }
@@ -322,16 +321,6 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
    { 
       // /* find loswest cost in Queue */
       conflictNode *curr = open_heap.top();
-
-      // if (i == 2)
-      // {
-      //    std::cout << curr->getCost() <<std::endl;
-      //    open_heap.pop();
-      //    conflictNode *curr1 = open_heap.top();
-      //    std::cout << curr1->getCost() <<std::endl;
-      //    std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
-
-      // }
 
       std::vector <Conflict> conf = validatePlan(curr->getPlan());
 

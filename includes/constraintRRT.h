@@ -55,9 +55,9 @@ namespace ompl
             constraintRRT(const SpaceInformationPtr &si);
  
             ~constraintRRT() override;
- 
+
             base::PlannerStatus solve(const base::PlannerTerminationCondition &ptc) override;
- 
+  
             void clear() override;
  
             void setGoalBias(double goalBias)
@@ -94,9 +94,9 @@ namespace ompl
  
             void setup() override;
 
-            void updateConstraints(std::vector<const Constraint*> c) {constraints_ = c;};
-
             void provideAgent(Agent *a) {a_ = a;};
+
+            void updateOMPLConstraints(std::vector<const Constraint*> c) override {updateConstraints(c);};
  
         protected:
             class Motion
@@ -119,6 +119,8 @@ namespace ompl
  
                 Motion *parent{nullptr};
             };
+
+            void updateConstraints(std::vector<const Constraint*> c);
  
             void freeMemory();
  
@@ -129,9 +131,9 @@ namespace ompl
 
             bool satisfiesConstraints(const Motion *n) const;
 
-            std::vector<const Constraint*> constraints_{};
-
             Agent *a_{nullptr};
+
+            std::vector<const Constraint*> constraints_ = {};
 
             base::StateSamplerPtr sampler_;
  

@@ -1,4 +1,4 @@
-#include "../includes/Constraint.h"
+#include "includes/Constraint.h"
 
 
 bool Conflict::operator==(const Conflict &other) const

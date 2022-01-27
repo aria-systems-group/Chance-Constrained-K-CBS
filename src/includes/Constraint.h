@@ -53,20 +53,16 @@ class Constraint
 {
 
 public:
-	Constraint(std::vector <const polygon> polygons, int agentIdx, const std::pair<double, double> *timeRange) : polys_(polygons)
-	{
-		// polys_ = polygons;
-		// for (const polygon p: polygons) {polys_.push_back(p);}
-		agentIdx_ = agentIdx;
-		t_ = timeRange;
-	}
+	Constraint(const std::vector <const polygon> polygons, 
+		const std::vector<double> timeRange, 
+		const int agentIdx) : polys_(polygons), times_(timeRange), agentIdx_(agentIdx) {}
 	const std::vector <const polygon> getPolygons() const {return polys_;};
-	const std::pair<double, double>* getTimeRange() const {return t_;};
+	const std::vector<double> getTimes() const {return times_;};
 	const int getAgent() const {return agentIdx_;};
 private:
-	std::vector <const polygon> polys_;
-	const std::pair<double, double> *t_;
-	int agentIdx_;
+	const std::vector <const polygon> polys_;
+	const std::vector<double> times_;
+	const int agentIdx_;
 };
 #endif
 

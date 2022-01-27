@@ -7,9 +7,9 @@
 /* Author: Justin Kottinger */
 
 // #include "../includes/World.h"
-#include "../includes/multiAgentSetUp.h"
-#include "../includes/KD_CBS.h"
-#include "../includes/postProcessing.h"
+#include "includes/multiAgentSetUp.h"
+#include "includes/KD_CBS.h"
+#include "includes/postProcessing.h"
 
 
 namespace fs = std::filesystem;
@@ -25,15 +25,20 @@ int main(int argc, char ** argv)
 {
     std::string problem = argv[1];
     World *w = yaml2world(problem);
-    const std::vector<oc::SimpleSetup> allAgentSetUp = multiAgentSimpleSetUp(w);
-    oc::KD_CBS *p = new oc::KD_CBS(allAgentSetUp);
+    const std::vector<std::pair<std::shared_ptr<oc::SpaceInformation>, 
+        std::shared_ptr<ob::ProblemDefinition>>> mmpp = multiAgentSetUp(w);
+    oc::KD_CBS *p = new oc::KD_CBS(mmpp); // K_CBS
     p->setWorld(w);
     ob::PlannerPtr planner(p);
-    // OMPL_INFORM("Set-Up Complete");
+    OMPL_INFORM("Set-Up Complete");
     std::cout << "Setup Complete. Press ENTER to plan: ";
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     bool solved = planner->solve(30.0);
     if (solved)
-        write2sys(allAgentSetUp, w->getAgents());
+    {
+        problem.resize(problem.size() - 4); // remove ".yml"
+        printf("Writing Solution to %s \n", problem.c_str());
+        write2sys(mmpp, w->getAgents(), problem);
+    }
     return 0;
 }

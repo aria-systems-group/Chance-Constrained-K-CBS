@@ -13,17 +13,23 @@
 /* Author: Justin Kottinger */
 
 #pragma once
-#include "../includes/World.h"
-#include "../includes/Constraint.h"
-#include "../includes/constraintRRT.h"
+#include "World.h"
+#include "Constraint.h"
+#include "constraintRRT.h"
+#include "collisionChecking.h"
 #include <ompl/control/PathControl.h>
 #include <ompl/control/SimpleSetup.h>
-#include "../includes/collisionChecking.h"
 #include <ompl/control/SpaceInformation.h>
 #include <ompl/tools/config/SelfConfig.h>
+#include <boost/shared_ptr.hpp>
 #include <math.h>
-#include <vector>
 #include <stdlib.h>
+#include <memory.h>
+#include <vector>
+#include <chrono>
+
+typedef std::pair< std::shared_ptr<oc::SpaceInformation>, 
+        std::shared_ptr<ob::ProblemDefinition> > problem;
 
 
 namespace ompl
@@ -37,7 +43,7 @@ namespace ompl
         {
         public:
             /** \brief Constructor */
-            KD_CBS(const std::vector<SimpleSetup> mmpp);
+            KD_CBS(const std::vector<problem> mmpp);
 
             ~KD_CBS() override;
 
@@ -74,24 +80,10 @@ namespace ompl
             does not allow the user to use such interpolation. This method 
             borrows much of that code but is implemented in such a way that enables
             the user to use the interpolated trajectory. */
-            void interpolate(PathControl &p);
+            // void interpolate(PathControl &p);
             
             /*method that checks for conflicts (collisions) within the plan*/
             std::vector <Conflict> validatePlan(Plan pl);
-
-            /*method deletes outdated planner object and 
-            creates new one with updated constraints for simplesetup 
-            object cooresponding to agentIdx */
-            void updateOMPLConstraints(SimpleSetup &ss, std::vector<const Constraint*> c, const int agentIdx)
-            {
-                // ss.getPlanner()->clear();
-                // auto planner(std::make_shared<constraintRRT>(ss.getSpaceInformation()));
-                ss.getPlanner().get()->updateOMPLConstraints(c);
-                // ss.getPlanner()->provideAgent(w_->getAgents()[agentIdx]);
-                // ss.setPlanner(planner);
-            }
-
-            void updateOMPLConstraints(std::vector<const Constraint*> c) override {OMPL_ERROR("Using useless function! Terminating prematurely."); exit(1);};
 
         protected:
             /** \brief Representation of a conflict node
@@ -103,7 +95,19 @@ namespace ompl
             public:
                 conflictNode() = default;
 
+                conflictNode(conflictNode const &c)
+                {
+                    // create a copy of conflict node
+                    this->plan_ = c.getPlan();
+                    this->parent_ = c.getParent();
+                    this->cost_ = c.getCost();
+                    this->constraint_ = c.getConstraint();
+                }
+
                 ~conflictNode() = default;
+                // {
+                //     printf("destructor called! \n");
+                // }
 
                 // update plan and cost at same time to avoid bad bookkeeping
                 void updatePlanAndCost(Plan &p) 
@@ -120,7 +124,7 @@ namespace ompl
                 };
 
                 // update parent node
-                void updateParent(conflictNode* &c) {parent_ = c;};
+                void updateParent(const conflictNode *c) {parent_ = c;};
 
                 // add constraint
                 void addConstraint(Constraint *constraint) {constraint_ = constraint;};
@@ -129,7 +133,7 @@ namespace ompl
                 Plan getPlan() const {return plan_;};
 
                 // get the parent, but no not change it
-                conflictNode* getParent() const {return parent_;};
+                const conflictNode* getParent() const {return parent_;};
 
                 // get the cost, but do not alter it
                 const double getCost() const {return cost_;};
@@ -142,28 +146,28 @@ namespace ompl
                 Plan plan_;
 
                 /** \brief The parent motion in the exploration tree */
-                conflictNode *parent_{nullptr};
+                const conflictNode *parent_{nullptr};
 
                 /** \brief The total length (sum of cost) of the plan */
                 double cost_{std::numeric_limits<double>::infinity()};
 
                 /** \brief the constraint that the node was created to resolve*/
-                Constraint *constraint_; 
+                const Constraint *constraint_{nullptr}; 
             };
 
             // function that orders priority queue
-            struct LessThanNodeK
+            struct Compare
             {
-                bool operator()(const conflictNode *n1, const conflictNode *n2) const
+                bool operator()(const conflictNode n1, const conflictNode n2) const
                 {
-                    // std::cout << n1->getCost() << std::endl;
-                    // std::cout << n2->getCost() << std::endl;
-                    // if (n1->getCost() < n2->getCost())
-                        // std::cout << "n1 is smaller" << std::endl;
-                    // else
-                        // std::cout << "n2 is smaller" << std::endl;
-                    // std::cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
-                    return n1->getCost() > n2->getCost();
+                    /* Note that the Compare parameter is defined such 
+                    that it returns true if its first argument comes before 
+                    its second argument in a weak ordering. But because the 
+                    priority queue outputs largest elements first, the 
+                    elements that "come before" are actually output last. 
+                    That is, the front of the queue contains the "last" 
+                    element according to the weak ordering imposed by Compare. */
+                    return n1.getCost() > n2.getCost();
                 }
             };
 
@@ -174,41 +178,68 @@ namespace ompl
             /* Replan for agent agentIdx for new set of constraints c */
             void replanSingleAgent(conflictNode* &n, const int agentIdx, PathControl &solution)
             {
-                SimpleSetup ss = mmpp_[agentIdx];
-                // get all agent specific constratints within a branch
-                std::vector<const Constraint*> c{};
-                conflictNode *nCopy = n;
-                while (nCopy->getParent())
-                {
-                    if (nCopy->getConstraint()->getAgent() == agentIdx)
-                        c.push_back(nCopy->getConstraint());
-                    nCopy = nCopy->getParent();
-                }
-                // update the constraints with OMPL
-                updateOMPLConstraints(ss, c, agentIdx);
-                // solve new problem
-                base::PlannerStatus solved = ss.solve(planningTime_);
-                if (solved)
-                    solution = ss.getSolutionPath();
-            }
+                /* SAVE -- HOW TO USE LOW-LEVEL SEARCH INSIDE KD-CBS
+                // attempt to solve the problem within one second of planning time
+                ob::PlannerStatus solved = planner->ob::Planner::solve(10.0);
 
-            // // Queue utilities
-            // conflictNode* popHead()
-            // {
-            //     conflictNode *n = *queue_.begin();
-            //     queue_.erase(queue_.begin());
-            //     return n;
-            // }
+                if (solved)
+                {
+                    // get the goal representation from the problem definition (not the same as the goal state)
+                    // and inquire about the found path
+                    oc::PathControl path = static_cast<oc::PathControl &>(*pdef->getSolutionPath());
+                    std::cout << "Found solution:" << std::endl;
+                    path.printAsMatrix(std::cout);
+                }
+                else
+                    std::cout << "No solution found" << std::endl;
+                */
+
+
+
+                // SimpleSetup ss = mmpp_[agentIdx];
+                // // get all agent specific constratints within a branch
+                // std::vector<const Constraint*> c{};
+                // const conflictNode *nCopy = n;
+                // printf("Adding constraints to the following time range. \n");
+                // while (nCopy->getParent())
+                // {
+                //     if (nCopy->getConstraint()->getAgent() == agentIdx)
+                //     {
+                //         std::cout << nCopy->getConstraint()->getTimeRange()->first << ", " << 
+                //             nCopy->getConstraint()->getTimeRange()->second << std::endl;
+                //         c.push_back(nCopy->getConstraint());
+                //     }
+                //     nCopy = nCopy->getParent();
+                // }
+                // printf("Done!\n");
+                // std::cout << ss.getPlanner().get() << std::endl;
+                // // delete old low-level planner
+                // ss.getPlanner().get()->clear();
+                // // create new planner
+                // auto planner(std::make_shared<oc::constraintRRT>(ss.getSpaceInformation()));
+                // // planner->provideAgent(a);
+                // // planner->updateConstraints(c);
+                // // ss.setPlanner(planner);
+                // // ss.setup();
+                // // ss.getPlanner()->setup();
+                
+                exit(1);
+                // updateOMPLConstraints(ss, c, agentIdx);
+                // // solve new problem
+                // base::PlannerStatus solved = ss.solve(planningTime_);
+                // if (solved)
+                //     solution = ss.getSolutionPath();
+            }
 
             /** \brief Free the memory allocated by this planner */
             // void freeMemory();
 
             /** \brief The vector of control::SpaceInformation, for convenience */
             // this is the Multi-agent motion planning problem
-            std::vector<SimpleSetup> mmpp_;
+            const std::vector<problem> mmpp_;
+            // std::vector<oc::constraintRRT*>
 
-            // Queue queue_;
-
+            /* Flag that tracks which agent we are replanning for */
             int replanningAgent_{0};
 
             /** \brief The most recent goal motion.  Used for PlannerData computation */

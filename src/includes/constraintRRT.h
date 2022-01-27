@@ -42,8 +42,8 @@
 #include <ompl/datastructures/NearestNeighbors.h>
 #include <ompl/base/spaces/RealVectorStateSpace.h>
 #include <ompl/base/spaces/SO2StateSpace.h>
-#include "../includes/Constraint.h"
-#include "../includes/World.h"
+#include "Constraint.h"
+#include "World.h"
  
 namespace ompl
 {
@@ -96,7 +96,12 @@ namespace ompl
 
             void provideAgent(Agent *a) {a_ = a;};
 
-            void updateOMPLConstraints(std::vector<const Constraint*> c) override {updateConstraints(c);};
+            // TODO: need an update constraints function that can be called from KD-CBS
+            void updateConstraints(const std::vector<const Constraint*> c);
+            // {
+            //     for (const Constraint *con: c)
+            //         constraints_.push_back(con);
+            // }
  
         protected:
             class Motion
@@ -119,8 +124,6 @@ namespace ompl
  
                 Motion *parent{nullptr};
             };
-
-            void updateConstraints(std::vector<const Constraint*> c);
  
             void freeMemory();
  

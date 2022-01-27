@@ -8,7 +8,7 @@
 /* Author: Justin Kottinger */
 
 #include <yaml.h>
-#include "../includes/World.h"
+#include "includes/World.h"
 
 
 // printing methods for usability

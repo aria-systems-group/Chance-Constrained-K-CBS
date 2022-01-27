@@ -10,19 +10,22 @@
  
 /* Author: Ioan Sucan */
  
-#include "../includes/constraintRRT.h"
+#include "includes/constraintRRT.h"
 #include "ompl/base/goals/GoalSampleableRegion.h"
 #include "ompl/tools/config/SelfConfig.h"
 #include <limits>
  
-ompl::control::constraintRRT::constraintRRT(const SpaceInformationPtr &si) : base::Planner(si, "Constraint RRT")
+ompl::control::constraintRRT::constraintRRT(const SpaceInformationPtr &si) : 
+    base::Planner(si, "Constraint RRT")
 {
     specs_.approximateSolutions = true;
     siC_ = si.get();
  
-    Planner::declareParam<double>("goal_bias", this, &constraintRRT::setGoalBias, &constraintRRT::getGoalBias, "0.:.05:1.");
-    Planner::declareParam<bool>("intermediate_states", this, &constraintRRT::setIntermediateStates, &constraintRRT::getIntermediateStates,
-                                "0,1");
+    Planner::declareParam<double>("goal_bias", this, 
+        &constraintRRT::setGoalBias, &constraintRRT::getGoalBias, "0.:.05:1.");
+    Planner::declareParam<bool>("intermediate_states", this, 
+        &constraintRRT::setIntermediateStates, 
+        &constraintRRT::getIntermediateStates, "0,1");
 }
  
 ompl::control::constraintRRT::~constraintRRT()
@@ -35,7 +38,8 @@ void ompl::control::constraintRRT::setup()
     base::Planner::setup();
     if (!nn_)
         nn_.reset(tools::SelfConfig::getDefaultNearestNeighbors<Motion *>(this));
-    nn_->setDistanceFunction([this](const Motion *a, const Motion *b) { return distanceFunction(a, b); });
+    nn_->setDistanceFunction([this](const Motion *a, const Motion *b) 
+        { return distanceFunction(a, b); });
 }
  
 void ompl::control::constraintRRT::clear()
@@ -68,71 +72,87 @@ void ompl::control::constraintRRT::freeMemory()
 
 void ompl::control::constraintRRT::updateConstraints(std::vector<const Constraint*> c)
 {
-    // get minimum step size
-    OMPL_INFORM("Attempting to cut the tree from size %d!", nn_->size());
-    // update constraints
-    constraints_ = c;
-    // remove branches of tree that do not satisfy the constraints
-    std::vector<Motion *> motions;
-    // vector of all motions that do not satisfy new constraints
-    std::vector<const base::State*> badStates;
-    std::vector<Motion *> newTree = {};
-    nn_->list(motions);
-    for (const auto &motion : motions)
-    {
-        // check if the motion needs to be deleted
-        if (! satisfiesConstraints(motion))
-            badStates.push_back(motion->state);
-    }
-    if (badStates.empty())
-    {
-        for (const Constraint *c: constraints_)
-            std::cout << c->getTimeRange()->first << ", " << c->getTimeRange()->second << std::endl;
-        OMPL_ERROR("No unsatisfactory states!");
-        exit(1);
-    }
-    // for all the motions, figure out which belong to new tree
-    for (const auto &motion : motions)
-    {
-        Motion *cpy = motion;
-        std::vector<Motion *> path;
-        bool badBranch = false;
-        while (cpy != nullptr)
-        {
-            for (const base::State *st: badStates)
-            {
-                if (siC_->equalStates(st, cpy->state))
-                    badBranch = true;
-            }
-            path.push_back(cpy);
-            cpy = cpy->parent;
-        }
-        if (!badBranch)
-        { 
-            newTree.push_back(motion);
-        }
-    }
-    nn_->clear();
-    nn_->add(newTree);
-    std::vector<Motion *> check = {};
-    nn_->list(check);
-    OMPL_INFORM("%d Nodes removed. Verifying Tree Integrity.", (motions.size() - newTree.size()));
-    for (Motion *m: check)
-    {
-        // verify that node satisfied constraint
-        if (! satisfiesConstraints(m))
-        {
-            OMPL_ERROR("Tree Prining Failed. Invalid nodes still exist!");
-            exit(1);
-        }
-        // verify that every motion still goes to root node
-        Motion *cpy = m;
-        while (cpy != nullptr)
-            cpy = cpy->parent;
+    // // get minimum step size
+    // OMPL_INFORM("Attempting to cut the tree from size %d!", nn_->size());
+    /* clear old data */
+    clear();
 
-    }
-    lastGoalMotion_ = nullptr;
-    OMPL_INFORM("Successfully cut the tree to %d nodes!", nn_->size());
+    /* update constraints */
+    constraints_ = c;
+
+    // // remove existing branch that caused constraints
+    // while (lastGoalMotion_)
+    // {
+    //     nn_->remove(lastGoalMotion_);
+    //     lastGoalMotion_ = lastGoalMotion_->parent;
+    // }
+
+    // // remove branches of tree that do not satisfy the constraints
+    // std::vector<Motion *> motions;
+    // // vector of all motions that do not satisfy new constraints
+    // std::vector<const base::State*> badStates;
+    // std::vector<Motion *> newTree = {};
+    // std::vector<Motion *> needRemoved = {};
+    // nn_->list(motions);
+    // for (const auto &motion : motions)
+    // {
+    //     // check if the motion needs to be deleted
+    //     if (! satisfiesConstraints(motion))
+    //         badStates.push_back(motion->state);
+    // }
+    // if (badStates.empty())
+    //     OMPL_INFORM("Successfully pruned tree!", nn_->size());
+    // else
+    // {
+    //     for (const auto &motion : motions)
+    //     {
+    //         Motion *cpy = motion;
+    //         std::vector<Motion *> path;
+    //         bool badBranch = false;
+    //         while (cpy != nullptr)
+    //         {
+    //             for (const base::State *st: badStates)
+    //             {
+    //                 if (siC_->equalStates(st, cpy->state))
+    //                     badBranch = true;
+    //             }
+    //             path.push_back(cpy);
+    //             cpy = cpy->parent;
+    //         }
+    //         if (!badBranch)
+    //             newTree.push_back(motion);
+    //         else
+    //             needRemoved.push_back(motion);
+    //     }
+    //     nn_->clear();
+    //     nn_->add(newTree);
+    //     OMPL_INFORM("Releasing memory of old states.");
+    //     for (auto &motion: needRemoved)
+    //     {
+    //         if (motion->state)
+    //             si_->freeState(motion->state);
+    //         if (motion->control)
+    //             siC_->freeControl(motion->control);
+    //         delete motion;
+    //     }
+    //     std::vector<Motion *> check = {};
+    //     nn_->list(check);
+    //     OMPL_INFORM("%d Nodes removed. ", (needRemoved.size()));
+    //     for (Motion *m: check)
+    //     {
+    //         // verify that node satisfied constraint
+    //         if (! satisfiesConstraints(m))
+    //         {
+    //             OMPL_ERROR("Tree Pruning Failed. Invalid nodes still exist!");
+    //             exit(1);
+    //         }
+    //         // verify that every motion still goes to root node
+    //         Motion *cpy = m;
+    //         while (cpy != nullptr)
+    //             cpy = cpy->parent;
+    //     }
+    //     OMPL_INFORM("Successfully cut the tree to %d nodes!", nn_->size());
+    // }
 }
 
 bool ompl::control::constraintRRT::satisfiesConstraints(const Motion *n) const
@@ -149,7 +169,7 @@ bool ompl::control::constraintRRT::satisfiesConstraints(const Motion *n) const
         p.append(n->state, n->control, (n->steps * stepSize));
         p.interpolate();
         
-        // get time of parent
+        // get control time from parent to current
         double currTime = 0;
         Motion *cpy = n->parent;
         while (cpy)
@@ -158,8 +178,7 @@ bool ompl::control::constraintRRT::satisfiesConstraints(const Motion *n) const
             cpy = cpy->parent;
         }
 
-
-
+        // for all interpolation points, create shape of robot and check for disjointedness with constraints
         for (int k = 0; k < p.getStateCount(); k++)
         {
             // Get xy state and theta state (in rad [0, 2*pi]) from state object
@@ -195,70 +214,86 @@ bool ompl::control::constraintRRT::satisfiesConstraints(const Motion *n) const
             std::string points = "POLYGON((" + bottom_left + "," + bottom_right + "," + top_right + "," + top_left + "," + bottom_left + "))";
             polygon currShape;
             boost::geometry::read_wkt(points,currShape);
-            // need to check validity
+            // need to check validity against all constraints
+            /* 
+            This is incorrect, need to be more precise in that specific time to specific geometry. 
+            Checking the entire set of polygons within a range is over-conservative 
+            */
             for (const Constraint *c: constraints_)
             {
-                if ((c->getTimeRange()->first <= currTime) && (currTime <= c->getTimeRange()->second))
+                for (int t = 0; t < c->getTimes().size(); t++)
                 {
-                    for (const polygon p: c->getPolygons())
+                    if (c->getTimes()[t] == currTime)
                     {
-                        if (! boost::geometry::disjoint(currShape, p))
-                            return false;
+                        if (! boost::geometry::disjoint(currShape, c->getPolygons()[t]))
+                            return false; 
                     }
                 }
             }
             currShape.clear();
-            if (k < p.getStateCount() - 1)
-                currTime = currTime + p.getControlDuration(k);
-            
+            currTime = currTime + p.getControlDuration(k);
         }
         return true;
     }
-    // at root node
-    // Get xy state and theta state (in rad [0, 2*pi]) from state object
-    auto compState = n->state->as<base::CompoundStateSpace::StateType>();
-    auto xyState = compState->as<base::RealVectorStateSpace::StateType>(0);
-    const double cx = xyState->values[0];
-    const double cy = xyState->values[1];
-    const double theta = compState->as<base::SO2StateSpace::StateType>(1)->value;
-
-    // Get important params from car object
-    const double carWidth = a_->getShape()[0];
-    const double carHeight = a_->getShape()[1];
-
-    // turn (x,y, theta), width, length to a polygon object
-    // see https://stackoverflow.com/questions/41898990/find-corners-of-a-rotated-rectangle-given-its-center-point-and-rotation
-    // TOP RIGHT VERTEX:
-    const double TR_x = cx + ((carWidth / 2) * cos(theta)) - ((carHeight / 2) * sin(theta));
-    const double TR_y = cy + ((carWidth / 2) * sin(theta)) + ((carHeight / 2) * cos(theta));
-    std::string top_right = std::to_string(TR_x) + " " + std::to_string(TR_y);
-    // TOP LEFT VERTEX:
-    const double TL_x = cx - ((carWidth / 2) * cos(theta)) - ((carHeight / 2) * sin(theta));
-    const double TL_y = cy - ((carWidth / 2) * sin(theta)) + ((carHeight / 2) * cos(theta));
-    std::string top_left = std::to_string(TL_x) + " " + std::to_string(TL_y);
-    // BOTTOM LEFT VERTEX:
-    const double BL_x = cx - ((carWidth / 2) * cos(theta)) + ((carHeight / 2) * sin(theta));
-    const double BL_y = cy - ((carWidth / 2) * sin(theta)) - ((carHeight / 2) * cos(theta));
-    std::string bottom_left = std::to_string(BL_x) + " " + std::to_string(BL_y);
-    // BOTTOM RIGHT VERTEX:
-    const double BR_x = cx + ((carWidth / 2) * cos(theta)) + ((carHeight / 2) * sin(theta));
-    const double BR_y = cy + ((carWidth / 2) * sin(theta)) - ((carHeight / 2) * cos(theta));
-    std::string bottom_right = std::to_string(BR_x) + " " + std::to_string(BR_y);
-    // convert to string for easy initializataion
-    std::string points = "POLYGON((" + bottom_left + "," + bottom_right + "," + top_right + "," + top_left + "," + bottom_left + "))";
-    polygon currShape;
-    boost::geometry::read_wkt(points,currShape);
-    for (const Constraint *c: constraints_)
+    else
     {
-        if ((c->getTimeRange()->first <= 0) && (0 <= c->getTimeRange()->second))
+        // at root node
+        // Get xy state and theta state (in rad [0, 2*pi]) from state object
+        auto compState = n->state->as<base::CompoundStateSpace::StateType>();
+        auto xyState = compState->as<base::RealVectorStateSpace::StateType>(0);
+        const double cx = xyState->values[0];
+        const double cy = xyState->values[1];
+        const double theta = compState->as<base::SO2StateSpace::StateType>(1)->value;
+
+        // Get important params from car object
+        const double carWidth = a_->getShape()[0];
+        const double carHeight = a_->getShape()[1];
+
+        // turn (x,y, theta), width, length to a polygon object
+        // see https://stackoverflow.com/questions/41898990/find-corners-of-a-rotated-rectangle-given-its-center-point-and-rotation
+        // TOP RIGHT VERTEX:
+        const double TR_x = cx + ((carWidth / 2) * cos(theta)) - ((carHeight / 2) * sin(theta));
+        const double TR_y = cy + ((carWidth / 2) * sin(theta)) + ((carHeight / 2) * cos(theta));
+        std::string top_right = std::to_string(TR_x) + " " + std::to_string(TR_y);
+        // TOP LEFT VERTEX:
+        const double TL_x = cx - ((carWidth / 2) * cos(theta)) - ((carHeight / 2) * sin(theta));
+        const double TL_y = cy - ((carWidth / 2) * sin(theta)) + ((carHeight / 2) * cos(theta));
+        std::string top_left = std::to_string(TL_x) + " " + std::to_string(TL_y);
+        // BOTTOM LEFT VERTEX:
+        const double BL_x = cx - ((carWidth / 2) * cos(theta)) + ((carHeight / 2) * sin(theta));
+        const double BL_y = cy - ((carWidth / 2) * sin(theta)) - ((carHeight / 2) * cos(theta));
+        std::string bottom_left = std::to_string(BL_x) + " " + std::to_string(BL_y);
+        // BOTTOM RIGHT VERTEX:
+        const double BR_x = cx + ((carWidth / 2) * cos(theta)) + ((carHeight / 2) * sin(theta));
+        const double BR_y = cy + ((carWidth / 2) * sin(theta)) - ((carHeight / 2) * cos(theta));
+        std::string bottom_right = std::to_string(BR_x) + " " + std::to_string(BR_y);
+        // convert to string for easy initializataion
+        std::string points = "POLYGON((" + bottom_left + "," + bottom_right + "," + top_right + "," + top_left + "," + bottom_left + "))";
+        polygon currShape;
+        boost::geometry::read_wkt(points,currShape);
+        // for (const Constraint *c: constraints_)
+        // {
+        //     if ((c->getTimeRange()->first <= 0) && (0 <= c->getTimeRange()->second))
+        //     {
+        //         // need to check validity
+        //         for (const polygon p: c->getPolygons())
+        //             if (! boost::geometry::disjoint(currShape, p))
+        //                 return false;
+        //     }
+        // }
+        for (const Constraint *c: constraints_)
         {
-            // need to check validity
-            for (const polygon p: c->getPolygons())
-                if (! boost::geometry::disjoint(currShape, p))
-                    return false;
+            for (int t = 0; t < c->getTimes().size(); t++)
+            {
+                if (c->getTimes()[t] == 0)
+                {
+                    if (! boost::geometry::disjoint(currShape, c->getPolygons()[t]))
+                        return false; 
+                }
+            }
         }
+        return true;
     }
-    return true;
 }
  
 ompl::base::PlannerStatus ompl::control::constraintRRT::solve(const base::PlannerTerminationCondition &ptc)
@@ -271,20 +306,27 @@ ompl::base::PlannerStatus ompl::control::constraintRRT::solve(const base::Planne
         OMPL_ERROR("No agent object.");
         exit(1);
     }
-    if (constraints_.size() > 0)
+    // if (constraints_.size() > 0)
+    // {
+    //     // OMPL_WARN("Resolving %d Constraints.", constraints_.size());
+    //     while (const base::State *st = pis_.nextStart())
+    //     {
+    //         auto *motion = new Motion(siC_);
+    //         si_->copyState(motion->state, st);
+    //         siC_->nullControl(motion->control);
+    //         nn_->add(motion);
+    //     }
+    // }
+    // else
+    // {
+    while (const base::State *st = pis_.nextStart())
     {
-        OMPL_WARN("Resolving %d Constraints.", constraints_.size());
+        auto *motion = new Motion(siC_);
+        si_->copyState(motion->state, st);
+        siC_->nullControl(motion->control);
+        nn_->add(motion);
     }
-    else
-    {
-        while (const base::State *st = pis_.nextStart())
-        {
-            auto *motion = new Motion(siC_);
-            si_->copyState(motion->state, st);
-            siC_->nullControl(motion->control);
-            nn_->add(motion);
-        }
-    }
+    // }
     if (nn_->size() == 0)
     {
         OMPL_ERROR("%s: There are no valid initial states!", getName().c_str());
@@ -297,6 +339,19 @@ ompl::base::PlannerStatus ompl::control::constraintRRT::solve(const base::Planne
         controlSampler_ = siC_->allocDirectedControlSampler();
  
     OMPL_INFORM("%s: Starting planning with %u states already in datastructure", getName().c_str(), nn_->size());
+    // for (const Constraint *c: constraints_)
+    // {
+    //     std::cout << c->getTimes().front() << ", " << c->getTimes().back() << std::endl;
+    //     const std::vector <const polygon> ps = c->getPolygons();
+    //     for (auto p: ps)
+    //     {
+    //         auto exterior_points = boost::geometry::exterior_ring(p);
+    //         for (int i=0; i<exterior_points.size(); i++)
+    //         {
+    //             std::cout << boost::geometry::get<0>(exterior_points[i]) << ", " << boost::geometry::get<1>(exterior_points[i]) <<std::endl;
+    //         }
+    //     }
+    // }
 
     Motion *solution = nullptr;
     Motion *approxsol = nullptr;
@@ -400,10 +455,12 @@ ompl::base::PlannerStatus ompl::control::constraintRRT::solve(const base::Planne
                             approxsol = motion;
                         }
                     }
+                    else
+                        delete motion;
                 }
                 else
                 {
-                    // proceed as normal 
+                    // no constraints given, proceed as normal 
                     nn_->add(motion);
                     double dist = 0.0;
                     bool solv = goal->isSatisfied(motion->state, &dist);
@@ -423,7 +480,6 @@ ompl::base::PlannerStatus ompl::control::constraintRRT::solve(const base::Planne
             }
         }
     }
- 
     bool solved = false;
     bool approximate = false;
     if (solution == nullptr)

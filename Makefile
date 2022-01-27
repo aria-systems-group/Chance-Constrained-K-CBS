@@ -41,7 +41,7 @@ OBJ_DIR := obj
 SRC := $(wildcard $(SRC_DIR)/*.cpp)
 OBJ := $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
-CPPFLAGS := -std=c++17 -I/opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3 \
+CPPFLAGS := -std=c++20 -I/opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3 \
 				-I/opt/homebrew/Cellar/boost/1.76.0/include \
 				-I/opt/homebrew/Cellar/ompl/1.5.2/include/ompl-1.5 \
 				-I/opt/homebrew/Cellar/ode/0.16.2/include \

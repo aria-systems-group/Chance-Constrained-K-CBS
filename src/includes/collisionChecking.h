@@ -17,7 +17,7 @@
 /* Author: Justin Kottinger */
 
 #pragma once
-#include "../includes/World.h"
+#include "World.h"
 #include <boost/geometry.hpp>
 #include <boost/geometry/io/io.hpp>
 #include <boost/geometry/geometries/geometries.hpp>

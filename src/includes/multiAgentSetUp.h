@@ -9,17 +9,20 @@
 /* Author: Justin Kottinger */
 
 #pragma once
-#include "../includes/World.h"
-#include "../includes/Goals.h"
-#include "../includes/OdeFunctions.h"
-#include "../includes/collisionChecking.h"
-#include "../includes/constraintRRT.h"
-#include <ompl/control/planners/rrt/RRT.h>
+#include "World.h"
+#include "Goals.h"
+#include "OdeFunctions.h"
+#include "collisionChecking.h"
+#include "constraintRRT.h"
 #include <ompl/control/SimpleSetup.h>
-
+#include <utility>
 
 namespace ob = ompl::base;
 namespace oc = ompl::control;
+
+typedef std::pair< std::shared_ptr<oc::SpaceInformation>, 
+        std::shared_ptr<ob::ProblemDefinition> > problem;
+
 
 // standard real vector control space of any dimension
 class StandardControlSpace : public oc::RealVectorControlSpace
@@ -32,11 +35,13 @@ public:
 };
 
 // this function sets-up an ompl planning problem for an arbtrary number of agents
-std::vector<oc::SimpleSetup> multiAgentSimpleSetUp(const World *w)
+// returns planners to be used
+const std::vector<problem> multiAgentSetUp(const World *w)
 {
     std::cout << "" << std::endl;
     OMPL_INFORM("Setting up planning problem for all agents...");
-    std::vector<oc::SimpleSetup> ssVec;
+    // std::vector<shared_ptr<oc::constraintRRT> >
+    std::vector<problem> probDefs;
     const double goalRadius = 0.25;
     for (int i=0; i < w->getAgents().size(); i++)
     {
@@ -67,47 +72,49 @@ std::vector<oc::SimpleSetup> multiAgentSimpleSetUp(const World *w)
             cbounds.setHigh(1);
 
             cspace->setBounds(cbounds);
- 
-            // define a simple setup class
-            oc::SimpleSetup ss(cspace);
-            // set state validity checking for this space
-            oc::SpaceInformation *si = ss.getSpaceInformation().get();
-            // ss.setStateValidityChecker(
-                // [si, w, a](const ob::State *state) { return isStateValid_2D(si, w, a, state); });
-            // std::vector<int> constrin;
-            ss.setStateValidityChecker(std::make_shared<isStateValid_2D_Test>(ss.getSpaceInformation(), w, a));
+
+            // construct an instance of  space information from this state space
+            auto si(std::make_shared<oc::SpaceInformation>(space, cspace));
+
+            si->setStateValidityChecker(
+                std::make_shared<isStateValid_2D_Test>(si, w, a));
     
-            // Use the ODESolver to propagate the system.  Call KinematicCarPostIntegration
+            // Use the ODESolver to propagate the system.  
+            // Call KinematicCarPostIntegration
             // when integration has finished to normalize the orientation values.
-            auto odeSolver(std::make_shared<oc::ODEBasicSolver<>>(ss.getSpaceInformation(), &KinematicCarODE));
-            ss.setStatePropagator(oc::ODESolver::getStatePropagator(odeSolver, &KinematicCarPostIntegration));
-            // assume that planner integrates dynamics at steps of 0.1 seconds (need each agent to be the same)
+            auto odeSolver(std::make_shared<oc::ODEBasicSolver<>>(si, &KinematicCarODE));
+            si->setStatePropagator(oc::ODESolver::getStatePropagator(odeSolver, 
+                &KinematicCarPostIntegration));
+            // assume that planner integrates dynamics at steps of 0.1 seconds
             si->setPropagationStepSize(0.1);
+            si->setMinControlDuration(1);
+            si->setMaxControlDuration(10);
+            si->setup();
+
             ob::ScopedState<ob::SE2StateSpace> start(space);
             start->setX(a->getStartLocation()[0]);
             start->setY(a->getStartLocation()[1]);
             start->setYaw(0.0);  // start yaw is set manually (TODO)
 
-            ob::GoalPtr goal (new ArbirtryGoal_2D(ss.getSpaceInformation(), a->getGoalLocation(), goalRadius));
+            ob::GoalPtr goal (new ArbirtryGoal_2D(si, a->getGoalLocation(), goalRadius));
+            
+            // create a problem instance
+            auto pdef(std::make_shared<ob::ProblemDefinition>(si));
 
-            ss.setStartState(start);
-            ss.setGoal(goal);
+            // set the start and goal states
+            pdef->addStartState(start);
+            pdef->setGoal(goal);
 
-            // initialize and set planner
-            auto planner(std::make_shared<oc::constraintRRT>(ss.getSpaceInformation()));
-            planner->provideAgent(a);
-            ss.setPlanner(planner);
-            ss.setup();
-            ss.getPlanner()->setup();
+            problem prob(si, pdef);
 
-            ssVec.push_back(ss);
+            probDefs.push_back(prob);
         }
         else
         {
             OMPL_ERROR("No model implemented for %s dynamics: %s", a->getName().c_str(), a->getDynamics().c_str());
-            return ssVec;
+            return probDefs;
         }
     }
     OMPL_INFORM("Done!");
-    return ssVec;
+    return probDefs;
 }

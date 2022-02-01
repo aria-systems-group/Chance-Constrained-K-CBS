@@ -314,17 +314,13 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
    for (auto p: treeSearchs)
    {
       ob::PlannerStatus solved = p->ob::Planner::solve(planningTime_);
-      if (solved)
-      {
-         oc::PathControl traj = static_cast<oc::PathControl &>
-            (*p->ob::Planner::getProblemDefinition()->getSolutionPath());
-         root_plan.push_back(traj);
-      }
-      else
-      {
-         OMPL_ERROR("Insufficient planning time for initial solution. This is a TO-DO item. Terminating prematurely.");
-         exit(1);
-      }
+      while (!solved)
+         solved = p->ob::Planner::solve(planningTime_);
+
+      /* store initial trajectory */
+      oc::PathControl traj = static_cast<oc::PathControl &>
+         (*p->ob::Planner::getProblemDefinition()->getSolutionPath());
+      root_plan.push_back(traj);
    }
 
    /* create root node */
@@ -337,7 +333,7 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
    // if no root node exists, tell user and return invalid start
    if (pq.empty())
    {
-       OMPL_ERROR("%s: There are no valid initial states! Increase planning time.", getName().c_str(), planningTime_);
+       OMPL_ERROR("%s: There are no valid initial states!", getName().c_str(), planningTime_);
        return base::PlannerStatus::INVALID_START;
    }
  
@@ -346,9 +342,58 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
    int i = 1;
    while (ptc == false && !pq.empty())
    {
+      printf("At top of loop \n");
       /* find loswest cost in Queue */
-      const conflictNode *curr = new conflictNode(pq.top());
+      conflictNode *curr = new conflictNode(pq.top());
 
+      /* if cost==inf need to try to re-plan node */
+      if (curr->getCost() == std::numeric_limits<double>::infinity())
+      {
+         pq.pop();
+         printf("Now Here: %lu \n", curr->getMotions().size());
+         // update planner information
+         const int agentIdx = curr->getConstraint()->getAgent();
+         // get constraints
+         std::vector<const Constraint*> agent_constraints{curr->getConstraint()};
+         const conflictNode *nCpy = curr->getParent();
+         while (nCpy->getConstraint() != nullptr)
+         {
+            if (nCpy->getConstraint()->getAgent() == agentIdx)
+               agent_constraints.push_back(nCpy->getConstraint());
+            nCpy = nCpy->getParent();
+         }
+         // add constraints and motions to planner
+         treeSearchs[agentIdx]->motions2Tree(curr->getMotions(), agent_constraints);
+         // plan again
+         ob::PlannerStatus solved = treeSearchs[agentIdx]->ob::Planner::solve(planningTime_);
+         if (solved)
+         {
+            /* create new solution with updated traj. for conflicting agent */
+            oc::PathControl new_traj = static_cast<oc::PathControl &>
+               (*treeSearchs[agentIdx]->ob::Planner::getProblemDefinition()->getSolutionPath());
+            Plan new_plan;
+            for (int agent = 0; agent < mmpp_.size(); agent++)
+            {
+               if (agentIdx == agent)
+                  new_plan.push_back(new_traj);
+               else
+                  new_plan.push_back(curr->getParent()->getPlan()[agent]);
+            }
+            curr->updatePlanAndCost(new_plan);
+         }
+         else
+         {
+            // update the list of motions for next time
+            // save planner progress to node
+            std::vector<constraintRRT::Motion *> m;
+            treeSearchs[agentIdx]->dumpTree2Motions(m);
+            curr->fillMotions(m);
+            pq.emplace(*curr);
+            printf("Failed again, should skipp. \n");
+            continue;
+         }
+      }
+      printf("continuing. \n");
       std::vector <Conflict> conf = validatePlan(curr->getPlan());
 
       if (conf.empty())
@@ -358,15 +403,7 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
       }
       else
       {
-         // OMPL_ERROR("Conflict between agents: %d, %d \n", conf.front().agent1, conf.front().agent2);
-         // OMPL_ERROR("showing conflict times.");
-         // for (Conflict c: conf)
-         // {
-         //    std::cout << c.time << std::endl;
-         // }
-         // OMPL_ERROR("done");
          pq.pop();
-         // OMPL_INFORM("%s: Resolving %lu Conflicts.", getName().c_str(), conf.size());
          /* extract conflict information*/
          const std::vector<const int> conflicting_agents
             {conf.front().agent1, conf.front().agent2};
@@ -387,7 +424,7 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
                conflicting_times, conflicting_agents[a]);
             auto *new_traj = new PathControl(mmpp_[conflicting_agents[a]].first);
             
-            conflictNode n = conflictNode{};
+            conflictNode n{};
             n.updateParent(curr);
             n.addConstraint(new_constraint);
             // std::cout << "replanning required" << std::endl;
@@ -417,6 +454,23 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
                      new_plan.push_back(n.getParent()->getPlan()[agent]);
                }
                n.updatePlanAndCost(new_plan);
+               pq.emplace(n);
+            }
+            else
+            {
+               /* 
+               failed to find solution. 
+               Need to save data to node and put at back of queue 
+               */
+               printf("HERE: %d \n", a);
+               // save planner progress to node
+               std::vector<constraintRRT::Motion *> m;
+               treeSearchs[conflicting_agents[a]]->dumpTree2Motions(m);
+               n.fillMotions(m);
+               printf("Size of motions in n: %lu \n", n.getMotions().size());
+
+               // add to queue with cost inf
+               printf("Address of n: %p \n", &n);
                pq.emplace(n);
             }
          }

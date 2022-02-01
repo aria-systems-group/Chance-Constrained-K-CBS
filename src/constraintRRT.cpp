@@ -18,7 +18,7 @@
 ompl::control::constraintRRT::constraintRRT(const SpaceInformationPtr &si) : 
     base::Planner(si, "Constraint RRT")
 {
-    specs_.approximateSolutions = true;
+    specs_.approximateSolutions = false;
     siC_ = si.get();
  
     Planner::declareParam<double>("goal_bias", this, 
@@ -72,87 +72,83 @@ void ompl::control::constraintRRT::freeMemory()
 
 void ompl::control::constraintRRT::updateConstraints(std::vector<const Constraint*> c)
 {
-    // // get minimum step size
-    // OMPL_INFORM("Attempting to cut the tree from size %d!", nn_->size());
     /* clear old data */
     clear();
 
     /* update constraints */
     constraints_ = c;
+}
 
-    // // remove existing branch that caused constraints
-    // while (lastGoalMotion_)
-    // {
-    //     nn_->remove(lastGoalMotion_);
-    //     lastGoalMotion_ = lastGoalMotion_->parent;
-    // }
+void ompl::control::constraintRRT::dumpTree2Motions(std::vector<Motion *> &motions)
+{
+    std::vector<Motion *> tmp;
+    nn_->list(tmp);
+    // the elements of tmp will eventually be deleted
+    // copy the data into different element and save that instead
+    for (Motion *m: tmp)
+    {
+        // alloc mem for motion copy
+        Motion *n_motion = new Motion();
+        base::State *st = siC_->allocState();
+        Control *cntrl = siC_->allocControl();
+        unsigned int steps = m->steps;
+        Motion *par = nullptr;
+        // copy state, conrol
+        siC_->copyState(st, m->state);
+        siC_->copyControl(cntrl, m->control);
+        // update n_motion
+        n_motion->state = st;
+        n_motion->control = cntrl;
+        n_motion->steps = steps;
+        // copy parent address
+        n_motion->parent = m->parent;
+        // add new motion to motions
+        motions.push_back(n_motion);
+    }
+    // recall that n_motion->parent will be deleted
+    // need to match n_motion->parent to somethin in n_motion
+    // printf("Entering this loop. \n");
+    for (Motion *m1: motions)
+    {
+        for (Motion *m2: motions)
+        {
+            if (m1->parent != nullptr)
+            {
+                // check if m1->parent->state == m2->state
+                if (siC_->equalStates(m1->parent->state, m2->state))
+                {
+                    if (siC_->equalControls(m1->parent->control, m2->control))
+                    {
+                        if (m1->parent->steps == m2->steps)
+                        {
+                            // printf("Found Parent! \n");
+                            m1->parent = m2;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    // printf("Successfully found all parents. \n");
 
-    // // remove branches of tree that do not satisfy the constraints
-    // std::vector<Motion *> motions;
-    // // vector of all motions that do not satisfy new constraints
-    // std::vector<const base::State*> badStates;
-    // std::vector<Motion *> newTree = {};
-    // std::vector<Motion *> needRemoved = {};
-    // nn_->list(motions);
-    // for (const auto &motion : motions)
-    // {
-    //     // check if the motion needs to be deleted
-    //     if (! satisfiesConstraints(motion))
-    //         badStates.push_back(motion->state);
-    // }
-    // if (badStates.empty())
-    //     OMPL_INFORM("Successfully pruned tree!", nn_->size());
-    // else
-    // {
-    //     for (const auto &motion : motions)
-    //     {
-    //         Motion *cpy = motion;
-    //         std::vector<Motion *> path;
-    //         bool badBranch = false;
-    //         while (cpy != nullptr)
-    //         {
-    //             for (const base::State *st: badStates)
-    //             {
-    //                 if (siC_->equalStates(st, cpy->state))
-    //                     badBranch = true;
-    //             }
-    //             path.push_back(cpy);
-    //             cpy = cpy->parent;
-    //         }
-    //         if (!badBranch)
-    //             newTree.push_back(motion);
-    //         else
-    //             needRemoved.push_back(motion);
-    //     }
-    //     nn_->clear();
-    //     nn_->add(newTree);
-    //     OMPL_INFORM("Releasing memory of old states.");
-    //     for (auto &motion: needRemoved)
-    //     {
-    //         if (motion->state)
-    //             si_->freeState(motion->state);
-    //         if (motion->control)
-    //             siC_->freeControl(motion->control);
-    //         delete motion;
-    //     }
-    //     std::vector<Motion *> check = {};
-    //     nn_->list(check);
-    //     OMPL_INFORM("%d Nodes removed. ", (needRemoved.size()));
-    //     for (Motion *m: check)
-    //     {
-    //         // verify that node satisfied constraint
-    //         if (! satisfiesConstraints(m))
-    //         {
-    //             OMPL_ERROR("Tree Pruning Failed. Invalid nodes still exist!");
-    //             exit(1);
-    //         }
-    //         // verify that every motion still goes to root node
-    //         Motion *cpy = m;
-    //         while (cpy != nullptr)
-    //             cpy = cpy->parent;
-    //     }
-    //     OMPL_INFORM("Successfully cut the tree to %d nodes!", nn_->size());
-    // }
+}
+
+void ompl::control::constraintRRT::motions2Tree(const std::vector<Motion *> motions,
+    std::vector<const Constraint*> c)
+{
+    // printf("in motion2tree \n");
+    /* clear old data */
+    clear();
+    // printf("right here \n");
+    /* add new data */
+    // nn_->add(motions);
+    nn_->add(motions);
+    // printf("now here \n");
+    /* update constraints */
+    constraints_ = c;
+    /* notify solve function not to add start state */
+    replanning = true;
+    // printf("Everything added successfully \n");
 }
 
 bool ompl::control::constraintRRT::satisfiesConstraints(const Motion *n) const
@@ -214,11 +210,7 @@ bool ompl::control::constraintRRT::satisfiesConstraints(const Motion *n) const
             std::string points = "POLYGON((" + bottom_left + "," + bottom_right + "," + top_right + "," + top_left + "," + bottom_left + "))";
             polygon currShape;
             boost::geometry::read_wkt(points,currShape);
-            // need to check validity against all constraints
-            /* 
-            This is incorrect, need to be more precise in that specific time to specific geometry. 
-            Checking the entire set of polygons within a range is over-conservative 
-            */
+            /* Verify time-specific constraints */
             for (const Constraint *c: constraints_)
             {
                 for (int t = 0; t < c->getTimes().size(); t++)
@@ -271,16 +263,7 @@ bool ompl::control::constraintRRT::satisfiesConstraints(const Motion *n) const
         std::string points = "POLYGON((" + bottom_left + "," + bottom_right + "," + top_right + "," + top_left + "," + bottom_left + "))";
         polygon currShape;
         boost::geometry::read_wkt(points,currShape);
-        // for (const Constraint *c: constraints_)
-        // {
-        //     if ((c->getTimeRange()->first <= 0) && (0 <= c->getTimeRange()->second))
-        //     {
-        //         // need to check validity
-        //         for (const polygon p: c->getPolygons())
-        //             if (! boost::geometry::disjoint(currShape, p))
-        //                 return false;
-        //     }
-        // }
+        /* Verify time-specific constraints */
         for (const Constraint *c: constraints_)
         {
             for (int t = 0; t < c->getTimes().size(); t++)
@@ -306,27 +289,23 @@ ompl::base::PlannerStatus ompl::control::constraintRRT::solve(const base::Planne
         OMPL_ERROR("No agent object.");
         exit(1);
     }
-    // if (constraints_.size() > 0)
-    // {
-    //     // OMPL_WARN("Resolving %d Constraints.", constraints_.size());
-    //     while (const base::State *st = pis_.nextStart())
-    //     {
-    //         auto *motion = new Motion(siC_);
-    //         si_->copyState(motion->state, st);
-    //         siC_->nullControl(motion->control);
-    //         nn_->add(motion);
-    //     }
-    // }
-    // else
-    // {
-    while (const base::State *st = pis_.nextStart())
+    
+    if (!replanning)
     {
-        auto *motion = new Motion(siC_);
-        si_->copyState(motion->state, st);
-        siC_->nullControl(motion->control);
-        nn_->add(motion);
+        while (const base::State *st = pis_.nextStart())
+        {
+            auto *motion = new Motion(siC_);
+            si_->copyState(motion->state, st);
+            siC_->nullControl(motion->control);
+            nn_->add(motion);
+        }
     }
-    // }
+    else
+    {
+        // flag served its purpose, reset value
+        replanning = false;
+    }
+
     if (nn_->size() == 0)
     {
         OMPL_ERROR("%s: There are no valid initial states!", getName().c_str());
@@ -482,11 +461,11 @@ ompl::base::PlannerStatus ompl::control::constraintRRT::solve(const base::Planne
     }
     bool solved = false;
     bool approximate = false;
-    if (solution == nullptr)
-    {
-        solution = approxsol;
-        approximate = true;
-    }
+    // if (solution == nullptr)
+    // {
+    //     solution = approxsol;
+    //     approximate = true;
+    // }
  
     if (solution != nullptr)
     {

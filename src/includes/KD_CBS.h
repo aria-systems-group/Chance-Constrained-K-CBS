@@ -48,7 +48,8 @@ namespace ompl
             ~KD_CBS() override;
 
             /** \brief Continue solving for some amount of time. Return true if solution was found. */
-            base::PlannerStatus solve(const base::PlannerTerminationCondition &ptc) override;
+            base::PlannerStatus solve(const 
+                base::PlannerTerminationCondition &ptc) override;
 
             /** \brief Clear datastructures. Call this function if the
                 input data to the planner has changed and you do not
@@ -102,15 +103,13 @@ namespace ompl
                     this->parent_ = c.getParent();
                     this->cost_ = c.getCost();
                     this->constraint_ = c.getConstraint();
+                    this->motions_ = c.getMotions();
                 }
 
                 ~conflictNode() = default;
-                // {
-                //     printf("destructor called! \n");
-                // }
 
                 // update plan and cost at same time to avoid bad bookkeeping
-                void updatePlanAndCost(Plan &p) 
+                void updatePlanAndCost(Plan &p)
                 {
                     plan_ = p; 
                     double total = 0;
@@ -140,19 +139,32 @@ namespace ompl
 
                 // get the constraint within a node
                 const Constraint* getConstraint() const {return constraint_;};
-            
+
+                void fillMotions(std::vector<constraintRRT::Motion*> newMotions)
+                {
+                    motions_ = newMotions;
+                };
+
+                const std::vector<constraintRRT::Motion*> getMotions() const
+                {
+                    return motions_;
+                };
+
             private:
-                /** \brief The state contained by the motion */
+                /** The state contained by the motion */
                 Plan plan_;
 
-                /** \brief The parent motion in the exploration tree */
+                /* The parent motion in the exploration tree */
                 const conflictNode *parent_{nullptr};
 
-                /** \brief The total length (sum of cost) of the plan */
+                /* The total length (sum of cost) of the plan */
                 double cost_{std::numeric_limits<double>::infinity()};
 
-                /** \brief the constraint that the node was created to resolve*/
-                const Constraint *constraint_{nullptr}; 
+                /* the constraint that the node was created to resolve */
+                const Constraint *constraint_{nullptr};
+
+                /* list of motions--only filled if node fails to create plan_ */
+                std::vector<constraintRRT::Motion*> motions_;
             };
 
             // function that orders priority queue
@@ -171,66 +183,6 @@ namespace ompl
                 }
             };
 
-            // define the queue -- using multiset since it is more versatile than priority queue
-            // using Queue = std::multiset<conflictNode*, LessThanNodeK>;
-
-            
-            /* Replan for agent agentIdx for new set of constraints c */
-            void replanSingleAgent(conflictNode* &n, const int agentIdx, PathControl &solution)
-            {
-                /* SAVE -- HOW TO USE LOW-LEVEL SEARCH INSIDE KD-CBS
-                // attempt to solve the problem within one second of planning time
-                ob::PlannerStatus solved = planner->ob::Planner::solve(10.0);
-
-                if (solved)
-                {
-                    // get the goal representation from the problem definition (not the same as the goal state)
-                    // and inquire about the found path
-                    oc::PathControl path = static_cast<oc::PathControl &>(*pdef->getSolutionPath());
-                    std::cout << "Found solution:" << std::endl;
-                    path.printAsMatrix(std::cout);
-                }
-                else
-                    std::cout << "No solution found" << std::endl;
-                */
-
-
-
-                // SimpleSetup ss = mmpp_[agentIdx];
-                // // get all agent specific constratints within a branch
-                // std::vector<const Constraint*> c{};
-                // const conflictNode *nCopy = n;
-                // printf("Adding constraints to the following time range. \n");
-                // while (nCopy->getParent())
-                // {
-                //     if (nCopy->getConstraint()->getAgent() == agentIdx)
-                //     {
-                //         std::cout << nCopy->getConstraint()->getTimeRange()->first << ", " << 
-                //             nCopy->getConstraint()->getTimeRange()->second << std::endl;
-                //         c.push_back(nCopy->getConstraint());
-                //     }
-                //     nCopy = nCopy->getParent();
-                // }
-                // printf("Done!\n");
-                // std::cout << ss.getPlanner().get() << std::endl;
-                // // delete old low-level planner
-                // ss.getPlanner().get()->clear();
-                // // create new planner
-                // auto planner(std::make_shared<oc::constraintRRT>(ss.getSpaceInformation()));
-                // // planner->provideAgent(a);
-                // // planner->updateConstraints(c);
-                // // ss.setPlanner(planner);
-                // // ss.setup();
-                // // ss.getPlanner()->setup();
-                
-                exit(1);
-                // updateOMPLConstraints(ss, c, agentIdx);
-                // // solve new problem
-                // base::PlannerStatus solved = ss.solve(planningTime_);
-                // if (solved)
-                //     solution = ss.getSolutionPath();
-            }
-
             /** \brief Free the memory allocated by this planner */
             // void freeMemory();
 
@@ -247,7 +199,7 @@ namespace ompl
 
             World *w_{nullptr};
 
-            double planningTime_{5};
+            double planningTime_{1.5};  // seconds
         };
     }
 }

@@ -96,14 +96,10 @@ namespace ompl
 
             void provideAgent(Agent *a) {a_ = a;};
 
-            // TODO: need an update constraints function that can be called from KD-CBS
-            void updateConstraints(const std::vector<const Constraint*> c);
-            // {
-            //     for (const Constraint *con: c)
-            //         constraints_.push_back(con);
-            // }
- 
+            void updateConstraints(std::vector<const Constraint*> c);
+
         protected:
+            friend class KD_CBS;
             class Motion
             {
             public:
@@ -132,6 +128,14 @@ namespace ompl
                 return si_->distance(a->state, b->state);
             }
 
+            /* dump all the motions from datastructure to vector  */
+            void dumpTree2Motions(std::vector<Motion *> &motions);
+
+            /* clear datastructure, add motions to it, and update constraints */
+            void motions2Tree(const std::vector<Motion *> motions, 
+                std::vector<const Constraint*> c);
+
+            /* check if motion satisfies given constraints */
             bool satisfiesConstraints(const Motion *n) const;
 
             Agent *a_{nullptr};
@@ -153,6 +157,8 @@ namespace ompl
             RNG rng_;
  
             Motion *lastGoalMotion_{nullptr};
+
+            bool replanning{false};
         };
     }
 }

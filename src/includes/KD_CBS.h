@@ -73,15 +73,6 @@ namespace ompl
             void resetReplanAgent() {replanningAgent_ = 0;};
 
             void setWorld(World *world) {w_ = world;};
-
-            /* OMPL returns PathControl objects with different
-            control durations. This makes it difficult to evaluate conflicts
-            since time is not syncronized between agents. OMPL provides a PathControl
-            method that interpolates the trajectories but the function 
-            does not allow the user to use such interpolation. This method 
-            borrows much of that code but is implemented in such a way that enables
-            the user to use the interpolated trajectory. */
-            // void interpolate(PathControl &p);
             
             /*method that checks for conflicts (collisions) within the plan*/
             std::vector <Conflict> validatePlan(Plan pl);

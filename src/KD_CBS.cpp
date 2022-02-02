@@ -33,57 +33,6 @@ void ompl::control::KD_CBS::freemMemory()
 {
    
 }
-
-POSSIBLY NOT NEEDED
-void ompl::control::KD_CBS::interpolate(PathControl &p)
-{
-   if (p.getStates().size() <= p.getControls().size())
-   {
-      OMPL_ERROR("Interpolation not performed.  Number of states in the path should be strictly greater than the "
-                   "number of controls.");
-      return;
-   }
- 
-   const auto *si = static_cast<const SpaceInformation *>(p.getSpaceInformation().get());
-   std::vector<base::State *> newStates;
-   std::vector<Control *> newControls;
-   std::vector<double> newControlDurations;
- 
-   double res = si->getPropagationStepSize();
-   for (unsigned int i = 0; i < p.getControls().size(); ++i)
-   {
-       auto steps = (int)floor(0.5 + p.getControlDuration(i) / res);
-       assert(steps >= 0);
-       if (steps <= 1)
-       {
-           newStates.push_back(p.getState(i));
-           newControls.push_back(p.getControl(i));
-           newControlDurations.push_back(p.getControlDuration(i));
-           continue;
-       }
-       std::vector<base::State *> istates;
-       si->propagate(p.getState(i), p.getControl(i), steps, istates, true);
-       // last state is already in the non-interpolated path
-       if (!istates.empty())
-       {
-           si_->freeState(istates.back());
-           istates.pop_back();
-       }
-       newStates.push_back(p.getState(i));
-       newStates.insert(newStates.end(), istates.begin(), istates.end());
-       newControls.push_back(p.getControl(i));
-       newControlDurations.push_back(res);
-       for (int j = 1; j < steps; ++j)
-       {
-           newControls.push_back(si->cloneControl(p.getControl(i)));
-           newControlDurations.push_back(res);
-       }
-   }
-   newStates.push_back(p.getState(p.getControls().size()));
-   p.getStates().swap(newStates);
-   p.getControls().swap(newControls);
-   p.getControlDurations().swap(newControlDurations);
-}
 */
 
 

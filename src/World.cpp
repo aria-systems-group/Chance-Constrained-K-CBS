@@ -59,8 +59,8 @@ World* yaml2world(std::string file)
     {    
         // grab dimensions from problem definition
         const auto& dims = config["Map"]["Dimensions"];
-        const int dimx = dims[0].as<double>();
-        const int dimy = dims[1].as<double>();
+        const double dimx = dims[0].as<double>();
+        const double dimy = dims[1].as<double>();
         w->setWorldDimensions(dimx, dimy);
         
         // set Obstacles

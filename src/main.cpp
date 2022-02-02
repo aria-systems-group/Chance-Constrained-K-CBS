@@ -9,7 +9,7 @@
 // #include "../includes/World.h"
 #include "includes/multiAgentSetUp.h"
 #include "includes/KD_CBS.h"
-#include "includes/postProcessing.h"
+#include "includes/postProcess.h"
 
 
 namespace fs = std::filesystem;
@@ -33,12 +33,13 @@ int main(int argc, char ** argv)
     OMPL_INFORM("Set-Up Complete");
     std::cout << "Setup Complete. Press ENTER to plan: ";
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    bool solved = planner->solve(30.0);
+    bool solved = planner->solve(600.0);
     if (solved)
     {
+        std::vector<int> expCosts = generateExplanation(mmpp);
         problem.resize(problem.size() - 4); // remove ".yml"
         printf("Writing Solution to %s \n", problem.c_str());
-        write2sys(mmpp, w->getAgents(), problem);
+        write2sys(mmpp, w->getAgents(), problem, expCosts);
     }
     return 0;
 }

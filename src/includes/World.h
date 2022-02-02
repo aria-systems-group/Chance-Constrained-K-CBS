@@ -72,7 +72,7 @@ class World
 public:
     World(){}
     // methods for dimensions
-    void setWorldDimensions(int x, int y){xDim_ = x; yDim_ = y;};
+    void setWorldDimensions(double x, double y){xDim_ = x; yDim_ = y;};
     std::vector<double> getWorldDimensions() const {return {xDim_, yDim_};};
     void printWorldDimensions(){OMPL_INFORM("Space Dimensions: [%0.2f, %0.2f]", xDim_, yDim_);}
     // methods for obstacles

@@ -7,7 +7,9 @@
  
 /* Author: Justin Kottinger */
 
-#include "World.h"
+#pragma once
+// #include "World.h"
+#include "multiAgentSetUp.h"
 #include <ompl/base/ProblemDefinition.h>
 #include <ompl/control/PathControl.h>
 #include <filesystem>
@@ -24,25 +26,14 @@ namespace bg = boost::geometry;
 typedef bg::model::point<double, 2, bg::cs::cartesian> Point;
 typedef bg::model::segment<Point> Segment;
 
-// explanation 
-class expPathControl
-{
-    public:
-        expPathControl(oc::PathControl p, const std::vector<int> c): 
-        path_{p}, cost_{c} {}
 
-    private:
-        oc::PathControl path_;
-        const std::vector<int> cost_;
-};
+std::vector<oc::PathControl> decentralizeTrajectory(std::vector<oc::PathControl> compPlan, 
+    const World *w);
 
-void checkDisjoint(const std::vector<std::pair<std::shared_ptr<oc::SpaceInformation>, 
-        std::shared_ptr<ob::ProblemDefinition>>> problem,
-        std::vector<oc::PathControl> plan, const int begin, int depth, 
-    bool &intersection, bool &done);
+void checkDisjoint(const std::vector<oc::PathControl> plan,
+    const int begin, int depth, bool &intersection, bool &done);
 
-std::vector<int> generateExplanation(const std::vector<std::pair<std::shared_ptr<oc::SpaceInformation>, 
-        std::shared_ptr<ob::ProblemDefinition>>> problem);
+std::vector<int> generateExplanation(const std::vector<oc::PathControl> plan);
 
 // generate date/time information to solutions or solution directories
 std::string GetCurrentTimeForFileName();
@@ -51,7 +42,6 @@ std::string GetCurrentTimeForFileName();
 fs::path appendTimeToFileName(const fs::path& fileName);
 
 // write solultion to the system
-void write2sys(const std::vector<std::pair<std::shared_ptr<oc::SpaceInformation>, 
-        std::shared_ptr<ob::ProblemDefinition>>> problem, 
+void write2sys(const std::vector<oc::PathControl> plan, 
         const std::vector<Agent*> agents, const std::string problem_name,
         std::vector<int> expCosts);

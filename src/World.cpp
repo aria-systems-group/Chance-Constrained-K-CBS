@@ -27,8 +27,12 @@ void World::printAgents()
     {
         OMPL_INFORM("   - Name: %s", a->getName().c_str());
         OMPL_INFORM("     Dynamics: %s", a->getDynamics().c_str());
-        OMPL_INFORM("     Start: [%0.2f, %0.2f]", a->getStartLocation()[0], a->getStartLocation()[1]);
-        OMPL_INFORM("     Goal: [%0.2f, %0.2f]", a->getGoalLocation()[0], a->getGoalLocation()[1]);
+        for (int i = 0; i < a->getStartLocation().size(); i=i+2)
+        {
+            OMPL_INFORM("     Start: [%0.2f, %0.2f]", a->getStartLocation()[i], a->getStartLocation()[i+1]);
+            OMPL_INFORM("     Goal: [%0.2f, %0.2f]", a->getGoalLocation()[i], a->getGoalLocation()[i+1]);
+        }
+        OMPL_INFORM("     Shape: [%0.2f, %0.2f]", a->getShape()[0], a->getShape()[1]);
     }
 };
 void World::printWorld()
@@ -95,8 +99,15 @@ World* yaml2world(std::string file)
         {
             std::string name = "agent" + std::to_string(i);
             const std::vector<double> shape{agents[name]["Shape"][0].as<double>(), agents[name]["Shape"][1].as<double>()};
-            const std::vector<double> start{agents[name]["Start"][0].as<double>(), agents[name]["Start"][1].as<double>()};
-            const std::vector<double> goal{agents[name]["Goal"][0].as<double>(), agents[name]["Goal"][1].as<double>()};
+            std::vector<double> start;
+            std::vector<double> goal;
+            for (int i = 0; i < agents[name]["Start"].size(); i++)
+            {
+                start.push_back(agents[name]["Start"][i].as<double>());
+                goal.push_back(agents[name]["Goal"][i].as<double>());
+            }
+            // const {agents[name]["Start"][0].as<double>(), agents[name]["Start"][1].as<double>()};
+            // const std::vector<double> goal{agents[name]["Goal"][0].as<double>(), agents[name]["Goal"][1].as<double>()};
             Agent *a = new Agent(name, agents[name]["Model"].as<std::string>(), shape, start, goal);
             w->addAgent(a);
         }

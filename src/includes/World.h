@@ -56,6 +56,7 @@ public:
     std::vector<double> getShape() const {return shape_;};
     std::vector<double> getStartLocation() const {return start_;};
     std::vector<double> getGoalLocation() const {return goal_;};
+    void changeDynamics(const std::string newModel) {dynamics_ = newModel;};
 private:
     std::string name_;
     std::string dynamics_;

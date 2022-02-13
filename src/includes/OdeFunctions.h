@@ -28,27 +28,50 @@ namespace oc = ompl::control;
 
 /********* Definition of the ODE for the Kinematic Car *********/
 // the ODE
-void KinematicCarODE (const oc::ODESolver::StateType& q, const oc::Control* control, oc::ODESolver::StateType& qdot)
-{
-    // q: [x, y, theta]
-    // u: [v, steering rate]
-    const double *u = control->as<oc::RealVectorControlSpace::ControlType>()->values;
-    const double theta = q[2];
-    const double carLength = 0.2;
- 
-    // Zero out qdot
-    qdot.resize (q.size (), 0);
- 
-    qdot[0] = u[0] * cos(theta);
-    qdot[1] = u[0] * sin(theta);
-    qdot[2] = u[0] * tan(u[1]) / carLength;
-}
+void KinematicCarODE (const oc::ODESolver::StateType& q, 
+    const oc::Control* control, oc::ODESolver::StateType& qdot);
  
 // callback for putting angle [0, 2pi]
-void KinematicCarPostIntegration (const ob::State* /*state*/, const oc::Control* /*control*/, const double /*duration*/, ob::State *result)
-{
-    // Normalize orientation between 0 and 2*pi
-    ob::SO2StateSpace SO2;
-    SO2.enforceBounds(result->as<ob::SE2StateSpace::StateType>()->as<ob::SO2StateSpace::StateType>(1));
-}
+void KinematicCarPostIntegration (const ob::State* /*state*/, 
+    const oc::Control* /*control*/, const double /*duration*/, ob::State *result);
 /********* END ODE for the Kinematic Car *********/
+
+/********* Definition of the ODE for the Dynamic Car *********/
+// the ODE
+void DynamicCarODE (const oc::ODESolver::StateType& q, 
+    const oc::Control* control, oc::ODESolver::StateType& qdot);
+ 
+// callback for putting angle [0, 2pi]
+void DynamicCarPostIntegration (const ob::State* /*state*/, 
+    const oc::Control* /*control*/, const double /*duration*/, ob::State *result);
+/********* END ODE for the Dynamic Car *********/
+
+/********* Definition of the ODE for the Dynamic Unicycle *********/
+// the ODE
+void DynamicUnicycleODE (const oc::ODESolver::StateType& q, 
+    const oc::Control* control, oc::ODESolver::StateType& qdot);
+ 
+// callback for putting angle [0, 2pi]
+void DynamicUnicyclePostIntegration (const ob::State* /*state*/, 
+    const oc::Control* /*control*/, const double /*duration*/, ob::State *result);
+/********* END ODE for the Dynamic Unicycle *********/
+
+/********* Definition of the ODE for Two Dynamic Cars *********/
+// the ODE
+void TwoDynamicCarsODE (const oc::ODESolver::StateType& q, 
+    const oc::Control* control, oc::ODESolver::StateType& qdot);
+ 
+// callback for putting angle [0, 2pi]
+void TwoDynamicCarsPostIntegration (const ob::State* /*state*/, 
+    const oc::Control* /*control*/, const double /*duration*/, ob::State *result);
+/********* END ODE for Two Dynamic Cars *********/
+
+/********* Definition of the ODE for Three Dynamic Cars *********/
+// the ODE
+void ThreeDynamicCarsODE (const oc::ODESolver::StateType& q, 
+    const oc::Control* control, oc::ODESolver::StateType& qdot);
+ 
+// callback for putting angle [0, 2pi]
+void ThreeDynamicCarsPostIntegration (const ob::State* /*state*/, 
+    const oc::Control* /*control*/, const double /*duration*/, ob::State *result);
+/********* END ODE for Three Dynamic Cars *********/

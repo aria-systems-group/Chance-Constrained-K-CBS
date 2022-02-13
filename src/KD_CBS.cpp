@@ -24,17 +24,14 @@ ompl::control::KD_CBS::KD_CBS(const std::vector<problem> mmpp) :
 // de-constructor (TO-DO)
 ompl::control::KD_CBS::~KD_CBS()
 {
-    // freeMemory();
+    freeMemory();
 }
 
-/*
-TO-DO
-void ompl::control::KD_CBS::freemMemory()
+// free all alocated memory
+void ompl::control::KD_CBS::freeMemory()
 {
    
 }
-*/
-
 
 std::vector <Conflict> ompl::control::KD_CBS::validatePlan(Plan pl)
 {
@@ -49,6 +46,7 @@ std::vector <Conflict> ompl::control::KD_CBS::validatePlan(Plan pl)
    for (int i = 0; i < pl.size(); i++)
       pl[i].interpolate();
    
+   printf("done interpoloating.\n");
    // get longest trajectory -- i.e. max states
    int maxStates = 0;
    for (int i = 0; i < pl.size(); i++)
@@ -70,156 +68,380 @@ std::vector <Conflict> ompl::control::KD_CBS::validatePlan(Plan pl)
             validStatesAtK.push_back(pl[i].getState(k));
             validAgentsIdx.push_back(i);
          }
+         else
+         {
+            validStatesAtK.push_back(pl[i].getStates().back());
+            validAgentsIdx.push_back(i);
+         }
       }
       // for each valid agent at k, create agent shape
-      std::vector<polygon> shapes;
+      std::vector<std::pair<int, polygon>> shapes;
       for (int j = 0; j < validAgentsIdx.size(); j++)
       {
          // get agent information from world
          const Agent *a = w_->getAgents()[validAgentsIdx[j]];
-         const double carWidth = a->getShape()[0];
-         const double carHeight = a->getShape()[1];
-         // extract points from state object
-         auto compState = validStatesAtK[j]->as<ob::CompoundStateSpace::StateType>();
-         auto xyState = compState->as<ob::RealVectorStateSpace::StateType>(0);
-         const double cx = xyState->values[0];
-         const double cy = xyState->values[1];
-         const double theta = compState->as<ob::SO2StateSpace::StateType>(1)->value;
+         if ((a->getDynamics() == "Dynamic Car") || (a->getDynamics() == "Kinematic Car") ||
+            (a->getDynamics() == "Dynamic Unicycle"))
+         {
+            const double carWidth = a->getShape()[0];
+            const double carHeight = a->getShape()[1];
+            // extract points from state object
+            auto compState = validStatesAtK[j]->as<ob::CompoundStateSpace::StateType>();
+            auto xyState = compState->as<ob::RealVectorStateSpace::StateType>(0);
+            const double cx = xyState->values[0];
+            const double cy = xyState->values[1];
+            const double theta = compState->as<ob::SO2StateSpace::StateType>(1)->value;
 
-         // turn (x,y, theta), width, length to a polygon object
-         // borrowed from conflictChecking
-         // TOP RIGHT VERTEX:
-         const double TR_x = cx + ((carWidth / 2) * cos(theta)) - ((carHeight / 2) * sin(theta));
-         const double TR_y = cy + ((carWidth / 2) * sin(theta)) + ((carHeight / 2) * cos(theta));
-         std::string top_right = std::to_string(TR_x) + " " + std::to_string(TR_y);
-         // TOP LEFT VERTEX:
-         const double TL_x = cx - ((carWidth / 2) * cos(theta)) - ((carHeight / 2) * sin(theta));
-         const double TL_y = cy - ((carWidth / 2) * sin(theta)) + ((carHeight / 2) * cos(theta));
-         std::string top_left = std::to_string(TL_x) + " " + std::to_string(TL_y);
-         // BOTTOM LEFT VERTEX:
-         const double BL_x = cx - ((carWidth / 2) * cos(theta)) + ((carHeight / 2) * sin(theta));
-         const double BL_y = cy - ((carWidth / 2) * sin(theta)) - ((carHeight / 2) * cos(theta));
-         std::string bottom_left = std::to_string(BL_x) + " " + std::to_string(BL_y);
-         // BOTTOM RIGHT VERTEX:
-         const double BR_x = cx + ((carWidth / 2) * cos(theta)) + ((carHeight / 2) * sin(theta));
-         const double BR_y = cy + ((carWidth / 2) * sin(theta)) - ((carHeight / 2) * cos(theta));
-         std::string bottom_right = std::to_string(BR_x) + " " + std::to_string(BR_y);
-         // convert to string for easy initializataion
-         std::string points = "POLYGON((" + bottom_left + "," + bottom_right + "," + top_right + "," + top_left + "," + bottom_left + "))";
-         polygon agent;
-         boost::geometry::read_wkt(points,agent);
-         shapes.push_back(agent);
+            // turn (x,y, theta), width, length to a polygon object
+            // borrowed from conflictChecking
+            // TOP RIGHT VERTEX:
+            const double TR_x = cx + ((carWidth / 2) * cos(theta)) - ((carHeight / 2) * sin(theta));
+            const double TR_y = cy + ((carWidth / 2) * sin(theta)) + ((carHeight / 2) * cos(theta));
+            std::string top_right = std::to_string(TR_x) + " " + std::to_string(TR_y);
+            // TOP LEFT VERTEX:
+            const double TL_x = cx - ((carWidth / 2) * cos(theta)) - ((carHeight / 2) * sin(theta));
+            const double TL_y = cy - ((carWidth / 2) * sin(theta)) + ((carHeight / 2) * cos(theta));
+            std::string top_left = std::to_string(TL_x) + " " + std::to_string(TL_y);
+            // BOTTOM LEFT VERTEX:
+            const double BL_x = cx - ((carWidth / 2) * cos(theta)) + ((carHeight / 2) * sin(theta));
+            const double BL_y = cy - ((carWidth / 2) * sin(theta)) - ((carHeight / 2) * cos(theta));
+            std::string bottom_left = std::to_string(BL_x) + " " + std::to_string(BL_y);
+            // BOTTOM RIGHT VERTEX:
+            const double BR_x = cx + ((carWidth / 2) * cos(theta)) + ((carHeight / 2) * sin(theta));
+            const double BR_y = cy + ((carWidth / 2) * sin(theta)) - ((carHeight / 2) * cos(theta));
+            std::string bottom_right = std::to_string(BR_x) + " " + std::to_string(BR_y);
+            // convert to string for easy initializataion
+            std::string points = "POLYGON((" + bottom_left + "," + bottom_right + "," + top_right + "," + top_left + "," + bottom_left + "))";
+            polygon agent;
+            boost::geometry::read_wkt(points,agent);
+            std::pair<int, polygon> pair{validAgentsIdx[j], agent};
+            shapes.push_back(pair);
+         }
+         else if (a->getDynamics() == "Two Dynamic Cars")
+         {
+            printf("size of valid agents: %lu \n", validAgentsIdx.size());
+            printf("size of valid states: %lu \n", validStatesAtK.size());
+            printf("j: %i \n", j);
+            // extract points from state object
+            auto compState = validStatesAtK[j]->as<ob::CompoundStateSpace::StateType>();
+            printf("got composed state.\n");
+            // add two shapes (one for each vehicle)
+            for (int agnt = 0; agnt < 2; agnt++)
+            {
+               auto xyState = compState->as<
+                    ob::RealVectorStateSpace::StateType>(2*agnt + 0);
+               printf("got xyState state.\n");
+               const double cx = xyState->values[0];
+               const double cy = xyState->values[1];
+               const double theta = compState->as<
+                  ob::SO2StateSpace::StateType>(2*agnt + 1)->value;
+               printf("got got theta.\n");
+
+               // Get important params from car object
+               const double carWidth = a->getShape()[0];
+               const double carHeight = a->getShape()[1];
+
+               printf("got car shapes.\n");
+
+               // turn (x,y, theta), width, length to a polygon object
+               // see https://stackoverflow.com/questions/41898990/find-corners-of-a-rotated-rectangle-given-its-center-point-and-rotation
+               // TOP RIGHT VERTEX:
+               const double TR_x = cx + ((carWidth / 2) * cos(theta)) - ((carHeight / 2) * sin(theta));
+               const double TR_y = cy + ((carWidth / 2) * sin(theta)) + ((carHeight / 2) * cos(theta));
+               std::string top_right = std::to_string(TR_x) + " " + std::to_string(TR_y);
+               // TOP LEFT VERTEX:
+               const double TL_x = cx - ((carWidth / 2) * cos(theta)) - ((carHeight / 2) * sin(theta));
+               const double TL_y = cy - ((carWidth / 2) * sin(theta)) + ((carHeight / 2) * cos(theta));
+               std::string top_left = std::to_string(TL_x) + " " + std::to_string(TL_y);
+               // BOTTOM LEFT VERTEX:
+               const double BL_x = cx - ((carWidth / 2) * cos(theta)) + ((carHeight / 2) * sin(theta));
+               const double BL_y = cy - ((carWidth / 2) * sin(theta)) - ((carHeight / 2) * cos(theta));
+               std::string bottom_left = std::to_string(BL_x) + " " + std::to_string(BL_y);
+               // BOTTOM RIGHT VERTEX:
+               const double BR_x = cx + ((carWidth / 2) * cos(theta)) + ((carHeight / 2) * sin(theta));
+               const double BR_y = cy + ((carWidth / 2) * sin(theta)) - ((carHeight / 2) * cos(theta));
+               std::string bottom_right = std::to_string(BR_x) + " " + std::to_string(BR_y);
+
+               // convert to string for easy initializataion
+               std::string points = "POLYGON((" + bottom_left + "," + bottom_right + "," + top_right + "," + top_left + "," + bottom_left + "))";
+               polygon agent;
+               boost::geometry::read_wkt(points,agent);
+
+               std::pair<int, polygon> pair{validAgentsIdx[j], agent};
+               shapes.push_back(pair);
+            }
+         }
+         else
+         {
+            OMPL_ERROR("Validate Function not implemented for %s.", a->getDynamics().c_str());
+         }
       }
+      printf("shapes added successfully.\n");
       // disjoint check the shapes for a collision
       for (int ai = 0; ai < shapes.size(); ai++)
       {
          for (int aj = 0; aj < shapes.size(); aj++)
          {
-            if (ai != aj)
+            if (shapes[ai].first != shapes[aj].first)
             {
-               if (! boost::geometry::disjoint(shapes[ai], shapes[aj]))
+               if (! boost::geometry::disjoint(shapes[ai].second, shapes[aj].second))
                {
+                  printf("Conflict found.\n");
                   // agent ai and aj are in conflict, only care about those now
-                  Conflict conf{ai, aj, shapes[ai], shapes[aj], (k * minStepSize)};
+                  Conflict conf{shapes[ai].first, shapes[aj].first, 
+                     shapes[ai].second, shapes[aj].second, (k * minStepSize)};
                   c.push_back(conf);
                   bool inConflict = true;
+                  printf("Created first conflict.\n");
                   while (inConflict)
                   {
                      k++;
                      // for each k, get the (valid) states for each valid agent
                      std::vector<base::State *> validStatesAtK;
-                     if (k < pl[ai].getStateCount())
-                        validStatesAtK.push_back(pl[ai].getState(k));
-                     if (k < pl[aj].getStateCount())
-                        validStatesAtK.push_back(pl[aj].getState(k));
-                     if (validStatesAtK.size() < 2)
+                     if (k < pl[shapes[ai].first].getStateCount())
+                        validStatesAtK.push_back(pl[shapes[ai].first].getState(k));
+                     else
+                        validStatesAtK.push_back(pl[shapes[ai].first].getStates().back());
+
+                     if (k < pl[shapes[aj].first].getStateCount())
+                        validStatesAtK.push_back(pl[shapes[aj].first].getState(k));
+                     else
+                        validStatesAtK.push_back(pl[shapes[aj].first].getStates().back());
+
+
+                     if ((mmpp_[shapes[ai].first].first->
+                           equalStates(validStatesAtK[0], pl[shapes[ai].first].getStates().back())) && 
+                        (mmpp_[shapes[aj].first].first->
+                           equalStates(validStatesAtK[1], pl[shapes[aj].first].getStates().back())))
+                     {
                         inConflict = false;
+                     }
                      else
                      {
-                        // get first agent information from world
-                        const Agent *a1 = w_->getAgents()[validAgentsIdx[ai]];
-                        const double carWidth1 = a1->getShape()[0];
-                        const double carHeight1 = a1->getShape()[1];
-                        // extract points from state object
-                        auto compState1 = validStatesAtK[0]->as<ob::CompoundStateSpace::StateType>();
-                        auto xyState1 = compState1->as<ob::RealVectorStateSpace::StateType>(0);
-                        const double cx1 = xyState1->values[0];
-                        const double cy1 = xyState1->values[1];
-                        const double theta1 = compState1->as<ob::SO2StateSpace::StateType>(1)->value;
-                        // turn (x,y, theta), width, length to a polygon object
-                        // borrowed from conflictChecking
-                        // TOP RIGHT VERTEX:
-                        const double TR_x1 = cx1 + ((carWidth1 / 2) * cos(theta1)) - ((carHeight1 / 2) * sin(theta1));
-                        const double TR_y1 = cy1 + ((carWidth1 / 2) * sin(theta1)) + ((carHeight1 / 2) * cos(theta1));
-                        std::string top_right1 = std::to_string(TR_x1) + " " + std::to_string(TR_y1);
-                        // TOP LEFT VERTEX:
-                        const double TL_x1 = cx1 - ((carWidth1 / 2) * cos(theta1)) - ((carHeight1 / 2) * sin(theta1));
-                        const double TL_y1 = cy1 - ((carWidth1 / 2) * sin(theta1)) + ((carHeight1 / 2) * cos(theta1));
-                        std::string top_left1 = std::to_string(TL_x1) + " " + std::to_string(TL_y1);
-                        // BOTTOM LEFT VERTEX:
-                        const double BL_x1 = cx1 - ((carWidth1 / 2) * cos(theta1)) + ((carHeight1 / 2) * sin(theta1));
-                        const double BL_y1 = cy1 - ((carWidth1 / 2) * sin(theta1)) - ((carHeight1 / 2) * cos(theta1));
-                        std::string bottom_left1 = std::to_string(BL_x1) + " " + std::to_string(BL_y1);
-                        // BOTTOM RIGHT VERTEX:
-                        const double BR_x1 = cx1 + ((carWidth1 / 2) * cos(theta1)) + ((carHeight1 / 2) * sin(theta1));
-                        const double BR_y1 = cy1 + ((carWidth1 / 2) * sin(theta1)) - ((carHeight1 / 2) * cos(theta1));
-                        std::string bottom_right1 = std::to_string(BR_x1) + " " + std::to_string(BR_y1);
-                        // convert to string for easy initializataion
-                        std::string points1 = "POLYGON((" + bottom_left1 + "," + bottom_right1 + "," + top_right1 + "," + top_left1 + "," + bottom_left1 + "))";
-                        polygon agent1;
-                        boost::geometry::read_wkt(points1,agent1);
-
-                        // get second agent information from world
-                        const Agent *a2 = w_->getAgents()[validAgentsIdx[aj]];
-                        const double carWidth2 = a2->getShape()[0];
-                        const double carHeight2 = a2->getShape()[1];
-                        // extract points from state object
-                        auto compState2 = validStatesAtK[1]->as<ob::CompoundStateSpace::StateType>();
-                        auto xyState2 = compState2->as<ob::RealVectorStateSpace::StateType>(0);
-                        const double cx2 = xyState2->values[0];
-                        const double cy2 = xyState2->values[1];
-                        const double theta2 = compState2->as<ob::SO2StateSpace::StateType>(1)->value;
-                        // turn (x,y, theta), width, length to a polygon object
-                        // borrowed from conflictChecking
-                        // TOP RIGHT VERTEX:
-                        const double TR_x2 = cx2 + ((carWidth2 / 2) * cos(theta2)) - ((carHeight2 / 2) * sin(theta2));
-                        const double TR_y2 = cy2 + ((carWidth2 / 2) * sin(theta2)) + ((carHeight2 / 2) * cos(theta2));
-                        std::string top_right2 = std::to_string(TR_x2) + " " + std::to_string(TR_y2);
-                        // TOP LEFT VERTEX:
-                        const double TL_x2 = cx2 - ((carWidth2 / 2) * cos(theta2)) - ((carHeight2 / 2) * sin(theta2));
-                        const double TL_y2 = cy2 - ((carWidth2 / 2) * sin(theta2)) + ((carHeight2 / 2) * cos(theta2));
-                        std::string top_left2 = std::to_string(TL_x2) + " " + std::to_string(TL_y2);
-                        // BOTTOM LEFT VERTEX:
-                        const double BL_x2 = cx2 - ((carWidth2 / 2) * cos(theta2)) + ((carHeight2 / 2) * sin(theta2));
-                        const double BL_y2 = cy2 - ((carWidth2 / 2) * sin(theta2)) - ((carHeight2 / 2) * cos(theta2));
-                        std::string bottom_left2 = std::to_string(BL_x2) + " " + std::to_string(BL_y2);
-                        // BOTTOM RIGHT VERTEX:
-                        const double BR_x2 = cx2 + ((carWidth2 / 2) * cos(theta2)) + ((carHeight2 / 2) * sin(theta2));
-                        const double BR_y2 = cy2 + ((carWidth2 / 2) * sin(theta2)) - ((carHeight2 / 2) * cos(theta2));
-                        std::string bottom_right2 = std::to_string(BR_x2) + " " + std::to_string(BR_y2);
-                        // convert to string for easy initializataion
-                        std::string points2 = "POLYGON((" + bottom_left2 + "," + bottom_right2 + "," + top_right2 + "," + top_left2 + "," + bottom_left2 + "))";
-                        polygon agent2;
-                        boost::geometry::read_wkt(points2,agent2);
-
-                        // check if agetnai and agent aj are disjoint at next time step
-                        if (! boost::geometry::disjoint(agent1, agent2))
+                        std::vector<polygon> polys;
+                        for (int i = 0; i < 2; i++)
                         {
-                           // agent ai and aj are in conflict, only care about those now
-                           Conflict conf{ai, aj, agent1, agent2, (k * minStepSize)};
-                           c.push_back(conf);
+                           int currIdx = 0;
+                           if (i == 0)
+                              currIdx = shapes[ai].first;
+                           else
+                              currIdx = shapes[aj].first;
+                        
+                           // get first agent information from world
+                           const Agent *a = w_->getAgents()[currIdx];
+                           if ((a->getDynamics() == "Dynamic Car") || (a->getDynamics() == "Kinematic Car") ||
+                              (a->getDynamics() == "Dynamic Unicycle"))
+                           {
+                              const double carWidth = a->getShape()[0];
+                              const double carHeight = a->getShape()[1];
+                              // extract points from state object
+                              auto compState = validStatesAtK[i]->as<ob::CompoundStateSpace::StateType>();
+                              auto xyState = compState->as<ob::RealVectorStateSpace::StateType>(0);
+                              const double cx = xyState->values[0];
+                              const double cy = xyState->values[1];
+                              const double theta = compState->as<ob::SO2StateSpace::StateType>(1)->value;
+                              // turn (x,y, theta), width, length to a polygon object
+                              // borrowed from conflictChecking
+                              // TOP RIGHT VERTEX:
+                              const double TR_x = cx + ((carWidth / 2) * cos(theta)) - ((carHeight / 2) * sin(theta));
+                              const double TR_y = cy + ((carWidth / 2) * sin(theta)) + ((carHeight / 2) * cos(theta));
+                              std::string top_right = std::to_string(TR_x) + " " + std::to_string(TR_y);
+                              // TOP LEFT VERTEX:
+                              const double TL_x = cx - ((carWidth / 2) * cos(theta)) - ((carHeight / 2) * sin(theta));
+                              const double TL_y = cy - ((carWidth / 2) * sin(theta)) + ((carHeight / 2) * cos(theta));
+                              std::string top_left = std::to_string(TL_x) + " " + std::to_string(TL_y);
+                              // BOTTOM LEFT VERTEX:
+                              const double BL_x = cx - ((carWidth / 2) * cos(theta)) + ((carHeight / 2) * sin(theta));
+                              const double BL_y = cy - ((carWidth / 2) * sin(theta)) - ((carHeight / 2) * cos(theta));
+                              std::string bottom_left = std::to_string(BL_x) + " " + std::to_string(BL_y);
+                              // BOTTOM RIGHT VERTEX:
+                              const double BR_x = cx + ((carWidth / 2) * cos(theta)) + ((carHeight / 2) * sin(theta));
+                              const double BR_y = cy + ((carWidth / 2) * sin(theta)) - ((carHeight / 2) * cos(theta));
+                              std::string bottom_right = std::to_string(BR_x) + " " + std::to_string(BR_y);
+                              // convert to string for easy initializataion
+                              std::string points = "POLYGON((" + bottom_left + "," + bottom_right + "," + top_right + "," + top_left + "," + bottom_left + "))";
+                              polygon agent;
+                              boost::geometry::read_wkt(points, agent);
+                              polys.push_back(agent);
+                           }
+                           else if (a->getDynamics() == "Two Dynamic Cars")
+                           {
+                              // extract points from state object
+                              auto compState = validStatesAtK[i]->as<ob::CompoundStateSpace::StateType>();
+                              // add two shapes (one for each vehicle)
+                              for (int agnt = 0; agnt < 2; agnt++)
+                              {
+                                 auto xyState = compState->as<
+                                      ob::RealVectorStateSpace::StateType>(2*agnt + 0);
+                                 const double cx = xyState->values[0];
+                                 const double cy = xyState->values[1];
+                                 const double theta = compState->as<
+                                    ob::SO2StateSpace::StateType>(2*agnt + 1)->value;
+
+                                 // Get important params from car object
+                                 const double carWidth = a->getShape()[0];
+                                 const double carHeight = a->getShape()[1];
+
+                                 // turn (x,y, theta), width, length to a polygon object
+                                 // see https://stackoverflow.com/questions/41898990/find-corners-of-a-rotated-rectangle-given-its-center-point-and-rotation
+                                 // TOP RIGHT VERTEX:
+                                 const double TR_x = cx + ((carWidth / 2) * cos(theta)) - ((carHeight / 2) * sin(theta));
+                                 const double TR_y = cy + ((carWidth / 2) * sin(theta)) + ((carHeight / 2) * cos(theta));
+                                 std::string top_right = std::to_string(TR_x) + " " + std::to_string(TR_y);
+                                 // TOP LEFT VERTEX:
+                                 const double TL_x = cx - ((carWidth / 2) * cos(theta)) - ((carHeight / 2) * sin(theta));
+                                 const double TL_y = cy - ((carWidth / 2) * sin(theta)) + ((carHeight / 2) * cos(theta));
+                                 std::string top_left = std::to_string(TL_x) + " " + std::to_string(TL_y);
+                                 // BOTTOM LEFT VERTEX:
+                                 const double BL_x = cx - ((carWidth / 2) * cos(theta)) + ((carHeight / 2) * sin(theta));
+                                 const double BL_y = cy - ((carWidth / 2) * sin(theta)) - ((carHeight / 2) * cos(theta));
+                                 std::string bottom_left = std::to_string(BL_x) + " " + std::to_string(BL_y);
+                                 // BOTTOM RIGHT VERTEX:
+                                 const double BR_x = cx + ((carWidth / 2) * cos(theta)) + ((carHeight / 2) * sin(theta));
+                                 const double BR_y = cy + ((carWidth / 2) * sin(theta)) - ((carHeight / 2) * cos(theta));
+                                 std::string bottom_right = std::to_string(BR_x) + " " + std::to_string(BR_y);
+                                 // convert to string for easy initializataion
+                                 std::string points = "POLYGON((" + bottom_left + "," + bottom_right + "," + top_right + "," + top_left + "," + bottom_left + "))";
+                                 polygon agent;
+                                 boost::geometry::read_wkt(points,agent);
+                                 polys.push_back(agent);
+                              }
+                           }
                         }
-                        else
+                        bool addedConflict = false;
+                        for (int t1 = 0; t1 < polys.size(); t1++)
+                        {
+                           for (int t2 = 0; t2 < polys.size(); t2++)
+                           {
+                              if (t1 != t2)
+                              {
+                                 // check if agetnai and agent aj are disjoint at next time step
+                                 if (! boost::geometry::disjoint(polys[t1], polys[t2]))
+                                 {
+                                    // agent ai and aj are in conflict, only care about those now
+                                    Conflict conf{shapes[ai].first, shapes[aj].first, 
+                                       polys[t1], polys[t2], (k * minStepSize)};
+                                    c.push_back(conf);
+                                    addedConflict = true;
+                                 }
+                              }
+                           }
+                        }
+                        if (!addedConflict)
                            inConflict = false;
                      }
                   }
+                  // check if states we just checked were both the end
+                  // if so terminate the search.
+                  printf("finished with conflicts.\n");
                   return c;
                }
             }
          }
       }
    }
+   printf("no conflicts found.\n");
    return c;
+}
+
+
+bool ompl::control::KD_CBS::shouldMerge(
+   std::vector< std::pair< std::pair<int, int>, int> > &conf_cntr, 
+   const int agent1, const int agent2)
+{
+   printf("(%i, %i)\n", agent1, agent2);
+   // first, update the conflict tracking
+   for (int i = 0; i < conf_cntr.size(); i++)
+   {
+      // printf("Checking pair: (%i, %i) \n", conf_cntr[i].first.first, conf_cntr[i].first.second);
+      if ((conf_cntr[i].first.first == agent1) && (conf_cntr[i].first.second == agent2))
+      {
+         // printf("I am here\n");
+         conf_cntr[i].second = conf_cntr[i].second + 1;
+         // printf("Changed value: %i \n", conf_cntr[i].second);
+         break;
+      }
+      else if ((conf_cntr[i].first.first == agent2) && (conf_cntr[i].first.second == agent1))
+      {
+         // printf("I am down here.\n");
+         conf_cntr[i].second = conf_cntr[i].second + 1;
+         break;
+      }
+   }
+
+   for (int i = 0; i < conf_cntr.size(); i++)
+   {
+      printf("Pair: (%i, %i) Num. Conflicts: %i \n", conf_cntr[i].first.first, conf_cntr[i].first.second, conf_cntr[i].second);
+   }
+
+   // second, figure out if we should merge
+   for (int i = 0; i < conf_cntr.size(); i++)
+   {
+      if (conf_cntr[i].second >= B_)
+         return true;
+   }
+   return false;
+}
+
+World* ompl::control::KD_CBS::composeSystem(const int agentIdx1, const int agentIdx2)
+{
+   std::vector<problem> x;
+   /* first, change the world params to match new problem.
+      world object has a vector of Agents. need to replace the two 
+      at agent1 and agent2 idx and merge them into a single agent*/
+
+   w_->printAgents();
+
+   // create new world
+   World *new_world = new World();
+   // give map dimensions
+   new_world->setWorldDimensions(w_->getWorldDimensions()[0], 
+      w_->getWorldDimensions()[1]);
+   // provide obstacles
+   for (auto o: w_->getObstacles())
+      new_world->addObstacle(o);
+   // provide agents (except the ones that will be merged)
+   for(int a = 0; a < w_->getAgents().size(); a++)
+   {
+      if ((a != agentIdx1) && (a!= agentIdx2))
+         new_world->addAgent(w_->getAgents()[a]);
+   }
+
+   /* add new agent */
+   if ((w_->getAgents()[agentIdx1]->getDynamics() == "Dynamic Car") && 
+       (w_->getAgents()[agentIdx2]->getDynamics() == "Dynamic Car"))
+   {
+      OMPL_INFORM("%s: Creating a %s model", getName().c_str(), "Two Dynamic Cars");
+
+      // std::vector<double> s, std::vector<double> g
+      std::string new_name = "agent" + std::to_string(new_world->getAgents().size());
+      std::vector<double> new_start{
+         w_->getAgents()[agentIdx1]->getStartLocation()[0], 
+         w_->getAgents()[agentIdx1]->getStartLocation()[1],
+         w_->getAgents()[agentIdx2]->getStartLocation()[0],
+         w_->getAgents()[agentIdx2]->getStartLocation()[1]};
+      std::vector<double> new_goal{
+         w_->getAgents()[agentIdx1]->getGoalLocation()[0], 
+         w_->getAgents()[agentIdx1]->getGoalLocation()[1],
+         w_->getAgents()[agentIdx2]->getGoalLocation()[0],
+         w_->getAgents()[agentIdx2]->getGoalLocation()[1]};
+
+      Agent* new_agent = new Agent(new_name, "Two Dynamic Cars", 
+         new_world->getAgents()[0]->getShape(), new_start, new_goal);
+
+      new_world->addAgent(new_agent);
+
+      new_world->printAgents();
+   }
+   else
+   {
+      OMPL_ERROR("%s: unable to compose %s and %s. Implementation must be extended.",
+         getName().c_str(), w_->getAgents()[agentIdx1]->getDynamics().c_str(), 
+         w_->getAgents()[agentIdx2]->getDynamics().c_str());
+      return nullptr;
+   }
+
+   return new_world;
 }
 
 // the main algorithm
@@ -246,8 +468,40 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
       constraintRRT* planner = new constraintRRT(mmpp_[a].first);
       planner->setProblemDefinition(mmpp_[a].second);
       planner->provideAgent(w_->getAgents()[a]);
+      if (w_->getAgents()[a]->getDynamics() == "Two Dynamic Cars")
+         planner->isCentralized(true);
       planner->setup();
       treeSearchs.push_back(planner);
+   }
+
+   /* initialize disjoint sets */
+   std::vector< std::pair< std::pair<int, int>, int> > disjoint_set;
+   for (int a1 = 0; a1 < mmpp_.size(); a1++)
+   {
+      for (int a2 = 0; a2 < mmpp_.size(); a2++)
+      {
+         if (a1 != a2)
+         {
+            // does (a1, a2) exist in disjoint_set?
+            bool add = true;
+            for (int i = 0; i < disjoint_set.size(); i++)
+            {
+               std::pair<int, int> curr_pair = disjoint_set[i].first;
+               if (curr_pair.first == a1 && curr_pair.second == a2)
+                  add = false;
+               else if (curr_pair.first == a2 && curr_pair.second == a1)
+                  add = false;
+               if (add == false)
+                  break;
+            }
+            if (add)
+            {
+               std::pair<int, int> agnt_pair{a1, a2};
+               std::pair< std::pair<int, int>, int > conflict_count{agnt_pair, 0};
+               disjoint_set.push_back(conflict_count);
+            }
+         }
+      }
    }
 
    /* initialize priority queue */ 
@@ -270,6 +524,7 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
       oc::PathControl traj = static_cast<oc::PathControl &>
          (*p->ob::Planner::getProblemDefinition()->getSolutionPath());
       root_plan.push_back(traj);
+      p->clear();
    }
 
    /* create root node */
@@ -278,12 +533,6 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
    {
       rootNode.updatePlanAndCost(root_plan);
       pq.emplace(rootNode);
-   }
-   // if no root node exists, tell user and return invalid start
-   if (pq.empty())
-   {
-       OMPL_ERROR("%s: There are no valid initial states!", getName().c_str(), planningTime_);
-       return base::PlannerStatus::INVALID_START;
    }
  
    /* initialize solution */
@@ -338,17 +587,74 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
             treeSearchs[agentIdx]->dumpTree2Motions(m);
             curr->fillMotions(m);
             pq.emplace(*curr);
-            printf("Failed again, should skipp. \n");
+            printf("Failed again, should skip. \n");
             continue;
          }
       }
       printf("continuing. \n");
       std::vector <Conflict> conf = validatePlan(curr->getPlan());
-
+      // printf("conf: (%i, %i) \n", conf[0].agent1, conf[0].agent2);
       if (conf.empty())
       {
          solution = curr;
          break;
+      }
+      else if (shouldMerge(disjoint_set, conf[0].agent1, conf[0].agent2))
+      {
+         // we have decided to merge agents into a meta agent and restart the search
+         OMPL_INFORM("%s: Too many conflicts exist between a pair of agents.", getName().c_str());
+         OMPL_INFORM("%s: Composing a %s with a %s.", getName().c_str(),
+            w_->getAgents()[conf[0].agent1]->getDynamics().c_str(), 
+            w_->getAgents()[conf[0].agent2]->getDynamics().c_str());
+         
+         World* new_world  = composeSystem(conf[0].agent1, conf[0].agent2);
+         if (new_world == nullptr)
+            return base::PlannerStatus::INVALID_START;
+         
+         const std::vector<problem> new_mmpp = multiAgentSetUp(new_world);
+         oc::KD_CBS *p = new oc::KD_CBS(new_mmpp); // K_CBS
+         // subPlanners_.push_back(p);
+         p->setWorld(new_world);
+         ob::PlannerPtr planner(p);
+         OMPL_INFORM("Set-Up Complete");
+         // std::cout << "Setup Complete. Press ENTER to plan: ";
+         // std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+         auto curr = std::chrono::high_resolution_clock::now();
+         auto curr_dur = duration_cast<std::chrono::microseconds>(curr - start);
+         double time_left = 600.0 - (curr_dur.count() / 1000000.0);
+
+         bool solved = planner->solve(time_left);
+         auto stop = std::chrono::high_resolution_clock::now();
+         if (!solved)
+            return {solved, false};
+         else
+         {
+            solved = true;
+            // map new_problem solution to mmpp_
+            std::vector<PathControl> plan;
+            for (int a = 0; a < new_mmpp.size(); a++)
+            {
+               const std::string a_dyn = new_world->getAgents()[a]->getDynamics();
+               printf("Here: %s \n", a_dyn.c_str());
+               if ((a_dyn == "Dynamic Car") || (a_dyn == "Kinematic Car") || (a_dyn == "Dynamic Unicycle"))
+               {
+                  PathControl *mpath = new_mmpp[a].second->getSolutionPath()->as<PathControl>();
+                  plan.push_back(*mpath);
+               }
+               else if (a_dyn == "Two Dynamic Cars")
+               {
+                  // seperate the paths
+                  PathControl *mpath = new_mmpp[a].second->getSolutionPath()->as<PathControl>();
+                  plan.push_back(*mpath);
+                  plan = decentralizeTrajectory(plan, new_world);
+               }
+            }
+            auto duration = duration_cast<std::chrono::microseconds>(stop - start);
+            OMPL_INFORM("%s: Found Solution in %0.3f seconds!", getName().c_str(), 
+               (duration.count() / 1000000.0));
+            OMPL_INFORM("%s: Planning Complete.", getName().c_str());
+            return {solved, false};
+         }
       }
       else
       {
@@ -432,8 +738,6 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
    {
       if (ptc == true)
          OMPL_INFORM("%s: No solution found due to time.", getName().c_str());
-      else if (pq.empty())
-         OMPL_INFORM("%s: No solution found due to queue.", getName().c_str());
       return {solved, false};
    }
    else

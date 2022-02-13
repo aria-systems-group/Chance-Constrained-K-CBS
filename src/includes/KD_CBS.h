@@ -17,6 +17,8 @@
 #include "Constraint.h"
 #include "constraintRRT.h"
 #include "collisionChecking.h"
+#include "multiAgentSetUp.h"
+#include "postProcess.h"
 #include <ompl/control/PathControl.h>
 #include <ompl/control/SimpleSetup.h>
 #include <ompl/control/SpaceInformation.h>
@@ -56,6 +58,8 @@ namespace ompl
                 want to continue planning */
             // void clear() override;
 
+            void freeMemory();
+
             /** In the process of randomly selecting states in the state
                 space to attempt to go towards, the algorithm may in fact
                 choose the actual goal state, if it knows it, with some
@@ -76,6 +80,12 @@ namespace ompl
             
             /*method that checks for conflicts (collisions) within the plan*/
             std::vector <Conflict> validatePlan(Plan pl);
+
+            bool shouldMerge(
+                std::vector< std::pair< std::pair<int, int>, int> > &conf_cntr, 
+                const int agent1, const int agent2);
+
+            World* composeSystem(const int idx1, const int idx2);
 
         protected:
             /** \brief Representation of a conflict node
@@ -190,7 +200,13 @@ namespace ompl
 
             World *w_{nullptr};
 
-            double planningTime_{1.5};  // seconds
+            double planningTime_{3};  // seconds
+
+            const int B_{1};
+
+            std::vector<conflictNode*> conflictTree_;
+
+            // std::vector<KD_CBS*> subPlanners_;
         };
     }
 }

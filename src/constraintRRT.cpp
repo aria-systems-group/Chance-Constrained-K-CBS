@@ -129,8 +129,6 @@ void ompl::control::constraintRRT::dumpTree2Motions(std::vector<Motion *> &motio
             }
         }
     }
-    // printf("Successfully found all parents. \n");
-
 }
 
 void ompl::control::constraintRRT::motions2Tree(const std::vector<Motion *> motions,
@@ -147,7 +145,7 @@ void ompl::control::constraintRRT::motions2Tree(const std::vector<Motion *> moti
     /* update constraints */
     constraints_ = c;
     /* notify solve function not to add start state */
-    replanning = true;
+    replanning_ = true;
     // printf("Everything added successfully \n");
 }
 
@@ -278,6 +276,72 @@ bool ompl::control::constraintRRT::satisfiesConstraints(const Motion *n) const
         return true;
     }
 }
+
+unsigned int ompl::control::constraintRRT::MultiAgentControlSampler(Control *rcontrol, Control *previous, 
+    const base::State *source, base::State *dest)
+{
+    // determine which agents are already in goal
+    auto g = getProblemDefinition()->getGoal()->as<ArbirtryComposedGoal_2D>();
+    std::vector<int> idxInGoal = g->isInGoal(source);
+
+    // propogate as normal
+    /* sample a random control that attempts to go towards the random state, and also sample a control duration */
+    unsigned int cd = controlSampler_->sampleTo(rcontrol, previous, source, dest);
+    /* override destination for agents already in goal */
+    overrideStates(idxInGoal, source, dest, rcontrol); 
+    return cd;
+}
+
+void ompl::control::constraintRRT::overrideStates(const std::vector<int> DoNotProp, const base::State *source, 
+    base::State *result, Control *control)
+{
+    // this function takes in a state and a list of vehicle indexes that do not need to be propogated
+    // it changes the state s.t. state propogation and controls are null for any vehicles in the goal
+    if (DoNotProp.size() > 0)
+    {
+        // this array has a list of vehicles that do not need to be progpogated
+        // we need to iterate through all of them
+
+        // get the entire compound state for result
+        auto destination = result->as<ompl::base::CompoundStateSpace::StateType>();
+
+        // get the entire compound state space for source
+        const auto *src = source->as<ob::CompoundStateSpace::StateType>();
+
+        auto *cntrl = control->as<RealVectorControlSpace::ControlType>()->values;
+
+        for (int i = 0; i < DoNotProp.size(); i++)
+        {
+            // overriding controls 
+            // indexing method: ControlDimension(vehicle index) + ControlIndex
+            cntrl[2*DoNotProp[i] + 0] = 0.0;
+            cntrl[2*DoNotProp[i] + 1] = 0.0;
+
+            // next, make the source state the destination state for the indiv. vehicles
+            // indexing method: 2(vehicle) or 2(vehicle) + 1
+
+            // get the specific xy state of result 
+            auto *xyDest = destination->as<base::RealVectorStateSpace::StateType>(2*DoNotProp[i]);
+
+            // get the specific xy state of the source
+            const auto *xySrc = src->as<base::RealVectorStateSpace::StateType>(2*DoNotProp[i]);
+
+            // get the specific orientation of result
+            auto *rotDest = destination->as<base::SO2StateSpace::StateType>(2*DoNotProp[i] + 1);
+
+            // get the specific orientation of the source
+            const auto *rotSrc = src->as<base::SO2StateSpace::StateType>(2*DoNotProp[i] + 1);
+
+            // overriding the position state
+            xyDest->values[0] = xySrc->values[0];
+            xyDest->values[1] = xySrc->values[1];
+
+            // overriding the orientation
+            rotDest->value = rotSrc->value;
+
+        }
+    }
+}
  
 ompl::base::PlannerStatus ompl::control::constraintRRT::solve(const base::PlannerTerminationCondition &ptc)
 {
@@ -290,7 +354,7 @@ ompl::base::PlannerStatus ompl::control::constraintRRT::solve(const base::Planne
         exit(1);
     }
     
-    if (!replanning)
+    if (!replanning_)
     {
         while (const base::State *st = pis_.nextStart())
         {
@@ -303,7 +367,7 @@ ompl::base::PlannerStatus ompl::control::constraintRRT::solve(const base::Planne
     else
     {
         // flag served its purpose, reset value
-        replanning = false;
+        replanning_ = false;
     }
 
     if (nn_->size() == 0)
@@ -353,7 +417,11 @@ ompl::base::PlannerStatus ompl::control::constraintRRT::solve(const base::Planne
         Motion *nmotion = nn_->nearest(rmotion);
 
         /* sample a random control that attempts to go towards the random state, and also sample a control duration */
-        unsigned int cd = controlSampler_->sampleTo(rctrl, nmotion->control, nmotion->state, rmotion->state);
+        unsigned int cd = 0;
+        if (isCentralized_)
+            cd = MultiAgentControlSampler(rctrl, nmotion->control, nmotion->state, rmotion->state);
+        else
+            cd = controlSampler_->sampleTo(rctrl, nmotion->control, nmotion->state, rmotion->state);
  
         if (addIntermediateStates_)
         {

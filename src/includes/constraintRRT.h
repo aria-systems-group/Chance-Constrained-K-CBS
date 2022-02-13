@@ -41,9 +41,11 @@
 #include <ompl/control/planners/PlannerIncludes.h>
 #include <ompl/datastructures/NearestNeighbors.h>
 #include <ompl/base/spaces/RealVectorStateSpace.h>
+#include <ompl/control/spaces/RealVectorControlSpace.h>
 #include <ompl/base/spaces/SO2StateSpace.h>
 #include "Constraint.h"
 #include "World.h"
+#include "Goals.h"
  
 namespace ompl
 {
@@ -98,6 +100,8 @@ namespace ompl
 
             void updateConstraints(std::vector<const Constraint*> c);
 
+            void isCentralized(const bool cent) {isCentralized_ = cent;};
+
         protected:
             friend class KD_CBS;
             class Motion
@@ -127,6 +131,14 @@ namespace ompl
             {
                 return si_->distance(a->state, b->state);
             }
+
+            /* the extend function for multi-agent systems */
+            unsigned int MultiAgentControlSampler(Control *rcontrol, Control *previous, 
+                const base::State *source, base::State *dest);
+
+            /* reset states that are already at goal */
+            void overrideStates(const std::vector<int> DoNotProp, const base::State *source, 
+                base::State *result, Control *control);
 
             /* dump all the motions from datastructure to vector  */
             void dumpTree2Motions(std::vector<Motion *> &motions);
@@ -158,7 +170,9 @@ namespace ompl
  
             Motion *lastGoalMotion_{nullptr};
 
-            bool replanning{false};
+            bool replanning_{false};
+
+            bool isCentralized_{false};
         };
     }
 }

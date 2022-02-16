@@ -94,8 +94,8 @@ const std::vector<problem> multiAgentSetUp(const World *w)
             bounds.setHigh(1, w->getWorldDimensions()[1]); // y upper bound
             bounds.setLow(2, -1);  // v lower bound
             bounds.setHigh(2, 1); // v upper bound
-            bounds.setLow(3, -pi/2);  // phi lower bound
-            bounds.setHigh(3, pi/2); // phi upper bound
+            bounds.setLow(3, -pi/4);  // phi lower bound
+            bounds.setHigh(3, pi/4); // phi upper bound
 
             // set bounds
             space->as<ob::RealVectorStateSpace>(0)->setBounds(bounds);
@@ -167,8 +167,8 @@ const std::vector<problem> multiAgentSetUp(const World *w)
             bounds.setHigh(1, w->getWorldDimensions()[1]); // y upper bound
             bounds.setLow(2, -1);  // v lower bound
             bounds.setHigh(2, 1); // v upper bound
-            bounds.setLow(3, -pi/2);  // phi lower bound
-            bounds.setHigh(3, pi/2); // phi upper bound
+            bounds.setLow(3, -pi/4);  // phi lower bound
+            bounds.setHigh(3, pi/4); // phi upper bound
 
             // set the bounds of this space 
             space->as<ob::RealVectorStateSpace>(0)->setBounds(bounds);
@@ -195,7 +195,7 @@ const std::vector<problem> multiAgentSetUp(const World *w)
             // assume that planner integrates dynamics at steps of 0.1 seconds
             si->setPropagationStepSize(stepSize);
             si->setMinControlDuration(1);
-            si->setMaxControlDuration(10);
+            si->setMaxControlDuration(30);
             si->setup();
 
             // create start

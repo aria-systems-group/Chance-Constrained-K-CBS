@@ -34,6 +34,7 @@
 
 /* Author: Justin Kottinger */
 
+#pragma once
 #include "World.h"
 #include "ompl/control/planners/PlannerIncludes.h"
 #include <ompl/base/goals/GoalSampleableRegion.h>

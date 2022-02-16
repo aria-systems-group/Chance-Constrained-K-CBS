@@ -43,11 +43,11 @@ OBJ := $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
 CPPFLAGS := -std=c++20 -I/opt/homebrew/Cellar/eigen/3.4.0_1/include/eigen3 \
 				-I/opt/homebrew/Cellar/boost/1.76.0/include \
-				-I/opt/homebrew/Cellar/ompl/1.5.2/include/ompl-1.5 \
 				-I/opt/homebrew/Cellar/ode/0.16.2/include \
+				-I/opt/homebrew/Cellar/ompl/1.5.2/include/ompl-1.5 \
 				-I/opt/homebrew/Cellar/yaml-cpp/0.6.3_1/include
 LDPATHS := -L/opt/homebrew/lib 
-LDLIBS   := -lompl -lboost_serialization -lode -lyaml-cpp
+LDLIBS   := -lboost_serialization -lode -lompl -lyaml-cpp 
 CC = g++
 
 ##############################################################################################

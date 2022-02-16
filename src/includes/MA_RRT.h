@@ -34,6 +34,7 @@
  
 /* Author: Justin Kottinger */
 
+#pragma once
 #include <ompl/control/planners/PlannerIncludes.h>
 #include <ompl/datastructures/NearestNeighbors.h>
 #include <ompl/control/spaces/RealVectorControlSpace.h>
@@ -86,6 +87,10 @@ namespace ompl
                 nn_ = std::make_shared<NN<Motion *>>();
                 setup();
             }
+
+            const double getSolveTime() const {return solveTime_;};
+
+            void resetSolveTime() {solveTime_ = 0.0;};
  
             void setup() override;
  
@@ -148,16 +153,7 @@ namespace ompl
  
             Motion *lastGoalMotion_{nullptr};
 
-            // // the goal as a vector
-            // std::vector<double> g;
-
-            // //  for the propogation functions
-            // int NumVs;
-            // int NumCs;
-            // double radius_;
-            // int numControlSamples_ = 1;
-            // double SegmentTime_ = 0;
-            // int FinalCost_{0};
+            double solveTime_{0.0};
         };
     }
 }

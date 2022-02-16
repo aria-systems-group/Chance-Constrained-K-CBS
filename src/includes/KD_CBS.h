@@ -87,6 +87,10 @@ namespace ompl
 
             World* composeSystem(const int idx1, const int idx2);
 
+            const double getSolveTime() const {return solveTime_;};
+
+            void resetSolveTime() {solveTime_ = 0.0;};
+
         protected:
             /** \brief Representation of a conflict node
 
@@ -107,7 +111,14 @@ namespace ompl
                     this->motions_ = c.getMotions();
                 }
 
-                ~conflictNode() = default;
+                ~conflictNode()
+                {
+                    // printf("in here\n");
+                    motions_.clear();
+                    plan_.clear();
+                    // delete constraint_;
+                    // constraint_ = nullptr;
+                }
 
                 // update plan and cost at same time to avoid bad bookkeeping
                 void updatePlanAndCost(Plan &p)
@@ -202,11 +213,9 @@ namespace ompl
 
             double planningTime_{3};  // seconds
 
-            const int B_{1};
+            const int B_{10};
 
-            std::vector<conflictNode*> conflictTree_;
-
-            // std::vector<KD_CBS*> subPlanners_;
+            double solveTime_{0.0};
         };
     }
 }

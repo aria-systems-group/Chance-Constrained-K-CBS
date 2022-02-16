@@ -21,6 +21,7 @@ ompl::control::KD_CBS::KD_CBS(const std::vector<problem> mmpp) :
                                 // "0,1");
 }
 
+
 // de-constructor (TO-DO)
 ompl::control::KD_CBS::~KD_CBS()
 {
@@ -30,7 +31,7 @@ ompl::control::KD_CBS::~KD_CBS()
 // free all alocated memory
 void ompl::control::KD_CBS::freeMemory()
 {
-   
+   // not implemented yet
 }
 
 std::vector <Conflict> ompl::control::KD_CBS::validatePlan(Plan pl)
@@ -46,7 +47,7 @@ std::vector <Conflict> ompl::control::KD_CBS::validatePlan(Plan pl)
    for (int i = 0; i < pl.size(); i++)
       pl[i].interpolate();
    
-   printf("done interpoloating.\n");
+   // printf("done interpoloating.\n");
    // get longest trajectory -- i.e. max states
    int maxStates = 0;
    for (int i = 0; i < pl.size(); i++)
@@ -119,29 +120,29 @@ std::vector <Conflict> ompl::control::KD_CBS::validatePlan(Plan pl)
          }
          else if (a->getDynamics() == "Two Dynamic Cars")
          {
-            printf("size of valid agents: %lu \n", validAgentsIdx.size());
-            printf("size of valid states: %lu \n", validStatesAtK.size());
-            printf("j: %i \n", j);
+            // printf("size of valid agents: %lu \n", validAgentsIdx.size());
+            // printf("size of valid states: %lu \n", validStatesAtK.size());
+            // printf("j: %i \n", j);
             // extract points from state object
             auto compState = validStatesAtK[j]->as<ob::CompoundStateSpace::StateType>();
-            printf("got composed state.\n");
+            // printf("got composed state.\n");
             // add two shapes (one for each vehicle)
             for (int agnt = 0; agnt < 2; agnt++)
             {
                auto xyState = compState->as<
                     ob::RealVectorStateSpace::StateType>(2*agnt + 0);
-               printf("got xyState state.\n");
+               // printf("got xyState state.\n");
                const double cx = xyState->values[0];
                const double cy = xyState->values[1];
                const double theta = compState->as<
                   ob::SO2StateSpace::StateType>(2*agnt + 1)->value;
-               printf("got got theta.\n");
+               // printf("got got theta.\n");
 
                // Get important params from car object
                const double carWidth = a->getShape()[0];
                const double carHeight = a->getShape()[1];
 
-               printf("got car shapes.\n");
+               // printf("got car shapes.\n");
 
                // turn (x,y, theta), width, length to a polygon object
                // see https://stackoverflow.com/questions/41898990/find-corners-of-a-rotated-rectangle-given-its-center-point-and-rotation
@@ -176,7 +177,7 @@ std::vector <Conflict> ompl::control::KD_CBS::validatePlan(Plan pl)
             OMPL_ERROR("Validate Function not implemented for %s.", a->getDynamics().c_str());
          }
       }
-      printf("shapes added successfully.\n");
+      // printf("shapes added successfully.\n");
       // disjoint check the shapes for a collision
       for (int ai = 0; ai < shapes.size(); ai++)
       {
@@ -186,13 +187,13 @@ std::vector <Conflict> ompl::control::KD_CBS::validatePlan(Plan pl)
             {
                if (! boost::geometry::disjoint(shapes[ai].second, shapes[aj].second))
                {
-                  printf("Conflict found.\n");
+                  // printf("Conflict found.\n");
                   // agent ai and aj are in conflict, only care about those now
                   Conflict conf{shapes[ai].first, shapes[aj].first, 
                      shapes[ai].second, shapes[aj].second, (k * minStepSize)};
                   c.push_back(conf);
                   bool inConflict = true;
-                  printf("Created first conflict.\n");
+                  // printf("Created first conflict.\n");
                   while (inConflict)
                   {
                      k++;
@@ -333,14 +334,14 @@ std::vector <Conflict> ompl::control::KD_CBS::validatePlan(Plan pl)
                   }
                   // check if states we just checked were both the end
                   // if so terminate the search.
-                  printf("finished with conflicts.\n");
+                  // printf("finished with conflicts.\n");
                   return c;
                }
             }
          }
       }
    }
-   printf("no conflicts found.\n");
+   // printf("no conflicts found.\n");
    return c;
 }
 
@@ -349,7 +350,7 @@ bool ompl::control::KD_CBS::shouldMerge(
    std::vector< std::pair< std::pair<int, int>, int> > &conf_cntr, 
    const int agent1, const int agent2)
 {
-   printf("(%i, %i)\n", agent1, agent2);
+   // printf("(%i, %i)\n", agent1, agent2);
    // first, update the conflict tracking
    for (int i = 0; i < conf_cntr.size(); i++)
    {
@@ -369,10 +370,10 @@ bool ompl::control::KD_CBS::shouldMerge(
       }
    }
 
-   for (int i = 0; i < conf_cntr.size(); i++)
-   {
-      printf("Pair: (%i, %i) Num. Conflicts: %i \n", conf_cntr[i].first.first, conf_cntr[i].first.second, conf_cntr[i].second);
-   }
+   // for (int i = 0; i < conf_cntr.size(); i++)
+   // {
+   //    printf("Pair: (%i, %i) Num. Conflicts: %i \n", conf_cntr[i].first.first, conf_cntr[i].first.second, conf_cntr[i].second);
+   // }
 
    // second, figure out if we should merge
    for (int i = 0; i < conf_cntr.size(); i++)
@@ -507,7 +508,6 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
    /* initialize priority queue */ 
    std::priority_queue<conflictNode, std::vector<conflictNode>, Compare> pq;
 
-
    /* begin planning -- timing should start after this statement */
    OMPL_INFORM("%s: Starting planning. ", getName().c_str());
    auto start = std::chrono::high_resolution_clock::now();
@@ -517,13 +517,16 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
    for (auto p: treeSearchs)
    {
       ob::PlannerStatus solved = p->ob::Planner::solve(planningTime_);
-      while (!solved)
+      while (!solved && !ptc)
          solved = p->ob::Planner::solve(planningTime_);
 
       /* store initial trajectory */
-      oc::PathControl traj = static_cast<oc::PathControl &>
+      if (solved)
+      {
+         oc::PathControl traj = static_cast<oc::PathControl &>
          (*p->ob::Planner::getProblemDefinition()->getSolutionPath());
-      root_plan.push_back(traj);
+         root_plan.push_back(traj);
+      }
       p->clear();
    }
 
@@ -536,19 +539,21 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
    }
  
    /* initialize solution */
-   const conflictNode *solution = nullptr;
-   int i = 1;
+   conflictNode *solution = nullptr;
    while (ptc == false && !pq.empty())
    {
-      printf("At top of loop \n");
+      // printf("At top of loop \n");
       /* find loswest cost in Queue */
-      conflictNode *curr = new conflictNode(pq.top());
+      // std::shared_ptr<conflictNode> curr = std::make_shared<conflictNode>(pq.top());
+      // auto *curr = new conflictNode(pq.top());
+      // std::shared_ptr<conflictNode> c = std::make_shared<conflictNode>(curr);
+      auto *curr = new conflictNode(pq.top());
 
       /* if cost==inf need to try to re-plan node */
       if (curr->getCost() == std::numeric_limits<double>::infinity())
       {
          pq.pop();
-         printf("Now Here: %lu \n", curr->getMotions().size());
+         // printf("Now Here: %lu \n", curr->getMotions().size());
          // update planner information
          const int agentIdx = curr->getConstraint()->getAgent();
          // get constraints
@@ -587,16 +592,17 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
             treeSearchs[agentIdx]->dumpTree2Motions(m);
             curr->fillMotions(m);
             pq.emplace(*curr);
-            printf("Failed again, should skip. \n");
+            // printf("Failed again, should skip. \n");
             continue;
          }
       }
-      printf("continuing. \n");
+      // printf("continuing. \n");
       std::vector <Conflict> conf = validatePlan(curr->getPlan());
       // printf("conf: (%i, %i) \n", conf[0].agent1, conf[0].agent2);
       if (conf.empty())
       {
-         solution = curr;
+         // printf("Sol. Size: %lu \n", curr->getPlan().size());
+         solution = curr; //curr.get();
          break;
       }
       else if (shouldMerge(disjoint_set, conf[0].agent1, conf[0].agent2))
@@ -619,17 +625,22 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
          OMPL_INFORM("Set-Up Complete");
          // std::cout << "Setup Complete. Press ENTER to plan: ";
          // std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-         auto curr = std::chrono::high_resolution_clock::now();
-         auto curr_dur = duration_cast<std::chrono::microseconds>(curr - start);
-         double time_left = 600.0 - (curr_dur.count() / 1000000.0);
+         // auto curr = std::chrono::high_resolution_clock::now();
+         // auto curr_dur = duration_cast<std::chrono::microseconds>(curr - start);
+         // double time_left = 600.0 - (curr_dur.count() / 1000000.0);
 
-         bool solved = planner->solve(time_left);
+         bool solved = planner->solve(ptc);
          auto stop = std::chrono::high_resolution_clock::now();
+         auto duration = duration_cast<std::chrono::microseconds>(stop - start);
+         solveTime_ = (duration.count() / 1000000.0);
          if (!solved)
             return {solved, false};
          else
          {
             solved = true;
+            for (int i = 0; i < mmpp_.size(); i++)
+               mmpp_[i].second->clearSolutionPaths();
+
             // map new_problem solution to mmpp_
             std::vector<PathControl> plan;
             for (int a = 0; a < new_mmpp.size(); a++)
@@ -649,9 +660,12 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
                   plan = decentralizeTrajectory(plan, new_world);
                }
             }
-            auto duration = duration_cast<std::chrono::microseconds>(stop - start);
-            OMPL_INFORM("%s: Found Solution in %0.3f seconds!", getName().c_str(), 
-               (duration.count() / 1000000.0));
+            for (int i = 0; i < mmpp_.size(); i++)
+            {
+               auto path(std::make_shared<PathControl>(plan[i]));
+               mmpp_[i].second->addSolutionPath(path, false, -1.0, w_->getAgents()[i]->getName());
+            }
+            OMPL_INFORM("%s: Found Solution in %0.3f seconds!", getName().c_str(), solveTime_ );
             OMPL_INFORM("%s: Planning Complete.", getName().c_str());
             return {solved, false};
          }
@@ -717,15 +731,15 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
                failed to find solution. 
                Need to save data to node and put at back of queue 
                */
-               printf("HERE: %d \n", a);
+               // printf("HERE: %d \n", a);
                // save planner progress to node
                std::vector<constraintRRT::Motion *> m;
                treeSearchs[conflicting_agents[a]]->dumpTree2Motions(m);
                n.fillMotions(m);
-               printf("Size of motions in n: %lu \n", n.getMotions().size());
+               // printf("Size of motions in n: %lu \n", n.getMotions().size());
 
                // add to queue with cost inf
-               printf("Address of n: %p \n", &n);
+               // printf("Address of n: %p \n", &n);
                pq.emplace(n);
             }
          }
@@ -733,7 +747,15 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
    }
    /* end main algorithm -- begin ompl bookkeeping */
    auto stop = std::chrono::high_resolution_clock::now();
+   auto duration = duration_cast<std::chrono::microseconds>(stop - start);
+   solveTime_ = (duration.count() / 1000000.0);
    bool solved = false;
+   /* clean up */
+   for (auto p: treeSearchs)
+   {
+      p->clear();
+      delete p;
+   }
    if (solution == nullptr)
    {
       if (ptc == true)
@@ -742,10 +764,11 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
    }
    else
    {
+      // printf("%p\n", solution);
+      // printf("Sol. size: %lu \n", solution->getPlan().size());
       solved = true;
-      auto duration = duration_cast<std::chrono::microseconds>(stop - start);
       OMPL_INFORM("%s: Found Solution in %0.3f seconds!", getName().c_str(), 
-         (duration.count() / 1000000.0));
+         solveTime_);
       /* add correct path to all problem instances */
       for (int i = 0; i < mmpp_.size(); i++)
       {

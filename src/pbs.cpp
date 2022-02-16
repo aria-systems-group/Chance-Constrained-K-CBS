@@ -80,7 +80,11 @@ ompl::base::PlannerStatus ompl::control::PBS::solve(const base::PlannerTerminati
         planner->setup();
         treeSearchs.push_back(planner);
     }
+    /* plan */
     std::vector<PathControl> solution;
+    OMPL_INFORM("%s: Starting planning. ", getName().c_str());
+    auto start = std::chrono::high_resolution_clock::now();
+    bool solved = false;
     for (auto p: treeSearchs)
     {
         p->setExistingSolutions(solution);
@@ -93,13 +97,29 @@ ompl::base::PlannerStatus ompl::control::PBS::solve(const base::PlannerTerminati
             solution.push_back(traj);
         }
         else
-        {
-            OMPL_INFORM("PBS failed to find a solution.");
-            return {false, false};
-        }
+            break;
     }
-    OMPL_INFORM("PBS returned correct solution.");
-    return {true, false};   
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = duration_cast<std::chrono::microseconds>(stop - start);
+    solveTime_ = (duration.count() / 1000000.0);
+    if (solution.size() == treeSearchs.size())
+        solved = true;
+    /* clean up */
+    for (auto p: treeSearchs)
+    {
+       p->clear();
+       delete p;
+    }
+    if (solved)
+    {
+        OMPL_INFORM("PBS returned correct solution.");
+        return {solved, false};
+    }
+    else
+    {
+        OMPL_INFORM("%s: No Solution Found.", getName().c_str());
+        return {solved, false};
+    }
 }
 
 

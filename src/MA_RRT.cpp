@@ -42,7 +42,7 @@
 
 ompl::control::MA_RRT::MA_RRT(const SpaceInformationPtr &si) : base::Planner(si, "MA-RRT")
 {
-    specs_.approximateSolutions = true;
+    specs_.approximateSolutions = false;
     siC_ = si.get();
  
     Planner::declareParam<double>("goal_bias", this, &MA_RRT::setGoalBias, &MA_RRT::getGoalBias, "0.:.05:1.");
@@ -190,7 +190,7 @@ ompl::base::PlannerStatus ompl::control::MA_RRT::solve(const base::PlannerTermin
         controlSampler_ = siC_->allocDirectedControlSampler();
  
     OMPL_INFORM("%s: Starting planning with %u states already in datastructure", getName().c_str(), nn_->size());
- 
+    auto start = std::chrono::high_resolution_clock::now();
     Motion *solution = nullptr;
     Motion *approxsol = nullptr;
     double approxdif = std::numeric_limits<double>::infinity();
@@ -291,14 +291,14 @@ ompl::base::PlannerStatus ompl::control::MA_RRT::solve(const base::PlannerTermin
             }
         }
     }
- 
+    auto stop = std::chrono::high_resolution_clock::now();
     bool solved = false;
     bool approximate = false;
-    if (solution == nullptr)
-    {
-        solution = approxsol;
-        approximate = true;
-    }
+    // if (solution == nullptr)
+    // {
+    //     solution = approxsol;
+    //     approximate = true;
+    // }
  
     if (solution != nullptr)
     {
@@ -329,9 +329,10 @@ ompl::base::PlannerStatus ompl::control::MA_RRT::solve(const base::PlannerTermin
         siC_->freeControl(rmotion->control);
     delete rmotion;
     si_->freeState(xstate);
- 
+    auto duration = duration_cast<std::chrono::microseconds>(stop - start);
+    solveTime_ = (duration.count() / 1000000.0);
     OMPL_INFORM("%s: Created %u states", getName().c_str(), nn_->size());
- 
+    clear();
     return {solved, approximate};
 }
  

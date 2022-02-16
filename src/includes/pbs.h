@@ -34,6 +34,7 @@
 
 /* Author: Justin Kottinger */
 
+#pragma once
 #include "World.h"
 #include "timedRRT.h"
 #include <ompl/control/planners/PlannerIncludes.h>
@@ -65,9 +66,14 @@ namespace ompl
 
             World* getWorld() {return w_;};
 
+            const double getSolveTime() const {return solveTime_;};
+
+            void resetSolveTime() {solveTime_ = 0.0;};
+
         protected:
             const std::vector<problem> mmpp_;
             World* w_{nullptr};
+            double solveTime_{0.0};
         };
     }
 }

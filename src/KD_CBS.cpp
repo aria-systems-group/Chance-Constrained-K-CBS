@@ -674,9 +674,9 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
       {
          pq.pop();
          /* extract conflict information*/
-         const std::vector<const int> conflicting_agents
+         const std::vector<int> conflicting_agents
             {conf.front().agent1, conf.front().agent2};
-         std::vector<std::vector<const polygon>> conflicting_polys{ {}, {} };
+         std::vector<std::vector<polygon>> conflicting_polys{ {}, {} };
          std::vector<double> conflicting_times{};
          /* fill time and polygon vectors*/
          for (Conflict c: conf)

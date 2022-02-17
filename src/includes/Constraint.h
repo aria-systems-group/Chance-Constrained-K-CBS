@@ -53,7 +53,7 @@ class Constraint
 {
 
 public:
-	Constraint(const std::vector <const polygon> polygons, 
+	Constraint(const std::vector <polygon> polygons, 
 		const std::vector<double> timeRange, 
 		const int agentIdx) : polys_(polygons), times_(timeRange), agentIdx_(agentIdx) {}
 	~Constraint()
@@ -61,11 +61,11 @@ public:
 		polys_.clear();
 		times_.clear();
 	}
-	const std::vector <const polygon> getPolygons() const {return polys_;};
+	const std::vector <polygon> getPolygons() const {return polys_;};
 	const std::vector<double> getTimes() const {return times_;};
 	const int getAgent() const {return agentIdx_;};
 private:
-	std::vector <const polygon> polys_;
+	std::vector <polygon> polys_;
 	std::vector<double> times_;
 	const int agentIdx_;
 };

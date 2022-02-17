@@ -14,7 +14,8 @@
 #include "OdeFunctions.h"
 #include "collisionChecking.h"
 #include "constraintRRT.h"
-#include <ompl/control/SimpleSetup.h>
+// #include <ompl/control/SimpleSetup.h>
+#include <ompl/control/SpaceInformation.h>
 #include <utility>
 
 namespace ob = ompl::base;

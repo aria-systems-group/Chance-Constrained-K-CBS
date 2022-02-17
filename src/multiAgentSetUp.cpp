@@ -55,8 +55,7 @@ const std::vector<problem> multiAgentSetUp(const World *w)
                 &KinematicCarPostIntegration));
             // assume that planner integrates dynamics at steps of 0.1 seconds
             si->setPropagationStepSize(stepSize);
-            si->setMinControlDuration(1);
-            si->setMaxControlDuration(10);
+            si->setMinMaxControlDuration(1, 10);
             si->setup();
 
             ob::ScopedState<ob::SE2StateSpace> start(space);
@@ -120,8 +119,7 @@ const std::vector<problem> multiAgentSetUp(const World *w)
                 &DynamicCarPostIntegration));
             // assume that planner integrates dynamics at steps of 0.1 seconds
             si->setPropagationStepSize(stepSize);
-            si->setMinControlDuration(1);
-            si->setMaxControlDuration(10);
+            si->setMinMaxControlDuration(1, 10);
             si->setup();
 
             // create start
@@ -194,8 +192,7 @@ const std::vector<problem> multiAgentSetUp(const World *w)
                 &TwoDynamicCarsPostIntegration));
             // assume that planner integrates dynamics at steps of 0.1 seconds
             si->setPropagationStepSize(stepSize);
-            si->setMinControlDuration(1);
-            si->setMaxControlDuration(30);
+            si->setMinMaxControlDuration(1, 10);
             si->setup();
 
             // create start
@@ -279,8 +276,7 @@ const std::vector<problem> multiAgentSetUp(const World *w)
                 &ThreeDynamicCarsPostIntegration));
             // assume that planner integrates dynamics at steps of 0.1 seconds
             si->setPropagationStepSize(stepSize);
-            si->setMinControlDuration(1);
-            si->setMaxControlDuration(10);
+            si->setMinMaxControlDuration(1, 10);
             si->setup();
 
             // create start

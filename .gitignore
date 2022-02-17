@@ -21,6 +21,7 @@
 *.lo
 *.o
 *.obj
+Makefile
 
 # Precompiled Headers
 *.gch

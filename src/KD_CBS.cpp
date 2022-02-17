@@ -370,10 +370,10 @@ bool ompl::control::KD_CBS::shouldMerge(
       }
    }
 
-   // for (int i = 0; i < conf_cntr.size(); i++)
-   // {
-   //    printf("Pair: (%i, %i) Num. Conflicts: %i \n", conf_cntr[i].first.first, conf_cntr[i].first.second, conf_cntr[i].second);
-   // }
+   for (int i = 0; i < conf_cntr.size(); i++)
+   {
+      printf("Pair: (%i, %i) Num. Conflicts: %i \n", conf_cntr[i].first.first, conf_cntr[i].first.second, conf_cntr[i].second);
+   }
 
    // second, figure out if we should merge
    for (int i = 0; i < conf_cntr.size(); i++)
@@ -428,7 +428,7 @@ World* ompl::control::KD_CBS::composeSystem(const int agentIdx1, const int agent
          w_->getAgents()[agentIdx2]->getGoalLocation()[1]};
 
       Agent* new_agent = new Agent(new_name, "Two Dynamic Cars", 
-         new_world->getAgents()[0]->getShape(), new_start, new_goal);
+         w_->getAgents()[0]->getShape(), new_start, new_goal);
 
       new_world->addAgent(new_agent);
 

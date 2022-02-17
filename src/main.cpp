@@ -40,7 +40,7 @@ int main(int argc, char ** argv)
         OMPL_INFORM("Set-Up Complete");
         std::cout << "Setup Complete. Press ENTER to plan: ";
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        bool solved = planner->solve(600.0);
+        bool solved = planner->solve(300.0);
         if (solved)
         {
             std::vector<oc::PathControl> plan;
@@ -69,7 +69,7 @@ int main(int argc, char ** argv)
         OMPL_INFORM("Set-Up Complete");
         std::cout << "Setup Complete. Press ENTER to plan: ";
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        bool solved = planner->solve(600.0);
+        bool solved = planner->solve(300.0);
         if (solved)
         {
             std::vector<oc::PathControl> plan;
@@ -100,7 +100,7 @@ int main(int argc, char ** argv)
         OMPL_INFORM("Set-Up Complete");
         std::cout << "Setup Complete. Press ENTER to plan: ";
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        bool solved = planner->solve(600.0);
+        bool solved = planner->solve(300.0);
         if (solved)
         {
             std::vector<oc::PathControl> plan;
@@ -129,7 +129,7 @@ int main(int argc, char ** argv)
         OMPL_INFORM("Set-Up Complete");
         std::cout << "Setup Complete. Press ENTER to plan: ";
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        bool solved = planner->solve(600.0);
+        bool solved = planner->solve(300.0);
         if (solved)
         {
             std::vector<oc::PathControl> plan;

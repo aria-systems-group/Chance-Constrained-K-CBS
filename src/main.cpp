@@ -36,6 +36,14 @@ int main(int argc, char ** argv)
             std::shared_ptr<ob::ProblemDefinition>>> mmpp = multiAgentSetUp(w);
         oc::KD_CBS *p = new oc::KD_CBS(mmpp); // K_CBS
         p->setWorld(w);
+        if (argc < 4)
+            OMPL_WARN("No merging parameter B specified. Default is 100 conflicts.");
+        else
+        {
+            const int b = std::stoi(argv[3]);
+            p->setMergeBound(b);
+            OMPL_INFORM("Mergin Parameter set to B=%d", b);
+        }
         ob::PlannerPtr planner(p);
         OMPL_INFORM("Set-Up Complete");
         std::cout << "Setup Complete. Press ENTER to plan: ";

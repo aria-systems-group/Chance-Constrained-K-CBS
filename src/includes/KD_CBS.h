@@ -91,6 +91,8 @@ namespace ompl
 
             void resetSolveTime() {solveTime_ = 0.0;};
 
+            void setMergeBound(int b) {B_ = b;};
+
         protected:
             /** \brief Representation of a conflict node
 
@@ -213,7 +215,7 @@ namespace ompl
 
             double planningTime_{3};  // seconds
 
-            const int B_{10};
+            int B_{100};
 
             double solveTime_{0.0};
         };

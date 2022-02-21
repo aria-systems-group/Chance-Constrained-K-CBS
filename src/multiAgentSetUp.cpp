@@ -8,7 +8,7 @@ const std::vector<problem> multiAgentSetUp(const World *w)
     OMPL_INFORM("Setting up planning problem for all agents...");
     // std::vector<shared_ptr<oc::constraintRRT> >
     std::vector<problem> probDefs;
-    const double goalRadius = 0.5;
+    const double goalRadius = 0.25;
     // define pi
     const double pi = boost::math::constants::pi<double>();
     const double stepSize = 0.08;

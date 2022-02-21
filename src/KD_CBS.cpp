@@ -646,7 +646,7 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
             for (int a = 0; a < new_mmpp.size(); a++)
             {
                const std::string a_dyn = new_world->getAgents()[a]->getDynamics();
-               printf("Here: %s \n", a_dyn.c_str());
+               // printf("Here: %s \n", a_dyn.c_str());
                if ((a_dyn == "Dynamic Car") || (a_dyn == "Kinematic Car") || (a_dyn == "Dynamic Unicycle"))
                {
                   PathControl *mpath = new_mmpp[a].second->getSolutionPath()->as<PathControl>();

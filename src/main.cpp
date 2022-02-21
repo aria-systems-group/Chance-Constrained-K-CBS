@@ -152,15 +152,31 @@ int main(int argc, char ** argv)
     }
     else if (planner == "Benchmark")
     {
-        const char* logName;
-        if (argc == 4)
-            logName = argv[3];
-        else
+        /* 
+        Benchmark Types:
+            1. K-CBS only
+            2. PBS vs. K-CBS only
+            3. MA-RRT vs. PBS vs. K-CBS
+        */
+        if (argc < 5)
         {
-            OMPL_WARN("No output file given. Will output to no_name.csv");
-            logName = "no_name.csv";
+            OMPL_ERROR("Incorrect parameters specified to benchmark.");
+            exit(1);
         }
-        const dataStruct results = benchmark(problem, 300);
+        // get log name
+        const char* logName = argv[3];
+
+        // get benchmark type
+        const int bench_type = std::stoi(argv[4]);
+
+        // get merging bound
+        int b = 100;
+        if (argc < 6)
+            OMPL_WARN("No merging parameter B specified. Default is 100 conflicts.");
+        else
+            b = std::stoi(argv[5]);
+
+        const dataStruct results = benchmark(problem, 300, bench_type, b);
         write_csv(logName, results);
     }
     else

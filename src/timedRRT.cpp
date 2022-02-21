@@ -157,19 +157,21 @@ bool ompl::control::timedRRT::isCollisionFree(Motion* current)
     for (int agentIdx = 0; agentIdx < existingSolns_.size(); agentIdx++)
     {
         PathControl existingPath = existingSolns_[agentIdx];
-        // does exisiting path at k exist?
-        bool check = false;
-        for (int k = 0; k < existingPath.getStateCount(); k++)
+        // // does exisiting path at k exist?
+        // bool check = false;
+        if (currStateStep < existingPath.getStateCount())
         {
-            if (currStateStep == k)
-            {
-                check = true;
+        // for (int k = 0; k < existingPath.getStateCount(); k++)
+        // {
+        //     if (currStateStep == k)
+        //     {
+                // check = true;
                 // create other agent shape
                 const Agent *otherAgent = w_->getAgents()[agentIdx];
                 const double otherAgent_width = otherAgent->getShape()[0];
                 const double otherAgent_height = otherAgent->getShape()[1];
                 // extract points from state object
-                auto compState = existingPath.getState(k)->as<ob::CompoundStateSpace::StateType>();
+                auto compState = existingPath.getState(currStateStep)->as<ob::CompoundStateSpace::StateType>();
                 auto xyState = compState->as<ob::RealVectorStateSpace::StateType>(0);
                 const double otherAgent_cx = xyState->values[0];
                 const double otherAgent_cy = xyState->values[1];
@@ -220,9 +222,9 @@ bool ompl::control::timedRRT::isCollisionFree(Motion* current)
                 //         exit(1);
                 //     }
                 // }
-            }
+            // }
         }
-        if (!check)
+        else
         {
             // need to check final state
             // create other agent shape

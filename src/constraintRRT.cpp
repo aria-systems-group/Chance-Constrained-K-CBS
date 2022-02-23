@@ -82,6 +82,46 @@ void ompl::control::constraintRRT::updateConstraints(std::vector<const Constrain
     constraints_ = c;
 }
 
+void ompl::control::constraintRRT::pruneTree(std::vector<const Constraint*> c)
+{
+    /* clear old solutions */
+    getProblemDefinition()->clearSolutionPaths();
+
+    /* update constraints */
+    constraints_ = c;
+
+    /* prune tree */
+    while (lastGoalMotion_->parent != nullptr)
+    {
+        nn_->remove(lastGoalMotion_);
+        lastGoalMotion_ = lastGoalMotion_->parent;
+    }
+
+    // std::vector<Motion*> tmp;
+    // nn_->list(tmp);
+
+    // for (Motion *m: tmp)
+    // {
+    //     if (m->parent != nullptr)
+    //     {
+    //         Motion *m_cpy = m;
+
+    //         while (m_cpy->parent != nullptr)
+    //         {
+    //             if (!satisfiesConstraints(m_cpy))
+    //             {
+    //                 nn_->remove(m);
+    //                 break;
+    //             }
+    //             else
+    //             {
+    //                 m_cpy = m_cpy->parent;
+    //             }
+    //         }
+    //     }
+    // }
+}
+
 void ompl::control::constraintRRT::dumpTree2Motions(std::vector<Motion *> &motions)
 {
     std::vector<Motion *> tmp;
@@ -137,19 +177,20 @@ void ompl::control::constraintRRT::dumpTree2Motions(std::vector<Motion *> &motio
 void ompl::control::constraintRRT::motions2Tree(const std::vector<Motion *> motions,
     std::vector<const Constraint*> c)
 {
-    // printf("in motion2tree \n");
     /* clear old data */
     clear();
-    // printf("right here \n");
+
+    /* clear old solutions */
+    getProblemDefinition()->clearSolutionPaths();
+
     /* add new data */
-    // nn_->add(motions);
     nn_->add(motions);
-    // printf("now here \n");
+
     /* update constraints */
     constraints_ = c;
+
     /* notify solve function not to add start state */
     replanning_ = true;
-    // printf("Everything added successfully \n");
 }
 
 bool ompl::control::constraintRRT::satisfiesConstraints(const Motion *n) const

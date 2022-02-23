@@ -44,6 +44,15 @@ int main(int argc, char ** argv)
             p->setMergeBound(b);
             OMPL_INFORM("Mergin Parameter set to B=%d", b);
         }
+        if (argc < 5)
+            OMPL_WARN("No Bypassing parameter specified. Default is False.");
+        else
+        {
+            std::string bypass = argv[4];
+            if (bypass == "True")
+                p->performBypassing();
+            OMPL_INFORM("Bypassing parameter set to %s", bypass.c_str());
+        }
         ob::PlannerPtr planner(p);
         OMPL_INFORM("Set-Up Complete");
         std::cout << "Setup Complete. Press ENTER to plan: ";

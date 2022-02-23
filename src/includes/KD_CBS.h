@@ -81,6 +81,8 @@ namespace ompl
             /*method that checks for conflicts (collisions) within the plan*/
             std::vector <Conflict> validatePlan(Plan pl);
 
+            Plan lowLevelSearch(oc::constraintRRT* p, std::vector<const Constraint*> &constraints, const Plan parentPlan, bool replanning);
+
             bool shouldMerge(
                 std::vector< std::pair< std::pair<int, int>, int> > &conf_cntr, 
                 const int agent1, const int agent2);
@@ -92,6 +94,8 @@ namespace ompl
             void resetSolveTime() {solveTime_ = 0.0;};
 
             void setMergeBound(int b) {B_ = b;};
+
+            void performBypassing() {bypass_ = true;};
 
         protected:
             /** \brief Representation of a conflict node
@@ -216,6 +220,10 @@ namespace ompl
             double planningTime_{3};  // seconds
 
             int B_{100};
+
+            bool bypass_{false};
+
+            std::vector<std::pair<int, int>> merger_count_{};
 
             double solveTime_{0.0};
         };

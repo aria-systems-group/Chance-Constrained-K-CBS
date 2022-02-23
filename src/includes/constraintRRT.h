@@ -140,6 +140,8 @@ namespace ompl
             void overrideStates(const std::vector<int> DoNotProp, const base::State *source, 
                 base::State *result, Control *control);
 
+            void pruneTree(std::vector<const Constraint*> c);
+
             /* dump all the motions from datastructure to vector  */
             void dumpTree2Motions(std::vector<Motion *> &motions);
 

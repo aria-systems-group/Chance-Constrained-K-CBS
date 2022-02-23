@@ -346,6 +346,165 @@ std::vector <Conflict> ompl::control::KD_CBS::validatePlan(Plan pl)
 }
 
 
+oc::Plan ompl::control::KD_CBS::lowLevelSearch(oc::constraintRRT* p, std::vector<const Constraint*> &constraints, 
+   const Plan parentPlan, bool replanning)
+{
+   Plan tmp_plan;
+   if (!bypass_ && !replanning)
+   {
+      /* no bypassing. proceed as usual */
+      p->updateConstraints(constraints);
+      ob::PlannerStatus solved = p->ob::Planner::solve(planningTime_);
+      if (solved)
+      {
+         OMPL_INFORM("Seccessfully Replanned.");
+         /* create new solution with updated traj. for conflicting agent */
+         oc::PathControl new_traj = static_cast<oc::PathControl &>
+            (*p->ob::Planner::getProblemDefinition()->getSolutionPath());
+         for (int agent = 0; agent < mmpp_.size(); agent++)
+         {
+            if (constraints.front()->getAgent() == agent)
+               tmp_plan.push_back(new_traj);
+            else
+               tmp_plan.push_back(parentPlan[agent]);
+         }
+         return tmp_plan;
+      }
+      else
+      {
+         OMPL_INFORM("Failed to replan.");
+         return tmp_plan; // empty
+      }
+   }
+   else if (replanning)  // no bypassing performed when replanning
+   {
+      // plan again
+      ob::PlannerStatus solved = p->ob::Planner::solve(planningTime_);
+      if (solved)
+      {
+         /* create new solution with updated traj. for conflicting agent */
+         oc::PathControl new_traj = static_cast<oc::PathControl &>
+            (*p->ob::Planner::getProblemDefinition()->getSolutionPath());
+         for (int agent = 0; agent < mmpp_.size(); agent++)
+         {
+            if (constraints.front()->getAgent() == agent)
+               tmp_plan.push_back(new_traj);
+            else
+               tmp_plan.push_back(parentPlan[agent]);
+         }
+         return tmp_plan;
+      }
+      else
+      {
+         OMPL_INFORM("Failed to replan.");
+         return tmp_plan; // empty
+      }
+   }
+   else if (bypass_ && !replanning)
+   {
+      auto start = std::chrono::high_resolution_clock::now();
+      auto stop = std::chrono::high_resolution_clock::now();
+      auto duration = duration_cast<std::chrono::microseconds>(stop - start);
+      double timeLeft = planningTime_ - (duration.count() / 1000000.0);
+      int bp = 0;
+      while (timeLeft > 0)
+      {
+         if (bp == 0)
+            p->updateConstraints(constraints);
+         else
+            p->pruneTree(constraints);
+         ob::PlannerStatus solved = p->ob::Planner::solve(timeLeft);
+         if (solved)
+         {
+            OMPL_INFORM("Seccessfully Replanned. Attempting to Bypass.");
+            /* create new solution with updated traj. for conflicting agent */
+            oc::PathControl new_traj = static_cast<oc::PathControl &>
+               (*p->ob::Planner::getProblemDefinition()->getSolutionPath());
+            OMPL_INFORM("Got Traj.");
+            if (bp == 0)
+            {
+               for (int agent = 0; agent < mmpp_.size(); agent++)
+               {
+                  if (constraints.front()->getAgent() == agent)
+                     tmp_plan.push_back(new_traj);
+                  else
+                     tmp_plan.push_back(parentPlan[agent]);
+               }
+            }
+            else
+            {
+               // replace rather that append to tmp_plan
+               tmp_plan.erase(tmp_plan.begin() +  constraints.front()->getAgent());
+               tmp_plan.insert(tmp_plan.begin() +  constraints.front()->getAgent(), new_traj);
+
+            }
+            // validate tmp_plan
+            std::vector <Conflict> conf = validatePlan(tmp_plan);
+            if (conf.empty())
+            {
+               OMPL_INFORM("Collision Free Plan found.");
+               return tmp_plan;
+            }
+            else
+            {
+               OMPL_INFORM("Conflict found.");
+               /* extract conflict information*/
+               const std::vector<int> conflicting_agents
+                  {conf.front().agent1, conf.front().agent2};
+               std::vector<std::vector<polygon>> conflicting_polys{ {}, {} };
+               std::vector<double> conflicting_times{};
+               /* fill time and polygon vectors*/
+               for (Conflict c: conf)
+               {
+                  conflicting_times.push_back(c.time);
+                  conflicting_polys[0].push_back(c.p2);
+                  conflicting_polys[1].push_back(c.p1);
+               }
+               OMPL_INFORM("Conflict between agents: (%d, %d)", conf.front().agent1, conf.front().agent2);
+               OMPL_INFORM("Conflict Time Range: [%0.1f, %0.1f]", conflicting_times.front(), conflicting_times.back());
+               // constraints.front().getAgent must be in conf to bypass
+               if (conf.front().agent1 == constraints.front()->getAgent())
+               {
+                  /* init new constraint and trajectory to resolve conflict */
+                  auto *new_constraint = new Constraint(conflicting_polys[0], 
+                     conflicting_times, conflicting_agents[0]);
+                  constraints.push_back(new_constraint);
+               }
+               else if (conf.front().agent2 == constraints.front()->getAgent())
+               {
+                  /* init new constraint and trajectory to resolve conflict */
+                  auto *new_constraint = new Constraint(conflicting_polys[1], 
+                     conflicting_times, conflicting_agents[1]);
+                  constraints.push_back(new_constraint);
+               }
+               else
+               {
+                  OMPL_INFORM("Unable to bypass.");
+                  return tmp_plan;
+               }
+            }
+         }
+         else
+         {
+            OMPL_INFORM("Failed to replan.");
+            return tmp_plan; // empty
+         }
+         bp++;
+         stop = std::chrono::high_resolution_clock::now();
+         duration = duration_cast<std::chrono::microseconds>(stop - start);
+         timeLeft = planningTime_ - (duration.count() / 1000000.0);
+      }
+      return tmp_plan;
+   }
+   else
+   {
+      OMPL_ERROR("Bypassing not implemented properly.");
+      exit(1);
+      return tmp_plan;
+   }
+}
+
+
 bool ompl::control::KD_CBS::shouldMerge(
    std::vector< std::pair< std::pair<int, int>, int> > &conf_cntr, 
    const int agent1, const int agent2)
@@ -386,6 +545,8 @@ bool ompl::control::KD_CBS::shouldMerge(
 
 World* ompl::control::KD_CBS::composeSystem(const int agentIdx1, const int agentIdx2)
 {
+   std::pair<int, int> idxs{agentIdx1, agentIdx2};
+   merger_count_.push_back(idxs);
    std::vector<problem> x;
    /* first, change the world params to match new problem.
       world object has a vector of Agents. need to replace the two 
@@ -567,6 +728,11 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
          }
          // add constraints and motions to planner
          treeSearchs[agentIdx]->motions2Tree(curr->getMotions(), agent_constraints);
+         
+         /* replan for conflicting agent w/ new constraint */
+         Plan new_plan = lowLevelSearch(treeSearchs[agentIdx], agent_constraints, curr->getParent()->getPlan(), true);
+
+
          // plan again
          ob::PlannerStatus solved = treeSearchs[agentIdx]->ob::Planner::solve(planningTime_);
          if (solved)
@@ -701,41 +867,24 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
                nCpy = nCpy->getParent();
             }
             /* replan for conflicting agent w/ new constraint */
-            treeSearchs[conflicting_agents[a]]->updateConstraints(agent_constraints);
-            ob::PlannerStatus solved = treeSearchs[conflicting_agents[a]]->ob::Planner::solve(planningTime_);
-            if (solved)
+            Plan new_plan = lowLevelSearch(treeSearchs[conflicting_agents[a]], 
+               agent_constraints, n.getParent()->getPlan(), false);
+            if (!new_plan.empty())
             {
-               OMPL_INFORM("Seccessfully Replanned.");
-               /* create new solution with updated traj. for conflicting agent */
-               oc::PathControl new_traj = static_cast<oc::PathControl &>
-                  (*treeSearchs[conflicting_agents[a]]->ob::Planner::getProblemDefinition()->getSolutionPath());
-               Plan new_plan;
-               for (int agent = 0; agent < mmpp_.size(); agent++)
-               {
-                  if (conflicting_agents[a] == agent)
-                     new_plan.push_back(new_traj);
-                  else
-                     new_plan.push_back(n.getParent()->getPlan()[agent]);
-               }
                n.updatePlanAndCost(new_plan);
                pq.emplace(n);
             }
             else
             {
-               OMPL_INFORM("Failed to replan.");
                /* 
                failed to find solution. 
                Need to save data to node and put at back of queue 
                */
-               // printf("HERE: %d \n", a);
                // save planner progress to node
                std::vector<constraintRRT::Motion *> m;
                treeSearchs[conflicting_agents[a]]->dumpTree2Motions(m);
                n.fillMotions(m);
-               // printf("Size of motions in n: %lu \n", n.getMotions().size());
-
                // add to queue with cost inf
-               // printf("Address of n: %p \n", &n);
                pq.emplace(n);
             }
          }

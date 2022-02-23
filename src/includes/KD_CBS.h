@@ -97,6 +97,8 @@ namespace ompl
 
             void performBypassing() {bypass_ = true;};
 
+            std::vector<std::pair<int, int>> getMergers() const {return merger_count_;};
+
         protected:
             /** \brief Representation of a conflict node
 

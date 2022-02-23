@@ -43,6 +43,7 @@ dataStruct benchmark(const std::string problem, const double planningTime,
             std::vector<std::string> planner_col{ma_rrt_planner->getName(), pbs_planner->getName(), k_cbs_planner->getName()};
             std::vector<std::string> isSolved_col{};
             std::vector<std::string> compTime_col{};
+            std::vector<std::string> mergers{};
 
 
             OMPL_INFORM("******** Beginning Benchmark ******** \n");
@@ -57,6 +58,9 @@ dataStruct benchmark(const std::string problem, const double planningTime,
             // record computation time
             compTime_col.push_back(std::to_string(ma_rrt_planner->as<oc::MA_RRT>()->getSolveTime()));
 
+            // record merger
+            mergers.push_back("");
+
             /* test PBS */
             // plan
             bool pbs_solved = pbs_planner->solve(planningTime);
@@ -68,6 +72,9 @@ dataStruct benchmark(const std::string problem, const double planningTime,
             // record computation time
             compTime_col.push_back(std::to_string(pbs_planner->as<oc::PBS>()->getSolveTime()));
 
+            // record merger
+            mergers.push_back("");
+
             /* test K-CBS */
             // plan
             bool k_cbs_solved = k_cbs_planner->solve(planningTime);
@@ -76,8 +83,18 @@ dataStruct benchmark(const std::string problem, const double planningTime,
                 isSolved_col.push_back("1");
             else
                 isSolved_col.push_back("0");
+            
             // record computation time
             compTime_col.push_back(std::to_string(k_cbs_planner->as<oc::KD_CBS>()->getSolveTime()));
+
+            // record merger list
+            std::vector<std::pair<int, int>> merger_list = k_cbs_planner->as<oc::KD_CBS>()->getMergers();
+            std::string list = "";
+            for (auto merge: merger_list)
+            {
+                list = list + "(" + std::to_string(merge.first) + " " + std::to_string(merge.second) + ") ";
+            }
+            mergers.push_back(list);
 
             // col 1: planner names
             std::pair< std::string, std::vector<std::string> > planners{"Algorithm", planner_col};
@@ -85,9 +102,11 @@ dataStruct benchmark(const std::string problem, const double planningTime,
             std::pair< std::string, std::vector<std::string> > solved{"Success (Boolean)", isSolved_col};
             // col 3: computation time
             std::pair< std::string, std::vector<std::string> > times{"Computation Time (s)", compTime_col};
+            // col 4: mergers
+            std::pair< std::string, std::vector<std::string> > merging{"Mergers", mergers};
 
             // put it all together
-            dataStruct data{planners, solved, times};
+            dataStruct data{planners, solved, times, merging};
             OMPL_INFORM("******** Benchmark Complete ******** \n");
             return data;
         }
@@ -115,6 +134,7 @@ dataStruct benchmark(const std::string problem, const double planningTime,
             std::vector<std::string> planner_col{pbs_planner->getName(), k_cbs_planner->getName()};
             std::vector<std::string> isSolved_col{};
             std::vector<std::string> compTime_col{};
+            std::vector<std::string> mergers{};
 
             OMPL_INFORM("******** Beginning Benchmark ******** \n");
             /* test PBS */
@@ -127,6 +147,8 @@ dataStruct benchmark(const std::string problem, const double planningTime,
                 isSolved_col.push_back("0");
             // record computation time
             compTime_col.push_back(std::to_string(pbs_planner->as<oc::PBS>()->getSolveTime()));
+            // record merger
+            mergers.push_back("");
 
             /* test K-CBS */
             // plan
@@ -139,15 +161,27 @@ dataStruct benchmark(const std::string problem, const double planningTime,
             // record computation time
             compTime_col.push_back(std::to_string(k_cbs_planner->as<oc::KD_CBS>()->getSolveTime()));
 
+
+            // record merger list
+            std::vector<std::pair<int, int>> merger_list = k_cbs_planner->as<oc::KD_CBS>()->getMergers();
+            std::string list = "";
+            for (auto merge: merger_list)
+            {
+                list = list + "(" + std::to_string(merge.first) + " " + std::to_string(merge.second) + ") ";
+            }
+            mergers.push_back(list);
+
             // col 1: planner names
             std::pair< std::string, std::vector<std::string> > planners{"Algorithm", planner_col};
             // col 2: success
             std::pair< std::string, std::vector<std::string> > solved{"Success (Boolean)", isSolved_col};
             // col 3: computation time
             std::pair< std::string, std::vector<std::string> > times{"Computation Time (s)", compTime_col};
+            // col 4: mergers
+            std::pair< std::string, std::vector<std::string> > merging{"Mergers", mergers};
 
             // put it all together
-            dataStruct data{planners, solved, times};
+            dataStruct data{planners, solved, times, merging};
             OMPL_INFORM("******** Benchmark Complete ******** \n");
             return data;
         }
@@ -174,6 +208,7 @@ dataStruct benchmark(const std::string problem, const double planningTime,
         std::vector<std::string> planner_col{pbs_planner->getName(), k_cbs_planner->getName()};
         std::vector<std::string> isSolved_col{};
         std::vector<std::string> compTime_col{};
+        std::vector<std::string> mergers{};
 
         OMPL_INFORM("******** Beginning Benchmark ******** \n");
         /* test PBS */
@@ -186,6 +221,8 @@ dataStruct benchmark(const std::string problem, const double planningTime,
             isSolved_col.push_back("0");
         // record computation time
         compTime_col.push_back(std::to_string(pbs_planner->as<oc::PBS>()->getSolveTime()));
+        // record merger
+        mergers.push_back("");
 
         /* test K-CBS */
         // plan
@@ -198,15 +235,26 @@ dataStruct benchmark(const std::string problem, const double planningTime,
         // record computation time
         compTime_col.push_back(std::to_string(k_cbs_planner->as<oc::KD_CBS>()->getSolveTime()));
 
+        // record merger list
+        std::vector<std::pair<int, int>> merger_list = k_cbs_planner->as<oc::KD_CBS>()->getMergers();
+        std::string list = "";
+        for (auto merge: merger_list)
+        {
+            list = list + "(" + std::to_string(merge.first) + " " + std::to_string(merge.second) + ") ";
+        }
+        mergers.push_back(list);
+
         // col 1: planner names
         std::pair< std::string, std::vector<std::string> > planners{"Algorithm", planner_col};
         // col 2: success
         std::pair< std::string, std::vector<std::string> > solved{"Success (Boolean)", isSolved_col};
         // col 3: computation time
         std::pair< std::string, std::vector<std::string> > times{"Computation Time (s)", compTime_col};
+        // col 4: mergers
+        std::pair< std::string, std::vector<std::string> > merging{"Mergers", mergers};
 
         // put it all together
-        dataStruct data{planners, solved, times};
+        dataStruct data{planners, solved, times, merging};
         OMPL_INFORM("******** Benchmark Complete ******** \n");
         return data;
     }
@@ -228,6 +276,7 @@ dataStruct benchmark(const std::string problem, const double planningTime,
         std::vector<std::string> planner_col{k_cbs_planner->getName()};
         std::vector<std::string> isSolved_col{};
         std::vector<std::string> compTime_col{};
+        std::vector<std::string> mergers{};
 
         OMPL_INFORM("******** Beginning Benchmark ******** \n");
         /* test K-CBS */
@@ -241,15 +290,26 @@ dataStruct benchmark(const std::string problem, const double planningTime,
         // record computation time
         compTime_col.push_back(std::to_string(k_cbs_planner->as<oc::KD_CBS>()->getSolveTime()));
 
+        // record merger list
+        std::vector<std::pair<int, int>> merger_list = k_cbs_planner->as<oc::KD_CBS>()->getMergers();
+        std::string list = "";
+        for (auto merge: merger_list)
+        {
+            list = list + "(" + std::to_string(merge.first) + " " + std::to_string(merge.second) + ") ";
+        }
+        mergers.push_back(list);
+
         // col 1: planner names
         std::pair< std::string, std::vector<std::string> > planners{"Algorithm", planner_col};
         // col 2: success
         std::pair< std::string, std::vector<std::string> > solved{"Success (Boolean)", isSolved_col};
         // col 3: computation time
         std::pair< std::string, std::vector<std::string> > times{"Computation Time (s)", compTime_col};
+        // col 4: mergers
+        std::pair< std::string, std::vector<std::string> > merging{"Mergers", mergers};
 
         // put it all together
-        dataStruct data{planners, solved, times};
+        dataStruct data{planners, solved, times, merging};
         OMPL_INFORM("******** Benchmark Complete ******** \n");
         return data;
     }

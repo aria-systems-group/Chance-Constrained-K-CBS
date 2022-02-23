@@ -596,13 +596,10 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
             continue;
          }
       }
-      // printf("continuing. \n");
       std::vector <Conflict> conf = validatePlan(curr->getPlan());
-      // printf("conf: (%i, %i) \n", conf[0].agent1, conf[0].agent2);
       if (conf.empty())
       {
-         // printf("Sol. Size: %lu \n", curr->getPlan().size());
-         solution = curr; //curr.get();
+         solution = curr;
          break;
       }
       else if (shouldMerge(disjoint_set, conf[0].agent1, conf[0].agent2))
@@ -623,11 +620,6 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
          p->setWorld(new_world);
          ob::PlannerPtr planner(p);
          OMPL_INFORM("Set-Up Complete");
-         // std::cout << "Setup Complete. Press ENTER to plan: ";
-         // std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-         // auto curr = std::chrono::high_resolution_clock::now();
-         // auto curr_dur = duration_cast<std::chrono::microseconds>(curr - start);
-         // double time_left = 600.0 - (curr_dur.count() / 1000000.0);
 
          bool solved = planner->solve(ptc);
          auto stop = std::chrono::high_resolution_clock::now();
@@ -686,6 +678,9 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
             conflicting_polys[1].push_back(c.p1);
          }
 
+         OMPL_INFORM("Conflict between agents: (%d, %d)", conf.front().agent1, conf.front().agent2);
+         OMPL_INFORM("Conflict Time Range: [%0.1f, %0.1f]", conflicting_times.front(), conflicting_times.back());
+
          for (int a = 0; a < 2; a++)
          {
             /* init new constraint and trajectory to resolve conflict */
@@ -696,11 +691,10 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
             conflictNode n{};
             n.updateParent(curr);
             n.addConstraint(new_constraint);
-            // std::cout << "replanning required" << std::endl;
             /* traverse conflict tree to get all agent constraints */
             std::vector<const Constraint*> agent_constraints{n.getConstraint()};
             const conflictNode *nCpy = n.getParent();
-            while (nCpy->getConstraint() != nullptr)
+            while (nCpy->getParent() != nullptr)
             {
                if (nCpy->getConstraint()->getAgent() == conflicting_agents[a])
                   agent_constraints.push_back(nCpy->getConstraint());
@@ -711,6 +705,7 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
             ob::PlannerStatus solved = treeSearchs[conflicting_agents[a]]->ob::Planner::solve(planningTime_);
             if (solved)
             {
+               OMPL_INFORM("Seccessfully Replanned.");
                /* create new solution with updated traj. for conflicting agent */
                oc::PathControl new_traj = static_cast<oc::PathControl &>
                   (*treeSearchs[conflicting_agents[a]]->ob::Planner::getProblemDefinition()->getSolutionPath());
@@ -727,6 +722,7 @@ base::PlannerStatus ompl::control::KD_CBS::solve(const base::PlannerTerminationC
             }
             else
             {
+               OMPL_INFORM("Failed to replan.");
                /* 
                failed to find solution. 
                Need to save data to node and put at back of queue 

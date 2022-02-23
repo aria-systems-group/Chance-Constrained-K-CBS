@@ -75,6 +75,9 @@ void ompl::control::constraintRRT::updateConstraints(std::vector<const Constrain
     /* clear old data */
     clear();
 
+    /* clear old solutions */
+    getProblemDefinition()->clearSolutionPaths();
+
     /* update constraints */
     constraints_ = c;
 }

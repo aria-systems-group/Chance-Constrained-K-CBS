@@ -1,7 +1,7 @@
 #include "includes/Benchmark.h"
 
 dataStruct benchmark(const std::string problem, const double planningTime, 
-    const int benchType, const int mergParam)
+    const int benchType, const int mergParam, const std::string bypass)
 {
     /* from problem file, create worlds and ompl problem instances */
     World *decentralized_w = yaml2world(problem);
@@ -37,6 +37,8 @@ dataStruct benchmark(const std::string problem, const double planningTime,
             oc::KD_CBS *k_cbs = new oc::KD_CBS(decentralized_ompl_problem); // K_CBS
             k_cbs->setWorld(decentralized_w);
             k_cbs->setMergeBound(mergParam);
+            if (bypass == "True")
+                k_cbs->performBypassing();
             ob::PlannerPtr k_cbs_planner(k_cbs);
 
             /* initialize data columns */
@@ -128,6 +130,8 @@ dataStruct benchmark(const std::string problem, const double planningTime,
             oc::KD_CBS *k_cbs = new oc::KD_CBS(decentralized_ompl_problem); // K_CBS
             k_cbs->setWorld(decentralized_w);
             k_cbs->setMergeBound(mergParam);
+            if (bypass == "True")
+                k_cbs->performBypassing();
             ob::PlannerPtr k_cbs_planner(k_cbs);
 
             /* initialize data columns */
@@ -202,6 +206,8 @@ dataStruct benchmark(const std::string problem, const double planningTime,
         oc::KD_CBS *k_cbs = new oc::KD_CBS(decentralized_ompl_problem); // K_CBS
         k_cbs->setWorld(decentralized_w);
         k_cbs->setMergeBound(mergParam);
+        if (bypass == "True")
+            k_cbs->performBypassing();
         ob::PlannerPtr k_cbs_planner(k_cbs);
 
         /* initialize data columns */
@@ -270,6 +276,8 @@ dataStruct benchmark(const std::string problem, const double planningTime,
         oc::KD_CBS *k_cbs = new oc::KD_CBS(decentralized_ompl_problem); // K_CBS
         k_cbs->setWorld(decentralized_w);
         k_cbs->setMergeBound(mergParam);
+        if (bypass == "True")
+            k_cbs->performBypassing();
         ob::PlannerPtr k_cbs_planner(k_cbs);
 
         /* initialize data columns */

@@ -167,7 +167,7 @@ int main(int argc, char ** argv)
             2. PBS vs. K-CBS only
             3. MA-RRT vs. PBS vs. K-CBS
         */
-        if (argc < 5)
+        if (argc < 7)
         {
             OMPL_ERROR("Incorrect parameters specified to benchmark.");
             exit(1);
@@ -185,7 +185,9 @@ int main(int argc, char ** argv)
         else
             b = std::stoi(argv[5]);
 
-        const dataStruct results = benchmark(problem, 300, bench_type, b);
+        // get merging bound
+        std::string bypass = argv[6];
+        const dataStruct results = benchmark(problem, 300, bench_type, b, bypass);
         write_csv(logName, results);
     }
     else

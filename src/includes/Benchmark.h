@@ -11,6 +11,6 @@ namespace ob = ompl::base;
 typedef std::vector<std::pair<std::string, std::vector<std::string>>> dataStruct;
 
 dataStruct benchmark(const std::string problem, const double planningTime,
-    const int benchType, const int mergParam);
+    const int benchType, const int mergParam, const std::string bypass);
 
 void write_csv(const char* logName, dataStruct dataset);

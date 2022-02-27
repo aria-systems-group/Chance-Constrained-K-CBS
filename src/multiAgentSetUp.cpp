@@ -118,7 +118,7 @@ const std::vector<problem> multiAgentSetUp(const World *w)
             si->setStatePropagator(oc::ODESolver::getStatePropagator(odeSolver, 
                 &DynamicCarPostIntegration));
             // assume that planner integrates dynamics at steps of 0.1 seconds
-            si->setPropagationStepSize(stepSize);
+            // si->setPropagationStepSize(stepSize);
             si->setMinMaxControlDuration(1, 10);
             si->setup();
 

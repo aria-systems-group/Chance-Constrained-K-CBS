@@ -6,16 +6,19 @@
 *.yml
 /yaml
 
-# Exverthing related to saved solutions
+# Exverthing old solutions
 /solutions
+/Archive
 /Benchmarks
 *.csv
 
 # Everything related to visualizing plans
 /visTools
 
-# Prerequisites
-*.d
+# Everything related to cmake
+CMakeCache.txt
+CMakeFiles/*
+cmake_install.cmake
 
 # Compiled Object files
 *.slo
@@ -25,27 +28,9 @@
 Makefile
 Dockerfile
 
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
 
 # Executables
 *.exe
 *.out
 *.app
-Planner
+K-CBS

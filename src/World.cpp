@@ -7,7 +7,7 @@
  
 /* Author: Justin Kottinger */
 
-#include <yaml.h>
+#include <yaml-cpp/yaml.h>
 #include "includes/World.h"
 
 

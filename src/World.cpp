@@ -6,9 +6,7 @@
 *********************************************************************/
  
 /* Author: Justin Kottinger */
-
-#include <yaml-cpp/yaml.h>
-#include "includes/World.h"
+#include "World.h"
 
 
 // printing methods for usability

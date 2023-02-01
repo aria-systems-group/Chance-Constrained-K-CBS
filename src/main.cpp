@@ -6,11 +6,11 @@
  
 /* Author: Justin Kottinger */
 
-#include "includes/KD_CBS.h"
-#include "includes/pbs.h"
-#include "includes/postProcess.h"
-#include "includes/MA_RRT.h"
-#include "includes/Benchmark.h"
+#include "KD_CBS.h"
+#include "pbs.h"
+#include "postProcess.h"
+#include "MA_RRT.h"
+#include "Benchmark.h"
 #include <ompl/control/planners/rrt/RRT.h>
 
 

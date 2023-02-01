@@ -10,7 +10,7 @@
  
 /* Author: Ioan Sucan */
  
-#include "includes/constraintRRT.h"
+#include "constraintRRT.h"
 #include "ompl/base/goals/GoalSampleableRegion.h"
 #include "ompl/tools/config/SelfConfig.h"
 #include <limits>

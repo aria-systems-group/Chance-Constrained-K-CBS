@@ -6,7 +6,7 @@
  
 /* Author: Justin Kottinger */
 
-#include "includes/KD_CBS.h"
+#include "KD_CBS.h"
 
 
 namespace base = ompl::base;

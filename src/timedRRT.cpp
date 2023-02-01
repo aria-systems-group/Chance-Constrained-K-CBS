@@ -34,7 +34,7 @@
  
 /* Author: Justin Kottinger */
  
-#include "includes/timedRRT.h"
+#include "timedRRT.h"
 
 namespace ob = ompl::base;
 

@@ -34,7 +34,7 @@
  
 /* Author: Justin Kottinger */
  
-#include "includes/pbs.h"
+#include "pbs.h"
 // #include <limits>
 // #include <ompl/tools/config/SelfConfig.h>
  

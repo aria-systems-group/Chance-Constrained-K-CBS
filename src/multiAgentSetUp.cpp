@@ -1,4 +1,4 @@
-#include "includes/multiAgentSetUp.h"
+#include "multiAgentSetUp.h"
 
 // this function sets-up an ompl planning problem for an arbtrary number of agents
 // returns planners to be used

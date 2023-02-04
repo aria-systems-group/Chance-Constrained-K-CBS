@@ -110,10 +110,19 @@ bool Instance::load_agents_()
         row = atoi((*beg).c_str());
         Location goal(row, col);
         beg++;
+        std::string shape = std::string(*beg);
+        beg++;
         std::string dyn_model = std::string(*beg);
+
         std::string name = "Robot " + std::to_string(i);
-        // manually assign the shape and size of the robot -- this is a To-Do item
-        robots_.emplace_back(new RectangularRobot(name, dyn_model, start, goal, 0.25, 0.25));
+
+        // add robot to list
+        if (shape == "Point")
+            robots_.emplace_back(new PointRobot(name, dyn_model, start, goal));
+        else if (shape == "Rectangle")
+            robots_.emplace_back(new RectangularRobot(name, dyn_model, start, goal, 0.25, 0.25)); // manual size To-Do!
+        else
+            OMPL_WARN("%s: %sRobot class not yet implemented!", name_.c_str());        
     }
     myfile.close();
     return true;

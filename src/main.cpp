@@ -1,4 +1,4 @@
-#include "multiAgentSetUp.h"
+#include "OmplSetUp.h"
 #include "Mergers/DeterministicMerger.h"
 #include "PlanValidityCheckers/DeterministicPlanValidityChecker.h"
 #include "Planners/KCBS.h"
@@ -45,11 +45,11 @@ int main(int argc, char ** argv)
     instance->print();
 
     // set-up low-level planners
-    std::vector<MotionPlanningProblemPtr> mrmp_problem = multiAgentSetUp(instance);
+    std::vector<MotionPlanningProblemPtr> mp_problems = set_up_all_MP_Problems(instance);
 
     // set-up MRMP Problem Definition
-    MultiRobotProblemDefinitionPtr pdef = std::make_shared<MultiRobotProblemDefinition>(mrmp_problem);
-    pdef->setMultiRobotInstance(instance);
+    MultiRobotProblemDefinitionPtr mrmp_pdef = std::make_shared<MultiRobotProblemDefinition>(mp_problems);
+    mrmp_pdef->setMultiRobotInstance(instance);
 
     // figure out which type of experiment to run, and run it
     std::string high_level_planner = instance->getPlannerName();
@@ -58,13 +58,13 @@ int main(int argc, char ** argv)
     if (high_level_planner == "K-CBS") {
         if (low_level_planner == "RRT") {
             // set-up (and include) a Merger in case merge bound is hit
-            MergerPtr merger = std::make_shared<DeterministicMerger>(pdef);
-            pdef->setMerger(merger);
+            MergerPtr merger = std::make_shared<DeterministicMerger>(mrmp_pdef);
+            mrmp_pdef->setMerger(merger);
             // set-up (and include) a PlanValidityChecker for agent-to-agent collision checking
-            PlanValidityCheckerPtr planValidator = std::make_shared<DeterministicPlanValidityChecker>(pdef);
-            pdef->setPlanValidator(planValidator);
+            PlanValidityCheckerPtr planValidator = std::make_shared<DeterministicPlanValidityChecker>(mrmp_pdef);
+            mrmp_pdef->setPlanValidator(planValidator);
             // create instance of K-CBS, set-up, and solve
-            ob::PlannerPtr p(std::make_shared<oc::KCBS>(pdef));
+            ob::PlannerPtr p(std::make_shared<oc::KCBS>(mrmp_pdef));
             p->as<oc::KCBS>()->setMergeBound(vm["bound"].as<int>());
             bool solved = p->solve(vm["time"].as<double>());
         }

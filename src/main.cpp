@@ -6,192 +6,108 @@
  
 /* Author: Justin Kottinger */
 
-#include "KD_CBS.h"
-#include "pbs.h"
-#include "postProcess.h"
-#include "MA_RRT.h"
-#include "Benchmark.h"
-#include <ompl/control/planners/rrt/RRT.h>
+// #include "KD_CBS.h"
+// #include "pbs.h"
+// #include "postProcess.h"
+// #include "MA_RRT.h"
+// #include "Benchmark.h"
+#include "Instance.h"
+#include "multiAgentSetUp.h"
+#include "MultiRobotProblemDefinition.h"
+#include "Mergers/DeterministicMerger.h"
+#include "PlanValidityCheckers/DeterministicPlanValidityChecker.h"
+#include "Planners/KCBS.h"
+#include <ompl/base/Planner.h>
 
 
-namespace fs = std::filesystem;
-namespace ob = ompl::base;
-namespace oc = ompl::control;
 
 // OMPL_INFORM("OMPL version: %s", OMPL_VERSION);  // blue font
 // OMPL_WARN("OMPL version: %s", OMPL_VERSION);  // yellow font
 // OMPL_ERROR("OMPL version: %s", OMPL_VERSION); // red font
 // these follow syntax of printf see (https://www.cplusplus.com/reference/cstdio/printf/)
 
- 
+void parse_cmd_line(int &argc, char ** &argv, po::variables_map &vm, po::options_description &desc)
+{
+    desc.add_options()
+        ("help,h", "produce help message")
+
+        // params for the input instance and experiment settings
+        ("map,m", po::value<std::string>()->required(), "the *.map file")
+        ("scen,s", po::value<std::string>()->required(), "the *.scen file")
+        ("numAgents,k", po::value<int>()->required(), "number of agents inside instance")
+        ("solver", po::value<std::string>()->default_value("K-CBS"), "the high-level MRMP solver (K-CBS, PBS, MR-RRT)")
+        ("lowlevel,l", po::value<std::string>()->default_value("RRT"), "The low-level motion planner for K-CBS (RRT, BSST)")
+        ("bound,b", po::value<int>()->default_value(std::numeric_limits<int>::max()), "The merge bound of K-CBS.")
+        ("time,t", po::value<double>()->default_value(600), "cutoff time (seconds)")
+        ("output,o", po::value<std::string>()->default_value("results"), "output file name (no extension)")
+        ("screen", po::value<int>()->default_value(0),
+                "screen option \n0 := none \n1 := K-CBS updates \n2 := Low-Level Planner updates \n3 := MRMP detailed updates")
+        ;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+}
+
 int main(int argc, char ** argv)
 {
-    std::string problem = argv[1];
     
-    std::string planner = argv[2];
-    if (planner == "K-CBS")
-    {
-        World *w = yaml2world(problem);
-        const std::vector<std::pair<std::shared_ptr<oc::SpaceInformation>, 
-            std::shared_ptr<ob::ProblemDefinition>>> mmpp = multiAgentSetUp(w);
-        oc::KD_CBS *p = new oc::KD_CBS(mmpp); // K_CBS
-        p->setWorld(w);
-        if (argc < 4)
-            OMPL_WARN("No merging parameter B specified. Default is 100 conflicts.");
-        else
-        {
-            const int b = std::stoi(argv[3]);
-            p->setMergeBound(b);
-            OMPL_INFORM("Mergin Parameter set to B=%d", b);
-        }
-        if (argc < 5)
-            OMPL_WARN("No Bypassing parameter specified. Default is False.");
-        else
-        {
-            std::string bypass = argv[4];
-            if (bypass == "True")
-                p->performBypassing();
-            OMPL_INFORM("Bypassing parameter set to %s", bypass.c_str());
-        }
-        ob::PlannerPtr planner(p);
-        OMPL_INFORM("Set-Up Complete");
-        std::cout << "Setup Complete. Press ENTER to plan: ";
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        bool solved = planner->solve(300.0);
-        if (solved)
-        {
-            std::vector<oc::PathControl> plan;
-            for (auto m: mmpp)
-            {
-                oc::PathControl traj = static_cast<oc::PathControl &>
-                    (*m.second->getSolutionPath());
-                traj.interpolate();
-                plan.push_back(traj);
-            }
-            std::vector<int> expCosts = generateExplanation(plan);
-            problem.resize(problem.size() - 4); // remove ".yml"
-            printf("Writing Solution to %s \n", problem.c_str());
-            write2sys(plan, w->getAgents(), problem, expCosts);
-        }
-        p->freeMemory();
-    }
-    else if (planner == "PBS")
-    {
-        World *w = yaml2world(problem);
-        const std::vector<std::pair<std::shared_ptr<oc::SpaceInformation>, 
-            std::shared_ptr<ob::ProblemDefinition>>> mmpp = multiAgentSetUp(w);
-        oc::PBS *p = new oc::PBS(mmpp); // PBS
-        p->setWorld(w);
-        ob::PlannerPtr planner(p);
-        OMPL_INFORM("Set-Up Complete");
-        std::cout << "Setup Complete. Press ENTER to plan: ";
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        bool solved = planner->solve(300.0);
-        if (solved)
-        {
-            std::vector<oc::PathControl> plan;
-            for (auto m: mmpp)
-            {
-                oc::PathControl traj = static_cast<oc::PathControl &>
-                    (*m.second->getSolutionPath());
-                traj.interpolate();
-                plan.push_back(traj);
-            }
-            // explain and return sol
-            std::vector<int> expCosts = generateExplanation(plan);
-            problem.resize(problem.size() - 4); // remove ".yml"
-            printf("Writing Solution to %s \n", problem.c_str());
-            write2sys(plan, w->getAgents(), problem, expCosts);
-        }
-    }
-    else if (planner == "RRT")
-    {
-        World *w = yaml2world(problem);
-        const std::vector<std::pair<std::shared_ptr<oc::SpaceInformation>, 
-            std::shared_ptr<ob::ProblemDefinition>>> mmpp = multiAgentSetUp(w);
-        OMPL_WARN("Using centralized RRT currently only plans for the first agent in the problem definition. This is only a problem if you provided a yaml file that contains multiple agents.\n");
-        oc::RRT *p = new oc::RRT(mmpp[0].first); // RRT for centralized planning
-        p->setProblemDefinition(mmpp[0].second);
-        p->setup();
-        ob::PlannerPtr planner(p);
-        OMPL_INFORM("Set-Up Complete");
-        std::cout << "Setup Complete. Press ENTER to plan: ";
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        bool solved = planner->solve(300.0);
-        if (solved)
-        {
-            std::vector<oc::PathControl> plan;
-            oc::PathControl traj = static_cast<oc::PathControl &>
-                (*mmpp[0].second->getSolutionPath());
-            plan.push_back(traj);
-            plan = decentralizeTrajectory(plan, w);
-            for (auto mp: plan)
-                mp.printAsMatrix(std::cout);
-            // std::vector<int> expCosts = generateExplanation(plan);
-            // problem.resize(problem.size() - 4); // remove ".yml"
-            // printf("Writing Solution to %s \n", problem.c_str());
-            // write2sys(plan, w->getAgents(), problem, expCosts);
-        }
-    }
-    else if (planner == "MA-RRT")
-    {
-        World *w = yaml2world(problem);
-        const std::vector<std::pair<std::shared_ptr<oc::SpaceInformation>, 
-            std::shared_ptr<ob::ProblemDefinition>>> mmpp = multiAgentSetUp(w);
-        OMPL_WARN("Using centralized RRT currently only plans for the first agent in the problem definition. This is only a problem if you provided a yaml file that contains multiple agents.\n");
-        oc::MA_RRT *p = new oc::MA_RRT(mmpp[0].first); // MA-RRT for centralized planning
-        p->setProblemDefinition(mmpp[0].second);
-        p->setup();
-        ob::PlannerPtr planner(p);
-        OMPL_INFORM("Set-Up Complete");
-        std::cout << "Setup Complete. Press ENTER to plan: ";
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        bool solved = planner->solve(300.0);
-        if (solved)
-        {
-            std::vector<oc::PathControl> plan;
-            oc::PathControl traj = static_cast<oc::PathControl &>
-                (*mmpp[0].second->getSolutionPath());
-            plan = decentralizeTrajectory(plan, w);
-            std::vector<int> expCosts = generateExplanation(plan);
-            problem.resize(problem.size() - 4); // remove ".yml"
-            printf("Writing Solution to %s \n", problem.c_str());
-            write2sys(plan, w->getAgents(), problem, expCosts);
-        }
-    }
-    else if (planner == "Benchmark")
-    {
-        /* 
-        Benchmark Types:
-            1. K-CBS only
-            2. PBS vs. K-CBS only
-            3. MA-RRT vs. PBS vs. K-CBS
-        */
-        if (argc < 7)
-        {
-            OMPL_ERROR("Incorrect parameters specified to benchmark.");
-            exit(1);
-        }
-        // get log name
-        const char* logName = argv[3];
+    po::variables_map vm;
+    po::options_description desc("Allowed options");
+    parse_cmd_line(argc, argv, vm, desc);
 
-        // get benchmark type
-        const int bench_type = std::stoi(argv[4]);
-
-        // get merging bound
-        int b = 100;
-        if (argc < 6)
-            OMPL_WARN("No merging parameter B specified. Default is 100 conflicts.");
-        else
-            b = std::stoi(argv[5]);
-
-        // get merging bound
-        std::string bypass = argv[6];
-        const dataStruct results = benchmark(problem, 300, bench_type, b, bypass);
-        write_csv(logName, results);
+    if (vm.count("help")) {
+        std::cout << desc << std::endl;
+        return 1;
     }
-    else
-        printf("No propper planner given. No planning will be performed. \n");
+
+    // set-up planning instance
+    InstancePtr instance = std::make_shared<Instance>(vm);
+    instance->print();
+
+    // set-up low-level planners
+    std::vector<MotionPlanningProblemPtr> mrmp_problem = multiAgentSetUp(instance);
+
+    // set-up MRMP Problem Definition
+    MultiRobotProblemDefinitionPtr pdef = std::make_shared<MultiRobotProblemDefinition>(mrmp_problem);
+    pdef->setMultiRobotInstance(instance);
+
+    // figure out which type of experiment to run, and run it
+    std::string high_level_planner = instance->getPlannerName();
+    std::string low_level_planner = instance->getLowLevelPlannerName();
     
+    if (high_level_planner == "K-CBS") {
+        if (low_level_planner == "RRT") {
+            // set-up (and include) a Merger in case merge bound is hit
+            MergerPtr merger = std::make_shared<DeterministicMerger>(pdef);
+            pdef->setMerger(merger);
+            // set-up (and include) a PlanValidityChecker for agent-to-agent collision checking
+            PlanValidityCheckerPtr planValidator = std::make_shared<DeterministicPlanValidityChecker>(pdef);
+            pdef->setPlanValidator(planValidator);
+            // create instance of K-CBS, set-up, and solve
+            ob::PlannerPtr p(std::make_shared<oc::KCBS>(pdef));
+            p->as<oc::KCBS>()->setMergeBound(vm["bound"].as<int>());
+            bool solved = p->solve(100);
+        }
+        else if (low_level_planner == "BSST") {
+            // solve uncertain MRMP w. K-CBS(BSST)
+        } 
+        else {
+            OMPL_ERROR("%s: Implementation of K-CBS w/ %s is unavailable.", "main", low_level_planner.c_str());
+        }
+    }
+    else if (high_level_planner == "PBS") {
+        if (low_level_planner == "RRT") {
+            // solve standard MRMP w. PBS
+            OMPL_WARN("%s: Planning with PBS not implemented after refactor.", "main");
+        }
+        else {
+            OMPL_ERROR("%s: Implementation of PBS w/ %s is unavailable.", "main", low_level_planner.c_str());
+        }
+    }
+    else if (high_level_planner == "MR-RRT") {
+        // solve standard MRMP w. MR-RRT
+        OMPL_WARN("%s: Planning with MR-RRT not implemented after refactor.", "main");
+    }
+    else {
+        OMPL_ERROR("%s: Implementation of %s w/ %s is unavailable.", "main", high_level_planner.c_str());
+    }
     return 0;
 }

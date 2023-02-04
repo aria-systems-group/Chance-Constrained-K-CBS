@@ -1,0 +1,23 @@
+#pragma once
+#include "common.h"
+#include "Conflict.h"
+#include "MultiRobotProblemDefinition.h"
+#include "Constraints/Constraint.h"
+
+
+OMPL_CLASS_FORWARD(MultiRobotProblemDefinition);
+OMPL_CLASS_FORWARD(PlanValidityChecker);
+class PlanValidityChecker
+{
+public:
+	PlanValidityChecker(MultiRobotProblemDefinitionPtr pdef, std::string name = "PlanValidityChecker"):
+		mrmp_pdef_(pdef), name_(name) {}
+
+	virtual std::vector<ConflictPtr> validatePlan(Plan p) = 0;
+
+	virtual ConstraintPtr createConstraint(Plan p, std::vector<ConflictPtr> conflicts, const int agent) = 0;
+
+protected:
+	MultiRobotProblemDefinitionPtr mrmp_pdef_;
+	std::string name_;
+};

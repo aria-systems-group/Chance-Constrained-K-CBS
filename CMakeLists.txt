@@ -8,7 +8,11 @@ IF(NOT CMAKE_BUILD_TYPE)
 ENDIF()
 
 include_directories("include")
-file(GLOB SOURCES "src/*.cpp")
+file(GLOB SOURCES "src/*.cpp" "src/Spaces/*.cpp" 
+    "src/StateValidityCheckers/*.cpp" "src/StatePropogators/*.cpp" 
+    "src/Planners/*.cpp" "src/Goals/*.cpp" "src/OptimizationObjectives/*.cpp"
+    "src/Mergers/*.cpp" "src/PlanValidityCheckers/*.cpp" "src/Constraints/*.cpp"
+    "src/ConstraintValidityCheckers/*.cpp")
 add_executable(K-CBS ${SOURCES})
 
 # Find Required packages
@@ -25,11 +29,6 @@ if (UNIX)
       IMPORTED_LOCATION "/opt/homebrew/lib/libompl.dylib"
       INTERFACE_INCLUDE_DIRECTORIES "/opt/homebrew/include/ompl-1.6"
     )
-    add_library(yaml-cpp SHARED IMPORTED)
-    set_target_properties(yaml-cpp PROPERTIES
-      IMPORTED_LOCATION "/opt/homebrew/lib/libyaml-cpp.dylib"
-      INTERFACE_INCLUDE_DIRECTORIES "/opt/homebrew/include/yaml-cpp"
-    )
 endif (UNIX)
 
 if (LINUX)
@@ -39,11 +38,6 @@ if (LINUX)
       IMPORTED_LOCATION "/opt/homebrew/lib/libompl.dylib"
       INTERFACE_INCLUDE_DIRECTORIES "/opt/homebrew/include/ompl-1.6"
     )
-    add_library(yaml-cpp SHARED IMPORTED)
-    set_target_properties(yaml-cpp PROPERTIES
-      IMPORTED_LOCATION "/opt/homebrew/lib/libyaml-cpp.dylib"
-      INTERFACE_INCLUDE_DIRECTORIES "/opt/homebrew/include/yaml-cpp"
-    )
 endif (LINUX)
 
-target_link_libraries(K-CBS ${Boost_LIBRARIES} ompl Eigen3::Eigen yaml-cpp)
+target_link_libraries(K-CBS ${Boost_LIBRARIES} ompl Eigen3::Eigen)

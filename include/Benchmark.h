@@ -1,13 +1,12 @@
-#include "World.h"
+#include "common.h"
+#include "Instance.h"
 #include "multiAgentSetUp.h"
-#include "MA_RRT.h"
-#include "KD_CBS.h"
-#include "pbs.h"
+#include "Planners/MultiRobotRRT.h"
+#include "Planners/KCBS.h"
+#include "Planners/PBS.h"
 #include <ompl/control/SpaceInformation.h>
 
 
-namespace oc = ompl::control;
-namespace ob = ompl::base;
 typedef std::vector<std::pair<std::string, std::vector<std::string>>> dataStruct;
 
 dataStruct benchmark(const std::string problem, const double planningTime,

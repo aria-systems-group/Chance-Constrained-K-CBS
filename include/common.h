@@ -66,6 +66,11 @@ protected:
     Location goal_;
 };
 
+class PointRobot: public Robot {
+public:
+    PointRobot(std::string name, std::string model, Location start, Location goal);
+};
+
 // a rectangular robot class
 class RectangularRobot: public Robot {
 public:

@@ -48,6 +48,13 @@ void Robot::printShape() const
     }
 }
 
+PointRobot::PointRobot(std::string name, std::string model, Location start, Location goal):
+    Robot(name, model, start, goal)
+{
+    Point p(start.x_, start.y_);
+    bg::append(shape_.outer(), p);
+}
+
 RectangularRobot::RectangularRobot(std::string name, std::string model, Location start, Location goal, double len, double width):
     Robot(name, model, start, goal), len_(len), width_(width)
 {

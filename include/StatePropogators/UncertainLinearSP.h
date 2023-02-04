@@ -1,8 +1,11 @@
 #pragma once
-#include "common.h"
-#include "ompl/control/SpaceInformation.h"
+#include "Spaces/R2BeliefSpace.h"
+#include <ompl/base/spaces/SE2StateSpace.h>
+#include <ompl/control/ODESolver.h>
 #include <ompl/control/spaces/RealVectorControlSpace.h>
-#include "../Spaces/R2BeliefSpace.h"
+
+namespace ob = ompl::base;
+namespace oc = ompl::control;
 
 
 typedef Eigen::Matrix<double, 2, 2, Eigen::DontAlign> Mat;

@@ -1,11 +1,8 @@
 #pragma once
-#include "common.h"
 #include "Instance.h"
 #include "Mergers/Merger.h"
 #include "PlanValidityCheckers/PlanValidityChecker.h"
 #include "Planners/ConstraintRespectingPlanner.h"
-#include <ompl/base/ProblemDefinition.h>
-#include <ompl/control/SpaceInformation.h>
 
 
 OMPL_CLASS_FORWARD(MotionPlanningProblem);

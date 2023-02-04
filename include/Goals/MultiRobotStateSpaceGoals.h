@@ -1,7 +1,10 @@
 #pragma once
-#include "common.h"
-#include <ompl/control/SimpleSetup.h>
+#include <ompl/base/Goal.h>
 #include <ompl/base/spaces/RealVectorStateSpace.h>
+#include <ompl/control/SpaceInformation.h>
+
+namespace ob = ompl::base;
+namespace oc = ompl::control;
 
 
 class R2MultiRobotGoal : public ompl::base::Goal

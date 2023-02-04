@@ -70,11 +70,6 @@ ob::PlannerStatus oc::ConstraintRespectingRRT::solve(const ob::PlannerTerminatio
 	checkValidity();
     base::Goal *goal = pdef_->getGoal().get();
     auto *goal_s = dynamic_cast<ob::GoalSampleableRegion *>(goal);
-    if (robot_ == nullptr)
-    {
-        OMPL_ERROR("No agent object.");
-        exit(1);
-    }
     
     if (!replanning_)
     {

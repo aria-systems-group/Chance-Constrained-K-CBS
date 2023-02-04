@@ -1,8 +1,12 @@
 #pragma once
-#include "common.h"
+// #include "common.h"
 #include "Conflict.h"
 #include "MultiRobotProblemDefinition.h"
 #include "Constraints/Constraint.h"
+#include <ompl/control/PathControl.h>
+
+namespace oc = ompl::control;
+typedef std::vector<oc::PathControl> Plan;
 
 
 OMPL_CLASS_FORWARD(MultiRobotProblemDefinition);

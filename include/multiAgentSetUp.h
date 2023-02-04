@@ -1,13 +1,4 @@
-/*********************************************************************
-* ARIA SYSTEMS RESEARCH GROUP
-* 
-* This file contains all relevent code for setting up a multi-agent
-* motion planning problem for OMPL. The result, is used by KD-CBS
-* repeatedly in order to find valid motion plans. 
-*********************************************************************/
- 
-/* Author: Justin Kottinger */
-
+#pragma once
 #include "Instance.h"
 #include "Spaces/R2BeliefSpace.h"
 #include "StateValidityCheckers/RealVectorStateSpaceSVC.h"
@@ -26,6 +17,12 @@
 #include "MultiRobotProblemDefinition.h"
 #include <ompl/control/SpaceInformation.h>
 #include <ompl/control/spaces/RealVectorControlSpace.h>
+#include <boost/program_options.hpp>
+#include <boost/math/constants/constants.hpp>
+
+namespace po = boost::program_options;
+namespace bm = boost::math;
+
 
 // the main ompl set-up function
 std::vector<MotionPlanningProblemPtr> multiAgentSetUp(InstancePtr mrmp_instance);
@@ -38,4 +35,3 @@ std::vector<MotionPlanningProblemPtr> set_up_KCBS_BSST_instances(InstancePtr mrm
 
 // the ompl set-up function for MR-RRT
 std::vector<MotionPlanningProblemPtr> set_up_MultiRobotRRT_instances(InstancePtr mrmp_instance);
-

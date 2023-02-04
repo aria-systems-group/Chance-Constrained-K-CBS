@@ -1,11 +1,15 @@
 #pragma once
-#include "common.h"
 #include "Instance.h"
 #include "Spaces/R2BeliefSpace.h"
-// #include <boost/math/special_functions/erf.hpp>
+#include <ompl/base/spaces/RealVectorStateSpace.h>
+#include <ompl/base/spaces/SO2StateSpace.h>
+#include <ompl/control/SpaceInformation.h>
+#include <boost/geometry/algorithms/correct.hpp>
+#include <boost/geometry/strategies/transform/matrix_transformers.hpp>
 #include <eigen3/Eigen/Dense>
-#include <ompl/base/SpaceInformation.h>
-#include <ompl/base/spaces/SE2StateSpace.h>
+
+namespace ob = ompl::base;
+namespace oc = ompl::control;
 
 
 OMPL_CLASS_FORWARD(Instance);

@@ -1,21 +1,21 @@
 #pragma once
-#include "common.h"
+// #include "common.h"
 #include "Planners/ConstraintRespectingPlanner.h"
+#include <ompl/tools/config/SelfConfig.h>
 #include <ompl/control/planners/PlannerIncludes.h>
 #include <ompl/datastructures/NearestNeighbors.h>
-#include <ompl/tools/config/SelfConfig.h>
 
 
 /** \brief Select a default nearest neighbor datastructure for the given space
-             *
-             * The default depends on the planning algorithm and the space the planner operates in:
-             * - If the space is a metric space and the planner is single-threaded,
-             *   then the default is ompl::NearestNeighborsGNATNoThreadSafety.
-             * - If the space is a metric space and the planner is multi-threaded,
-             *   then the default is ompl::NearestNeighborsGNAT.
-             * - If the space is a not a metric space,
-             *   then the default is ompl::NearestNeighborsSqrtApprox.
-             */
+*
+* The default depends on the planning algorithm and the space the planner operates in:
+* - If the space is a metric space and the planner is single-threaded,
+*   then the default is ompl::NearestNeighborsGNATNoThreadSafety.
+* - If the space is a metric space and the planner is multi-threaded,
+*   then the default is ompl::NearestNeighborsGNAT.
+* - If the space is a not a metric space,
+*   then the default is ompl::NearestNeighborsSqrtApprox.
+*/
 namespace ompl
 {
     namespace tools
@@ -72,7 +72,7 @@ namespace ompl
                 constraintValidator_ = validator;
             }
             const ConstraintValidityCheckerPtr getConstraintValidator() const {return constraintValidator_;};
-            void provideRobot(Robot *r) {robot_ = r;};
+            
             void updateConstraints(std::vector<ConstraintPtr> c) override;
 
             /** \brief Continue solving for some amount of time. Return true if solution was found. */
@@ -198,7 +198,7 @@ namespace ompl
             // my additions for replanning w. KCBS
             ConstraintValidityCheckerPtr constraintValidator_;
             std::vector<ConstraintPtr> constraints_;
-            Robot* robot_;
+            // Robot* robot_;
             bool replanning_;
         };
     }

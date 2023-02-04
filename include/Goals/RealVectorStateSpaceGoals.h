@@ -1,7 +1,11 @@
 #pragma once
-#include "common.h"
-#include <ompl/base/spaces/RealVectorStateSpace.h>
+#include <ompl/base/ScopedState.h>
 #include <ompl/base/goals/GoalRegion.h>
+#include <ompl/base/spaces/RealVectorStateSpace.h>
+#include <ompl/control/SpaceInformation.h>
+
+namespace ob = ompl::base;
+namespace oc = ompl::control;
 
 // Defines a circular goal region centered at goal, with radius = toll
 class R2Goal : public ompl::base::GoalRegion

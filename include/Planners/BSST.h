@@ -1,19 +1,13 @@
 #pragma once
-#include "common.h"
-#include "Instance.h"
 #include "Spaces/R2BeliefSpace.h"
 #include "Spaces/R2BeliefSpaceEuclidean.h"
-#include <ompl/control/SpaceInformation.h>
-#include <ompl/base/StateSpace.h>
-#include <ompl/base/spaces/SO2StateSpace.h>
-#include <ompl/base/spaces/RealVectorStateSpace.h>
-#include <ompl/control/spaces/RealVectorControlSpace.h>
-#include <ompl/base/objectives/MinimaxObjective.h>
-#include <ompl/base/objectives/MaximizeMinClearanceObjective.h>
-#include <ompl/base/objectives/PathLengthOptimizationObjective.h>
-#include <ompl/base/objectives/MechanicalWorkOptimizationObjective.h>
+#include <ompl/tools/config/SelfConfig.h>
 #include <ompl/base/goals/GoalSampleableRegion.h>
-#include <ompl/control/PlannerData.h>
+#include <ompl/base/objectives/PathLengthOptimizationObjective.h>
+#include <ompl/base/objectives/MaximizeMinClearanceObjective.h>
+#include <ompl/control/planners/PlannerIncludes.h>
+
+namespace oc = ompl::control;
 
 
 namespace ompl

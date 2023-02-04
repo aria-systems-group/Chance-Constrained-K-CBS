@@ -1,25 +1,7 @@
-/*********************************************************************
-* ARIA SYSTEMS RESEARCH GROUP
-* 
-* The main execution file that plans using KD-CBS
-*********************************************************************/
- 
-/* Author: Justin Kottinger */
-
-// #include "KD_CBS.h"
-// #include "pbs.h"
-// #include "postProcess.h"
-// #include "MA_RRT.h"
-// #include "Benchmark.h"
-#include "Instance.h"
 #include "multiAgentSetUp.h"
-#include "MultiRobotProblemDefinition.h"
 #include "Mergers/DeterministicMerger.h"
 #include "PlanValidityCheckers/DeterministicPlanValidityChecker.h"
 #include "Planners/KCBS.h"
-#include <ompl/base/Planner.h>
-
-
 
 // OMPL_INFORM("OMPL version: %s", OMPL_VERSION);  // blue font
 // OMPL_WARN("OMPL version: %s", OMPL_VERSION);  // yellow font
@@ -84,7 +66,7 @@ int main(int argc, char ** argv)
             // create instance of K-CBS, set-up, and solve
             ob::PlannerPtr p(std::make_shared<oc::KCBS>(pdef));
             p->as<oc::KCBS>()->setMergeBound(vm["bound"].as<int>());
-            bool solved = p->solve(100);
+            bool solved = p->solve(vm["time"].as<double>());
         }
         else if (low_level_planner == "BSST") {
             // solve uncertain MRMP w. K-CBS(BSST)

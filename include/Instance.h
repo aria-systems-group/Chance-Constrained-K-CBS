@@ -1,6 +1,11 @@
 #pragma once
 #include "common.h"
+#include <filesystem>
 #include <ompl/tools/config/SelfConfig.h>
+#include <boost/program_options.hpp>
+
+namespace fs = std::filesystem;
+namespace po = boost::program_options;
 
 
 // world class holds all relevent data in the world that is used by OMPL

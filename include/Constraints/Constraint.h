@@ -1,13 +1,6 @@
 #pragma once
-#include "common.h"
+#include <ompl/util/ClassForward.h>
 
-
-/* A conflict occurs an infinite number of times per
-collision. However, this range is minimally discretized 
-within OMPL through control durrations. Thus, each 
-collision creates a finite number of conflicts and a time range. 
-The constraint is the set of conflicting polygons for an agent
-within the given time range */
 
 // abstract class for constraint
 OMPL_CLASS_FORWARD(Constraint);

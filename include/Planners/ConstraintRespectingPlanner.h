@@ -1,11 +1,7 @@
 #pragma once
-#include "common.h"
 #include "ConstraintValidityCheckers/ConstraintValidityChecker.h"
 #include <ompl/base/goals/GoalSampleableRegion.h>
-#include <ompl/base/PlannerData.h>
-#include <ompl/base/PlannerStatus.h>
 #include <ompl/control/planners/PlannerIncludes.h>
-#include <ompl/control/planners/rrt/RRT.h>
 #include <boost/concept_check.hpp>
 #include <thread>
 
@@ -143,7 +139,7 @@ public:
         constraintValidator_ = validator;
     }
     const ConstraintValidityCheckerPtr getConstraintValidator() const {return constraintValidator_;};
-    void provideRobot(Robot *r) {robot_ = r;};
+    // void provideRobot(Robot *r) {robot_ = r;};
     virtual void updateConstraints(std::vector<ConstraintPtr> c) = 0;
 
     /** \brief Cast this instance to a desired type. */
@@ -356,7 +352,7 @@ protected:
     // my additions for replanning w. KCBS
     ConstraintValidityCheckerPtr constraintValidator_;
     std::vector<ConstraintPtr> constraints_;
-    Robot* robot_;
+    // Robot* robot_;
     bool replanning_;
 };
 

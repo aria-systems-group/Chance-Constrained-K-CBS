@@ -1,33 +1,6 @@
-/*********************************************************************
-* ARIA SYSTEMS RESEARCH GROUP
-* 
-* The main header file of KD-CBS. 
-* 
-* KD-CBS works by planning individually for many agents, locating 
-* conflicts (collisions) in the resulting plan, generating constraints
-* based on those conflicts, and invoking the low-level planner to 
-* resolve such conflicts. The process repeats till a valid plan is 
-* found.
-*********************************************************************/
- 
-/* Author: Justin Kottinger */
-
 #pragma once
-#include "common.h"
 #include "Conflict.h"
 #include "MultiRobotProblemDefinition.h"
-#include "Constraints/Constraint.h"
-#include "Planners/ConstraintRespectingPlanner.h"
-#include <ompl/control/PathControl.h>
-#include <ompl/control/SimpleSetup.h>
-#include <ompl/control/SpaceInformation.h>
-#include <ompl/tools/config/SelfConfig.h>
-#include <boost/shared_ptr.hpp>
-#include <math.h>
-#include <stdlib.h>
-#include <memory.h>
-#include <vector>
-#include <chrono>
 
 
 namespace ompl

@@ -1,8 +1,10 @@
 #pragma once
-#include "common.h"
+#include <ompl/base/spaces/SE2StateSpace.h>
 #include <ompl/control/ODESolver.h>
 #include <ompl/control/spaces/RealVectorControlSpace.h>
-#include <ompl/base/spaces/SE2StateSpace.h>
+
+namespace ob = ompl::base;
+namespace oc = ompl::control;
 
 
 void SecondOrderUnicycleODE (const oc::ODESolver::StateType& q, 

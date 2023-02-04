@@ -1,33 +1,23 @@
 #pragma once
-#include <utility>
 #include <vector>
 #include <string>
-#include <cmath>
 #include <fstream>
-#include <filesystem>
-#include <boost/program_options.hpp>
 #include <boost/geometry/io/io.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
 #include <boost/geometry/geometries/geometries.hpp>
-#include <ompl/base/ProblemDefinition.h>
-#include <ompl/base/Planner.h>
-#include <ompl/control/PathControl.h>
-#include <ompl/config.h>
+#include <ompl/util/Console.h>
 
-namespace po = boost::program_options;
-namespace fs = std::filesystem;
-namespace bm = boost::math;
+
+// namespace fs = std::filesystem;
+// namespace bm = boost::math;
 namespace bg = boost::geometry;
-namespace ob = ompl::base;
-namespace oc = ompl::control;
+// namespace ob = ompl::base;
+// namespace oc = ompl::control;
 
 
 typedef bg::model::d2::point_xy<double> Point;
 typedef bg::model::polygon<Point> Polygon;
-// typedef std::pair< std::shared_ptr<oc::SpaceInformation>, 
-                   // std::shared_ptr<ob::ProblemDefinition>> problem_t;
-// typedef std::tuple<oc::SpaceInformationPtr, ob::ProblemDefinition, ob::PlannerPtr> problem_t;
-typedef std::vector<oc::PathControl> Plan;
+// typedef std::vector<oc::PathControl> Plan;
 
 
 class Location {
@@ -36,7 +26,6 @@ public:
     const double x_;
     const double y_;
 };
-
 
 // An Obstacle is a polygon located at a reference Location
 class Obstacle: public Location {

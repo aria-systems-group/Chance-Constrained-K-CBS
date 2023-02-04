@@ -1,5 +1,6 @@
 #pragma once
 #include "common.h"
+#include <ompl/util/ClassForward.h>
 
 
 OMPL_CLASS_FORWARD(Conflict);

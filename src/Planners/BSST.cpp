@@ -377,7 +377,7 @@ ompl::base::PlannerStatus ompl::control::BSST::solve(const base::PlannerTerminat
     if (solution != nullptr)
     {
         /* set the solution path */
-        auto path(std::make_shared<PathControl>(si_));
+        auto path(std::make_shared<oc::PathControl>(si_));
         for (int i = prevSolution_.size() - 1; i >= 1; --i)
             path->append(prevSolution_[i], prevSolutionControls_[i - 1],
                          prevSolutionSteps_[i - 1] * siC_->getPropagationStepSize());

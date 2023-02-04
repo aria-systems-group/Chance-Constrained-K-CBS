@@ -165,13 +165,10 @@ std::vector<MotionPlanningProblemPtr> set_up_KCBS_RRT_instances(InstancePtr mrmp
             pdef->addStartState(start);
             pdef->setGoal(goal);
 
-
-
             // create (and provide) the low-level motion planner object
             ConstraintValidityCheckerPtr validator = std::make_shared<DeterministicCVC>(*itr);
             ConstraintRespectingPlannerPtr planner(std::make_shared<oc::ConstraintRespectingRRT>(si));
             planner->as<oc::ConstraintRespectingRRT>()->setProblemDefinition(pdef);
-            planner->as<oc::ConstraintRespectingRRT>()->provideRobot(*itr);
             planner->as<oc::ConstraintRespectingRRT>()->setConstraintValidator(validator);
             planner->as<oc::ConstraintRespectingRRT>()->setup();
 

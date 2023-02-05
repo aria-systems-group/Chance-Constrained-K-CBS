@@ -38,6 +38,27 @@ std::vector<ConflictPtr> DeterministicPlanValidityChecker::validatePlan(Plan p)
 	return confs;
 }
 
+ConstraintPtr DeterministicPlanValidityChecker::createConstraint(Plan p, std::vector<ConflictPtr> conflicts, const int robotIdx)
+{
+	const double step_duration = mrmp_pdef_->getSystemStepSize();
+	std::vector<double> times;
+	std::vector<Polygon> polys;
+	for (auto itr = conflicts.begin(); itr != conflicts.end(); itr++) {
+		times.push_back(((*itr)->timeStep_ * step_duration));
+		if ( (*itr)->timeStep_ <  p[robotIdx].getStates().size()) {
+			Polygon r = getShapeFromState_(p[robotIdx].getState((*itr)->timeStep_), robotIdx);
+			polys.push_back(r);
+		}
+		else {
+			Polygon r = getShapeFromState_(p[robotIdx].getStates().back(), robotIdx);
+			polys.push_back(r);
+		}
+		
+	}
+	ConstraintPtr c = std::make_shared<DeterministicConstraint>(robotIdx, times, polys);
+	return c;
+}
+
 ConflictPtr DeterministicPlanValidityChecker::checkForConflicts_(std::vector<std::pair<int, Polygon>> shapes, const int step)
 {
 	ConflictPtr c = nullptr;
@@ -124,25 +145,4 @@ Polygon DeterministicPlanValidityChecker::getShapeFromState_(ob::State *st, cons
                       0,          0,  1);
     bg::transform(raw, result, xfrm);
     return result;
-}
-
-ConstraintPtr DeterministicPlanValidityChecker::createConstraint(Plan p, std::vector<ConflictPtr> conflicts, const int robotIdx)
-{
-	const double step_duration = mrmp_pdef_->getSystemStepSize();
-	std::vector<double> times;
-	std::vector<Polygon> polys;
-	for (auto itr = conflicts.begin(); itr != conflicts.end(); itr++) {
-		times.push_back(((*itr)->timeStep_ * step_duration));
-		if ( (*itr)->timeStep_ <  p[robotIdx].getStates().size()) {
-			Polygon r = getShapeFromState_(p[robotIdx].getState((*itr)->timeStep_), robotIdx);
-			polys.push_back(r);
-		}
-		else {
-			Polygon r = getShapeFromState_(p[robotIdx].getStates().back(), robotIdx);
-			polys.push_back(r);
-		}
-		
-	}
-	ConstraintPtr c = std::make_shared<DeterministicConstraint>(robotIdx, times, polys);
-	return c;
 }

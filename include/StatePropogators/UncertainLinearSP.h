@@ -49,7 +49,7 @@ private:
     Eigen::Matrix2d H = Eigen::MatrixXd::Identity(2, 2);
     Eigen::Matrix2d F = Eigen::MatrixXd::Identity(2, 2);
 
-    Eigen::Matrix2d sigma_pred, lambda_pred, K, Q, Ak;
+    Eigen::Matrix2d sigma_pred, lambda_pred, K, Q, R, Ak;
 
     double K_ = 0.3;
 

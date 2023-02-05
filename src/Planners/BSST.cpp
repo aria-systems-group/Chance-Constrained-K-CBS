@@ -211,7 +211,7 @@ ompl::base::PlannerStatus ompl::control::BSST::solve(const base::PlannerTerminat
 
     unsigned iterations = 0;
 
-    max_eigenvalue_ = 10.0;
+    max_eigenvalue_ = 10.0; //TODO: make this general
 
     while (ptc == false)
     {
@@ -220,16 +220,6 @@ ompl::base::PlannerStatus ompl::control::BSST::solve(const base::PlannerTerminat
             goal_s->sampleGoal(rstate);
         else
             sampler_->sampleUniform(rstate);
-
-        if (DISTANCE_FUNC_ == 1){
-            if (rng_.uniform01() < samplingBias_){
-                rmotion->state_->as<R2BeliefSpace::StateType>()->setSigma(0.5);
-            }
-            else{
-                rmotion->state_->as<R2BeliefSpace::StateType>()->setSigmaX(rng_.uniform01()*max_eigenvalue_);
-                rmotion->state_->as<R2BeliefSpace::StateType>()->setSigmaY(rng_.uniform01()*max_eigenvalue_);
-            }
-        }
 
         /* find closest state in the tree */
         Motion *nmotion = selectNode(rmotion);

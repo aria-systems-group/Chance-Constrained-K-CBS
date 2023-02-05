@@ -156,14 +156,15 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintRRT_MP_Problems(InstanceP
             pdef->setGoal(goal);
 
             // create (and provide) the low-level motion planner object
-            // ob::PlannerPtr planner(std::make_shared<oc::ConstraintRRT>(si));
-            // planner->as<oc::ConstraintRRT>()->setProblemDefinition(pdef);
-            // planner->as<oc::ConstraintRRT>()->provideRobot(*itr);
-            // planner->as<oc::ConstraintRRT>()->setup();
+            ConstraintValidityCheckerPtr validator = std::make_shared<DeterministicCVC>(*itr);
+            ConstraintRespectingPlannerPtr planner(std::make_shared<oc::ConstraintRespectingRRT>(si));
+            planner->as<oc::ConstraintRespectingRRT>()->setProblemDefinition(pdef);
+            planner->as<oc::ConstraintRespectingRRT>()->setConstraintValidator(validator);
+            planner->as<oc::ConstraintRespectingRRT>()->setup();
 
             // append to MRMP problem list
-            // auto mp = std::make_shared<MotionPlanningProblem>(si, pdef, planner);
-            // prob_defs.push_back(mp);
+            auto mp = std::make_shared<MotionPlanningProblem>(si, pdef, planner);
+            prob_defs.push_back(mp);
         }
         else {
             OMPL_ERROR("%s: Dynamics model named %s is not yet implemented!", 
@@ -237,12 +238,15 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
             pdef->setOptimizationObjective(getEuclideanPathLengthObjective(si));
 
             // create (and provide) the low-level motion planner object
-            OMPL_ERROR("BSST not yet added to pdef.");
+            ConstraintValidityCheckerPtr validator = std::make_shared<BeliefCVC>(*itr);
+            ConstraintRespectingPlannerPtr planner(std::make_shared<oc::ConstraintRespectingBSST>(si));
+            planner->as<oc::ConstraintRespectingBSST>()->setProblemDefinition(pdef);
+            planner->as<oc::ConstraintRespectingBSST>()->setConstraintValidator(validator);
+            planner->as<oc::ConstraintRespectingBSST>()->setup();
 
             // append to MRMP problem list
-            // MotionPlanningProblem(si, pdef, )
-            // problem_t prob(si, pdef);
-            // prob_defs.push_back(prob);
+            auto mp = std::make_shared<MotionPlanningProblem>(si, pdef, planner);
+            prob_defs.push_back(mp);
         }
         else {
             OMPL_ERROR("%s: Dynamics model named %s is not yet implemented!", 

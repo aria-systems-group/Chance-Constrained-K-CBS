@@ -8,12 +8,28 @@ PCCBlackmoreSVC::PCCBlackmoreSVC(const oc::SpaceInformationPtr &si, InstancePtr 
 	n_obstacles_ = obs_list.size();
 	erf_inv_result_ = computeInverseErrorFunction(1 - 2 * p_collision_ / n_obstacles_);
 
-	A_list_.resize(n_obstacles_); 
-	
-	B_list_.resize(n_obstacles_); 
+	// A_list_.resize(n_obstacles_); 
+    Eigen::MatrixXf A(4, 2), B(4, 1);
+    
+    for (auto itr = obs_list.begin(); itr != obs_list.end(); itr++) {
+        auto vertices = (*itr)->getPolyPoints();
+        for (int i=0; i<exterior_points.size()-1; i++)
+        {
+            double x1 = boost::geometry::get<0>(exterior_points[i]);
+            double y1 = boost::geometry::get<1>(exterior_points[i]);
+            double x2 = boost::geometry::get<0>(exterior_points[i+1]);
+            double y2 = boost::geometry::get<1>(exterior_points[i+1]);
 
-	// A_list_ = ; #TODO: this needs to take in the polygons from obstacles and convert them to A and B matrices of the form Ax <= B
-	// B_list_ = ;
+            double a = y2 - y1;
+            double b = x1 - x2;
+            double c = a * x_1 + b * y_1;
+            A << a << b;
+            B << c;
+        }
+        A_list_.push_back(A);
+        B_list_.push_back(B);
+        
+    }
 }
 
 PCCBlackmoreSVC::~PCCBlackmoreSVC() {}
@@ -33,21 +49,7 @@ bool PCCBlackmoreSVC::isValid(const ob::State *state) const {
     //     return false;
     // }
 
-	//=========================================================================
-	// Extract the component of the state and cast it to what we expect
-	//=========================================================================
-	// double x_pose, y_pose;
-	// Eigen::MatrixXf PX(3, 3); PX.setZero();
-
-	// x_pose = state->as<R2BeliefSpace::StateType>()->getX();
-	// y_pose = state->as<R2BeliefSpace::StateType>()->getY();
-	// z_pose = 4.0;
-    // PX(0,0) = state->as<R2BeliefSpace::StateType>()->getCovariance()(0,0);
-    // PX(1,1) = state->as<R2BeliefSpace::StateType>()->getCovariance()(1,1);
-	// // PX(0,0) = state->as<ob::CompoundStateSpace::StateType>()->as<ob::RealVectorStateSpace::StateType>(4)->values[0];
-	// // PX(1,1) = state->as<ob::CompoundStateSpace::StateType>()->as<ob::RealVectorStateSpace::StateType>(4)->values[1];
-	// // PX(2,2) = state->as<ob::CompoundStateSpace::StateType>()->as<ob::RealVectorStateSpace::StateType>(4)->values[2];
-
+    PX = state->as<R2BeliefSpace::StateType>()->getCovariance();
 	//=========================================================================
 	// Probabilistic collision checker
 	//=========================================================================

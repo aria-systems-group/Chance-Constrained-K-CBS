@@ -29,6 +29,7 @@ class PCCBlackmoreSVC : public ob::StateValidityChecker {
 
 		std::vector<Eigen::Matrix<float, 4, 2> > A_list_;
 		std::vector<Eigen::Matrix<float, 4, 1> > B_list_;
+        Eigen::Matrix<float, 2, 2> PX;
 
 		inline double computeInverseErrorFunction_(const double &argument) {
 			return boost::math::erf_inv(argument);

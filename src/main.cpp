@@ -1,6 +1,8 @@
 #include "OmplSetUp.h"
 #include "Mergers/DeterministicMerger.h"
+#include "Mergers/BeliefMerger.h"
 #include "PlanValidityCheckers/DeterministicPlanValidityChecker.h"
+#include "PlanValidityCheckers/BeliefPlanValidityChecker.h"
 #include "Planners/KCBS.h"
 
 // OMPL_INFORM("OMPL version: %s", OMPL_VERSION);  // blue font
@@ -69,7 +71,16 @@ int main(int argc, char ** argv)
             bool solved = p->solve(vm["time"].as<double>());
         }
         else if (low_level_planner == "BSST") {
-            // solve uncertain MRMP w. K-CBS(BSST)
+            // set-up (and include) a Merger in case merge bound is hit
+            MergerPtr merger = std::make_shared<BeliefMerger>(mrmp_pdef);
+            mrmp_pdef->setMerger(merger);
+            // set-up (and include) a PlanValidityChecker for agent-to-agent collision checking
+            PlanValidityCheckerPtr planValidator = std::make_shared<BeliefPlanValidityChecker>(mrmp_pdef);
+            mrmp_pdef->setPlanValidator(planValidator);
+            // create instance of K-CBS, set-up, and solve
+            ob::PlannerPtr p(std::make_shared<oc::KCBS>(mrmp_pdef));
+            p->as<oc::KCBS>()->setMergeBound(vm["bound"].as<int>());
+            bool solved = p->solve(vm["time"].as<double>());
         } 
         else {
             OMPL_ERROR("%s: Implementation of K-CBS w/ %s is unavailable.", "main", low_level_planner.c_str());

@@ -1,40 +1,10 @@
 #pragma once
-// #include "common.h"
 #include "Planners/ConstraintRespectingPlanner.h"
+#include <utils/ConstraintRespectingGetDefaultNN.h>
 #include <ompl/tools/config/SelfConfig.h>
 #include <ompl/control/planners/PlannerIncludes.h>
 #include <ompl/datastructures/NearestNeighbors.h>
 
-
-/** \brief Select a default nearest neighbor datastructure for the given space
-*
-* The default depends on the planning algorithm and the space the planner operates in:
-* - If the space is a metric space and the planner is single-threaded,
-*   then the default is ompl::NearestNeighborsGNATNoThreadSafety.
-* - If the space is a metric space and the planner is multi-threaded,
-*   then the default is ompl::NearestNeighborsGNAT.
-* - If the space is a not a metric space,
-*   then the default is ompl::NearestNeighborsSqrtApprox.
-*/
-namespace ompl
-{
-    namespace tools
-    {
-        template <typename _T>
-        static NearestNeighbors<_T> *getDefaultNearestNeighbors(const ConstraintRespectingPlanner *planner)
-        {
-            const base::StateSpacePtr &space = planner->getSpaceInformation()->getStateSpace();
-            const base::PlannerSpecs &specs = planner->getSpecs();
-            if (space->isMetricSpace())
-            {
-                if (specs.multithreaded)
-                    return new NearestNeighborsGNAT<_T>();
-                return new NearestNeighborsGNATNoThreadSafety<_T>();
-            }
-            return new NearestNeighborsSqrtApprox<_T>();
-        }
-    }
-}
 
 namespace ompl
 {
@@ -65,15 +35,6 @@ namespace ompl
             ConstraintRespectingRRT(const SpaceInformationPtr &si);
 
             ~ConstraintRespectingRRT() override;
-
-            // add my things required for planning w/ KCBS
-            void setConstraintValidator(ConstraintValidityCheckerPtr &validator)
-            {
-                constraintValidator_ = validator;
-            }
-            const ConstraintValidityCheckerPtr getConstraintValidator() const {return constraintValidator_;};
-            
-            void updateConstraints(std::vector<ConstraintPtr> c) override;
 
             /** \brief Continue solving for some amount of time. Return true if solution was found. */
             base::PlannerStatus solve(const base::PlannerTerminationCondition &ptc) override;

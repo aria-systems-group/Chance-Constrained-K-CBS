@@ -12,8 +12,10 @@
 #include "Goals/MultiRobotStateSpaceGoals.h"
 #include "Goals/BeliefSpaceGoals.h"
 #include "Planners/ConstraintRespectingRRT.h"
+#include "Planners/ConstraintRespectingBSST.h"
 #include "OptimizationObjectives/StateCostObjectives.h"
 #include "ConstraintValidityCheckers/DeterministicCVC.h"
+#include "ConstraintValidityCheckers/BeliefCVC.h"
 #include "MultiRobotProblemDefinition.h"
 #include <ompl/control/SpaceInformation.h>
 #include <ompl/control/spaces/RealVectorControlSpace.h>

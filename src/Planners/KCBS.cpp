@@ -400,7 +400,6 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
             return base::PlannerStatus::INVALID_START;
          }
       }
-
       /* store initial trajectory */
       if (solved)
       {

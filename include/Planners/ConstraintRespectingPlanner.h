@@ -138,9 +138,18 @@ public:
     {
         constraintValidator_ = validator;
     }
+
     const ConstraintValidityCheckerPtr getConstraintValidator() const {return constraintValidator_;};
-    // void provideRobot(Robot *r) {robot_ = r;};
-    virtual void updateConstraints(std::vector<ConstraintPtr> c) = 0;
+    
+    void updateConstraints(std::vector<ConstraintPtr> c)
+    {
+        /* clear old data */
+        clear();
+        /* clear old solutions */
+        getProblemDefinition()->clearSolutionPaths();
+        /* update constraints */
+        constraints_ = c;
+    }
 
     /** \brief Cast this instance to a desired type. */
     template <class T>

@@ -53,18 +53,6 @@ void oc::ConstraintRespectingRRT::freeMemory()
     }
 }
 
-void oc::ConstraintRespectingRRT::updateConstraints(std::vector<ConstraintPtr> c)
-{
-	/* clear old data */
-	clear();
-
-	/* clear old solutions */
-	getProblemDefinition()->clearSolutionPaths();
-
-	/* update constraints */
-	constraints_ = c;
-}
-
 ob::PlannerStatus oc::ConstraintRespectingRRT::solve(const ob::PlannerTerminationCondition &ptc)
 {
 	checkValidity();

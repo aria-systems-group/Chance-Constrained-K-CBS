@@ -39,6 +39,27 @@ namespace ompl
             /** \brief Continue solving for some amount of time. Return true if solution was found. */
             base::PlannerStatus solve(const base::PlannerTerminationCondition &ptc) override;
 
+            // add my things required for planning w/ KCBS
+            void setConstraintValidator(ConstraintValidityCheckerPtr &validator) override
+            {
+                constraintValidator_ = validator;
+            }
+
+            const ConstraintValidityCheckerPtr getConstraintValidator() override
+            {
+                return constraintValidator_;
+            }
+
+            void updateConstraints(std::vector<ConstraintPtr> c) override
+            {
+                /* clear old data */
+                clear();
+                /* clear old solutions */
+                getProblemDefinition()->clearSolutionPaths();
+                /* update constraints */
+                constraints_ = c;
+            }
+
             /** \brief Clear datastructures. Call this function if the
                 input data to the planner has changed and you do not
                 want to continue planning */

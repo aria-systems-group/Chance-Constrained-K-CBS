@@ -134,22 +134,11 @@ public:
     virtual ~ConstraintRespectingPlanner() = default;
 
     // add my things required for planning w/ KCBS
-    void setConstraintValidator(ConstraintValidityCheckerPtr &validator)
-    {
-        constraintValidator_ = validator;
-    }
+    virtual void setConstraintValidator(ConstraintValidityCheckerPtr &validator) = 0;
 
-    const ConstraintValidityCheckerPtr getConstraintValidator() const {return constraintValidator_;};
+    virtual const ConstraintValidityCheckerPtr getConstraintValidator() = 0;
     
-    void updateConstraints(std::vector<ConstraintPtr> c)
-    {
-        /* clear old data */
-        clear();
-        /* clear old solutions */
-        getProblemDefinition()->clearSolutionPaths();
-        /* update constraints */
-        constraints_ = c;
-    }
+    virtual void updateConstraints(std::vector<ConstraintPtr> c) = 0;
 
     /** \brief Cast this instance to a desired type. */
     template <class T>

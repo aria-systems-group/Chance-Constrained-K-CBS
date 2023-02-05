@@ -247,47 +247,163 @@ ompl::base::PlannerStatus ompl::control::ConstraintRespectingBSST::solve(const b
                 motion->steps_ = cd;
                 motion->parent_ = nmotion;
                 nmotion->numChildren_++;
-                closestWitness->linkRep(motion);
 
-                nn_->add(motion);
+                if (!constraints_.empty()) {
+                    // check the motion for constraint validation prior to adding motion
+                    oc::PathControl p(si_);
+                    p.append(motion->parent_->state_);
+                    p.append(motion->state_, motion->control_, (motion->steps_ * siC_->getPropagationStepSize()));
+                    p.interpolate();
+                    if (constraintValidator_->satisfiesConstraints(p, constraints_)) {
+                        closestWitness->linkRep(motion);
 
-                if (DISTANCE_FUNC_ == 0){
-                    if (motion->state_->as<R2BeliefSpaceEuclidean::StateType>()->getCovariance()(0,0) > max_eigenvalue_)
-                    {
-                        max_eigenvalue_ = motion->state_->as<R2BeliefSpaceEuclidean::StateType>()->getCovariance()(0,0);
-                    }
-                    else if (motion->state_->as<R2BeliefSpaceEuclidean::StateType>()->getCovariance()(1,1) > max_eigenvalue_)
-                    {
-                        max_eigenvalue_ = motion->state_->as<R2BeliefSpaceEuclidean::StateType>()->getCovariance()(1,1);
+                        nn_->add(motion);
+
+                        if (DISTANCE_FUNC_ == 0){
+                            if (motion->state_->as<R2BeliefSpaceEuclidean::StateType>()->getCovariance()(0,0) > max_eigenvalue_)
+                            {
+                                max_eigenvalue_ = motion->state_->as<R2BeliefSpaceEuclidean::StateType>()->getCovariance()(0,0);
+                            }
+                            else if (motion->state_->as<R2BeliefSpaceEuclidean::StateType>()->getCovariance()(1,1) > max_eigenvalue_)
+                            {
+                                max_eigenvalue_ = motion->state_->as<R2BeliefSpaceEuclidean::StateType>()->getCovariance()(1,1);
+                            }
+                        }
+                        else if (DISTANCE_FUNC_ == 1){
+                            if (motion->state_->as<R2BeliefSpace::StateType>()->getCovariance()(0,0) > max_eigenvalue_)
+                            {
+                                max_eigenvalue_ = motion->state_->as<R2BeliefSpace::StateType>()->getCovariance()(0,0);
+                            }
+                            else if (motion->state_->as<R2BeliefSpace::StateType>()->getCovariance()(1,1) > max_eigenvalue_)
+                            {
+                                max_eigenvalue_ = motion->state_->as<R2BeliefSpace::StateType>()->getCovariance()(1,1);
+                            }
+                        }
+
+                        double dist = 0.0;
+                        bool solv = goal->isSatisfied(motion->state_, &dist);
+                        if (solv && opt_->isCostBetterThan(motion->accCost_, prevSolutionCost_))
+                        {
+                            approxdif = dist;
+                            solution = motion;
+
+                            for (auto &i : prevSolution_)
+                                if (i)
+                                    si_->freeState(i);
+                            prevSolution_.clear();
+                            for (auto &prevSolutionControl : prevSolutionControls_)
+                                if (prevSolutionControl)
+                                    siC_->freeControl(prevSolutionControl);
+                            prevSolutionControls_.clear();
+                            prevSolutionSteps_.clear();
+
+                            Motion *solTrav = solution;
+                            while (solTrav->parent_ != nullptr)
+                            {
+                                prevSolution_.push_back(si_->cloneState(solTrav->state_));
+                                prevSolutionControls_.push_back(siC_->cloneControl(solTrav->control_));
+                                prevSolutionSteps_.push_back(solTrav->steps_);
+                                solTrav = solTrav->parent_;
+                            }
+                            prevSolution_.push_back(si_->cloneState(solTrav->state_));
+                            prevSolutionCost_ = solution->accCost_;
+
+                            OMPL_INFORM("Found solution with cost %.2f", solution->accCost_.value());
+                            sufficientlyShort = opt_->isSatisfied(solution->accCost_);
+                            if (sufficientlyShort)
+                                break;
+                        }
+                        if (solution == nullptr && dist < approxdif)
+                        {
+                            approxdif = dist;
+                            approxsol = motion;
+
+                            for (auto &i : prevSolution_)
+                                if (i)
+                                    si_->freeState(i);
+                            prevSolution_.clear();
+                            for (auto &prevSolutionControl : prevSolutionControls_)
+                                if (prevSolutionControl)
+                                    siC_->freeControl(prevSolutionControl);
+                            prevSolutionControls_.clear();
+                            prevSolutionSteps_.clear();
+
+                            Motion *solTrav = approxsol;
+                            while (solTrav->parent_ != nullptr)
+                            {
+                                prevSolution_.push_back(si_->cloneState(solTrav->state_));
+                                prevSolutionControls_.push_back(siC_->cloneControl(solTrav->control_));
+                                prevSolutionSteps_.push_back(solTrav->steps_);
+                                solTrav = solTrav->parent_;
+                            }
+                            prevSolution_.push_back(si_->cloneState(solTrav->state_));
+                        }
+
+                        if (oldRep != rmotion)
+                        {
+                            while (oldRep->inactive_ && oldRep->numChildren_ == 0)
+                            {
+                                oldRep->inactive_ = true;
+                                nn_->remove(oldRep);
+
+                                if (oldRep->state_)
+                                    si_->freeState(oldRep->state_);
+                                if (oldRep->control_)
+                                    siC_->freeControl(oldRep->control_);
+
+                                oldRep->state_ = nullptr;
+                                oldRep->control_ = nullptr;
+                                oldRep->parent_->numChildren_--;
+                                Motion *oldRepParent = oldRep->parent_;
+                                delete oldRep;
+                                oldRep = oldRepParent;
+                            }
+                        }
                     }
                 }
-                else if (DISTANCE_FUNC_ == 1){
-                    if (motion->state_->as<R2BeliefSpace::StateType>()->getCovariance()(0,0) > max_eigenvalue_)
-                    {
-                        max_eigenvalue_ = motion->state_->as<R2BeliefSpace::StateType>()->getCovariance()(0,0);
-                    }
-                    else if (motion->state_->as<R2BeliefSpace::StateType>()->getCovariance()(1,1) > max_eigenvalue_)
-                    {
-                        max_eigenvalue_ = motion->state_->as<R2BeliefSpace::StateType>()->getCovariance()(1,1);
-                    }
-                }
+                else {
+                    // proceed as normal
+                    closestWitness->linkRep(motion);
 
-                double dist = 0.0;
-                bool solv = goal->isSatisfied(motion->state_, &dist);
-                if (solv && opt_->isCostBetterThan(motion->accCost_, prevSolutionCost_))
-                {
-                    approxdif = dist;
-                    solution = motion;
+                    nn_->add(motion);
 
-                    for (auto &i : prevSolution_)
-                        if (i)
-                            si_->freeState(i);
-                    prevSolution_.clear();
-                    for (auto &prevSolutionControl : prevSolutionControls_)
-                        if (prevSolutionControl)
-                            siC_->freeControl(prevSolutionControl);
-                    prevSolutionControls_.clear();
-                    prevSolutionSteps_.clear();
+                    if (DISTANCE_FUNC_ == 0){
+                        if (motion->state_->as<R2BeliefSpaceEuclidean::StateType>()->getCovariance()(0,0) > max_eigenvalue_)
+                        {
+                            max_eigenvalue_ = motion->state_->as<R2BeliefSpaceEuclidean::StateType>()->getCovariance()(0,0);
+                        }
+                        else if (motion->state_->as<R2BeliefSpaceEuclidean::StateType>()->getCovariance()(1,1) > max_eigenvalue_)
+                        {
+                            max_eigenvalue_ = motion->state_->as<R2BeliefSpaceEuclidean::StateType>()->getCovariance()(1,1);
+                        }
+                    }
+                    else if (DISTANCE_FUNC_ == 1){
+                        if (motion->state_->as<R2BeliefSpace::StateType>()->getCovariance()(0,0) > max_eigenvalue_)
+                        {
+                            max_eigenvalue_ = motion->state_->as<R2BeliefSpace::StateType>()->getCovariance()(0,0);
+                        }
+                        else if (motion->state_->as<R2BeliefSpace::StateType>()->getCovariance()(1,1) > max_eigenvalue_)
+                        {
+                            max_eigenvalue_ = motion->state_->as<R2BeliefSpace::StateType>()->getCovariance()(1,1);
+                        }
+                    }
+
+                    double dist = 0.0;
+                    bool solv = goal->isSatisfied(motion->state_, &dist);
+                    if (solv && opt_->isCostBetterThan(motion->accCost_, prevSolutionCost_))
+                    {
+                        approxdif = dist;
+                        solution = motion;
+
+                        for (auto &i : prevSolution_)
+                            if (i)
+                                si_->freeState(i);
+                        prevSolution_.clear();
+                        for (auto &prevSolutionControl : prevSolutionControls_)
+                            if (prevSolutionControl)
+                                siC_->freeControl(prevSolutionControl);
+                        prevSolutionControls_.clear();
+                        prevSolutionSteps_.clear();
 
                     Motion *solTrav = solution;
                     while (solTrav->parent_ != nullptr)
@@ -304,51 +420,52 @@ ompl::base::PlannerStatus ompl::control::ConstraintRespectingBSST::solve(const b
                     sufficientlyShort = opt_->isSatisfied(solution->accCost_);
                     if (sufficientlyShort)
                         break;
-                }
-                if (solution == nullptr && dist < approxdif)
-                {
-                    approxdif = dist;
-                    approxsol = motion;
-
-                    for (auto &i : prevSolution_)
-                        if (i)
-                            si_->freeState(i);
-                    prevSolution_.clear();
-                    for (auto &prevSolutionControl : prevSolutionControls_)
-                        if (prevSolutionControl)
-                            siC_->freeControl(prevSolutionControl);
-                    prevSolutionControls_.clear();
-                    prevSolutionSteps_.clear();
-
-                    Motion *solTrav = approxsol;
-                    while (solTrav->parent_ != nullptr)
-                    {
-                        prevSolution_.push_back(si_->cloneState(solTrav->state_));
-                        prevSolutionControls_.push_back(siC_->cloneControl(solTrav->control_));
-                        prevSolutionSteps_.push_back(solTrav->steps_);
-                        solTrav = solTrav->parent_;
                     }
-                    prevSolution_.push_back(si_->cloneState(solTrav->state_));
-                }
-
-                if (oldRep != rmotion)
-                {
-                    while (oldRep->inactive_ && oldRep->numChildren_ == 0)
+                    if (solution == nullptr && dist < approxdif)
                     {
-                        oldRep->inactive_ = true;
-                        nn_->remove(oldRep);
+                        approxdif = dist;
+                        approxsol = motion;
 
-                        if (oldRep->state_)
-                            si_->freeState(oldRep->state_);
-                        if (oldRep->control_)
-                            siC_->freeControl(oldRep->control_);
+                        for (auto &i : prevSolution_)
+                            if (i)
+                                si_->freeState(i);
+                        prevSolution_.clear();
+                        for (auto &prevSolutionControl : prevSolutionControls_)
+                            if (prevSolutionControl)
+                                siC_->freeControl(prevSolutionControl);
+                        prevSolutionControls_.clear();
+                        prevSolutionSteps_.clear();
 
-                        oldRep->state_ = nullptr;
-                        oldRep->control_ = nullptr;
-                        oldRep->parent_->numChildren_--;
-                        Motion *oldRepParent = oldRep->parent_;
-                        delete oldRep;
-                        oldRep = oldRepParent;
+                        Motion *solTrav = approxsol;
+                        while (solTrav->parent_ != nullptr)
+                        {
+                            prevSolution_.push_back(si_->cloneState(solTrav->state_));
+                            prevSolutionControls_.push_back(siC_->cloneControl(solTrav->control_));
+                            prevSolutionSteps_.push_back(solTrav->steps_);
+                            solTrav = solTrav->parent_;
+                        }
+                        prevSolution_.push_back(si_->cloneState(solTrav->state_));
+                    }
+
+                    if (oldRep != rmotion)
+                    {
+                        while (oldRep->inactive_ && oldRep->numChildren_ == 0)
+                        {
+                            oldRep->inactive_ = true;
+                            nn_->remove(oldRep);
+
+                            if (oldRep->state_)
+                                si_->freeState(oldRep->state_);
+                            if (oldRep->control_)
+                                siC_->freeControl(oldRep->control_);
+
+                            oldRep->state_ = nullptr;
+                            oldRep->control_ = nullptr;
+                            oldRep->parent_->numChildren_--;
+                            Motion *oldRepParent = oldRep->parent_;
+                            delete oldRep;
+                            oldRep = oldRepParent;
+                        }
                     }
                 }
             }

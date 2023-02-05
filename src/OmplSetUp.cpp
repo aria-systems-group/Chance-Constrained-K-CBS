@@ -238,7 +238,7 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
             pdef->setOptimizationObjective(getEuclideanPathLengthObjective(si));
 
             // create (and provide) the low-level motion planner object
-            ConstraintValidityCheckerPtr validator = std::make_shared<BeliefCVC>(*itr);
+            ConstraintValidityCheckerPtr validator = std::make_shared<BeliefCVC>(*itr, mrmp_instance->getObstacles().size());
             ConstraintRespectingPlannerPtr planner(std::make_shared<oc::ConstraintRespectingBSST>(si));
             planner->as<oc::ConstraintRespectingBSST>()->setProblemDefinition(pdef);
             planner->as<oc::ConstraintRespectingBSST>()->setConstraintValidator(validator);

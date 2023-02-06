@@ -57,20 +57,15 @@ bool PCCBlackmoreSVC::isValid(const ob::State *state) const {
 	//=========================================================================
 	// Probabilistic collision checker
 	//=========================================================================
-	bool valid = true;
 	for (int o = 0; o < n_obstacles_; o++) {
 		if (not HyperplaneCCValidityChecker_(A_list_.at(o), B_list_.at(o), x, y, PX)) {
-			goto exit_switch;
+			return false;
 		}
 	}
-
-	exit_switch:;
-	return valid;
+	return true;
 }
 
 bool PCCBlackmoreSVC::HyperplaneCCValidityChecker_(const Eigen::MatrixXd &A, const Eigen::MatrixXd &B, const double &x_pose, const double &y_pose, const Eigen::MatrixXd &PX) const {
-	
-    bool valid = false;
 	double PV, b_bar;
 	Eigen::MatrixXf Pv_2;
 
@@ -79,9 +74,8 @@ bool PCCBlackmoreSVC::HyperplaneCCValidityChecker_(const Eigen::MatrixXd &A, con
 		PV = sqrt(tmp);
 		b_bar = sqrt(2) * PV * erf_inv_result_;
 		if(x_pose * A(i, 0) + y_pose * A(i, 1) >= (B(i, 0) + b_bar)) {
-			valid = true;
-			break;
+            return true;
 		}
 	}
-	return valid;
+	return false;
 }

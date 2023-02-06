@@ -25,11 +25,13 @@ RectangularObstacle::RectangularObstacle(double x, double y, double len, double 
     Point top_left(x_ - (len_ / 2), y_ + (width_ / 2));
     Point top_right(x_ + (len_ / 2), y_ + (width_ / 2));
 
-    bg::append(poly_.outer(), bott_left);
-    bg::append(poly_.outer(), bott_right);
+    
+    
     bg::append(poly_.outer(), top_right);
-    bg::append(poly_.outer(), top_left);
+    bg::append(poly_.outer(), bott_right);
     bg::append(poly_.outer(), bott_left);
+    bg::append(poly_.outer(), top_left);
+    bg::append(poly_.outer(), top_right);
 }
 
 Robot::Robot(std::string name, std::string model, Location start, Location goal):

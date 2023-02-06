@@ -380,7 +380,7 @@
 // write solultion to the system
 void exportBeliefPlan(const std::vector<oc::PathControl*> plan, const std::string problem_name)
 {
-    fs::path sol_dir = "solution/" + problem_name;
+    fs::path sol_dir = "solutions/" + problem_name;
     std::filesystem::remove_all(sol_dir);
     fs::create_directories(sol_dir);
     for (int i = 0; i < plan.size(); i++)

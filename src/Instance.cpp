@@ -59,14 +59,14 @@ bool Instance::load_map_()
     }
     assert((x_max_ > 0 && y_max_ > 0));
     // getline(myfile, line);
-    int r = 0;
+    int c = 0;
     while (getline(myfile, line)) {
-        for (int c = 0; c < x_max_; c++) {
-            if (line[c] != '.') {
+        for (int r = 0; r < x_max_; r++) {
+            if (line[r] != '.') {
                 obstacles_.emplace_back(new RectangularObstacle(r, c, 1, 1));
             }
         }
-        r++;
+        c++; // pun intended...
     }
     myfile.close();
     return true;
@@ -100,14 +100,14 @@ bool Instance::load_agents_()
         beg++; // skip the map name
         beg++; // skip the columns
         beg++; // skip the rows
-        int col = atoi((*beg).c_str());
-        beg++;
         int row = atoi((*beg).c_str());
+        beg++;
+        int col = atoi((*beg).c_str());
         Location start(row, col);
         beg++;
-        col = atoi((*beg).c_str());
-        beg++;
         row = atoi((*beg).c_str());
+        beg++;
+        col = atoi((*beg).c_str());
         Location goal(row, col);
         beg++;
         std::string shape = std::string(*beg);
@@ -147,6 +147,7 @@ void Instance::printRobots()
         OMPL_INFORM("   - Name: %s", (*itr)->getName().c_str());
         OMPL_INFORM("   - Dynamics: %s", (*itr)->getDynamicsModel().c_str());
         (*itr)->printShape();
+        OMPL_INFORM("   - Goal: (%0.1f,%0.1f)", (*itr)->getGoalLocation().x_, (*itr)->getGoalLocation().y_);
     }
 };
 void Instance::print()

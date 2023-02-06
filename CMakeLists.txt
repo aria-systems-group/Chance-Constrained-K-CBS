@@ -35,8 +35,8 @@ if (LINUX)
     # os specific library importing
     add_library(ompl SHARED IMPORTED)
     set_target_properties(ompl PROPERTIES
-      IMPORTED_LOCATION "/opt/homebrew/lib/libompl.dylib"
-      INTERFACE_INCLUDE_DIRECTORIES "/opt/homebrew/include/ompl-1.6"
+      IMPORTED_LOCATION ""
+      INTERFACE_INCLUDE_DIRECTORIES ""
     )
 endif (LINUX)
 

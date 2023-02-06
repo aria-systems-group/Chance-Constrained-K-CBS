@@ -1,22 +1,15 @@
-// #pragma once
-// // #include "World.h"
-// #include "multiAgentSetUp.h"
-// #include <ompl/base/ProblemDefinition.h>
-// #include <ompl/control/PathControl.h>
-// #include <filesystem>
-// #include <iostream>
-// #include <fstream>
-// #include <string>
-// #include <boost/geometry.hpp>
+#pragma once
+#include "common.h"
+#include "Spaces/R2BeliefSpace.h"
+#include <string>
+#include <vector>
+#include <ompl/control/PathControl.h>
+#include <fstream>
+#include <filesystem>
 
-
-// namespace ob = ompl::base;
-// namespace oc = ompl::control;
-// namespace fs = std::filesystem;
-// namespace bg = boost::geometry;
-// typedef bg::model::point<double, 2, bg::cs::cartesian> Point;
-// typedef bg::model::segment<Point> Segment;
-
+namespace ob = ompl::base;
+namespace oc = ompl::control;
+namespace fs = std::filesystem;
 
 // std::vector<oc::PathControl> decentralizeTrajectory(std::vector<oc::PathControl> compPlan, 
 //     const World *w);
@@ -33,6 +26,4 @@
 // fs::path appendTimeToFileName(const fs::path& fileName);
 
 // // write solultion to the system
-// void write2sys(const std::vector<oc::PathControl> plan, 
-//         const std::vector<Agent*> agents, const std::string problem_name,
-//         std::vector<int> expCosts);
+void exportBeliefPlan(const std::vector<oc::PathControl*> plan, const std::string problem_name);

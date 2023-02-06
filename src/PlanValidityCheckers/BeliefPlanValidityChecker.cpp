@@ -2,7 +2,7 @@
 
 BeliefPlanValidityChecker::BeliefPlanValidityChecker(MultiRobotProblemDefinitionPtr pdef):
 	PlanValidityChecker(pdef, "BeliefPlanValidityChecker"), p_safe_(0.7), 
-	p_coll_dist_( (1-p_safe_) / pdef->getInstance()->getObstacles().size()) 
+	p_coll_dist_( (1-p_safe_) / pdef->getInstance()->getObstacles().size()) //pdef->getInstance()->getObstacles().size()
 {
 	// this can be generalized in the future based on robot shapes
 	HalfPlanes_.push_back({1.0,0.0,1.0}) ; // right side
@@ -51,7 +51,7 @@ ConstraintPtr BeliefPlanValidityChecker::createConstraint(Plan p, std::vector<Co
 	const double step_duration = mrmp_pdef_->getSystemStepSize();
 	std::vector<double> times;
 	std::vector<ob::State*> states;
-    std::cout << conflicts.size() << std::endl;
+    // std::cout << conflicts.size() << std::endl;
 	for (auto itr = conflicts.begin(); itr != conflicts.end(); itr++) {
 		times.push_back(((*itr)->timeStep_ * step_duration));
 		if ( (*itr)->timeStep_ <  p[robotIdx].getStates().size()) {

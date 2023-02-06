@@ -621,14 +621,14 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
       // printf("%p\n", solution);
       // printf("Sol. size: %lu \n", solution->getPlan().size());
       solved = true;
-      OMPL_INFORM("%s: Found Solution in %0.3f seconds!", getName().c_str(), 
-         solveTime_);
+      OMPL_INFORM("%s: Found Solution in %0.3f seconds!", getName().c_str(), solveTime_);
       // /* add correct path to all problem instances */
-      // for (int i = 0; i < mmpp_.size(); i++)
-      // {
-      //    auto path(std::make_shared<PathControl>(solution->getPlan()[i]));
-      //    mmpp_[i].second->addSolutionPath(path, false, -1.0, mrmp_instance_->getRobots()[i]->getName());
-      // }
+      auto sol_plan = solution->getPlan();
+      for (int i = 0; i < sol_plan.size(); i++)
+      {
+         auto path(std::make_shared<PathControl>(sol_plan[i]));
+         mrmp_pdef_->getRobotProblemDefinitionPtr(i)->addSolutionPath(path, false, -1.0, getName().c_str());
+      }
       OMPL_INFORM("%s: Planning Complete.", getName().c_str());
       return {solved, false};
    }

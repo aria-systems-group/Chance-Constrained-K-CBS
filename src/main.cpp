@@ -4,6 +4,7 @@
 #include "PlanValidityCheckers/DeterministicPlanValidityChecker.h"
 #include "PlanValidityCheckers/BeliefPlanValidityChecker.h"
 #include "Planners/KCBS.h"
+#include "postProcess.h"
 
 // OMPL_INFORM("OMPL version: %s", OMPL_VERSION);  // blue font
 // OMPL_WARN("OMPL version: %s", OMPL_VERSION);  // yellow font
@@ -32,7 +33,6 @@ void parse_cmd_line(int &argc, char ** &argv, po::variables_map &vm, po::options
 
 int main(int argc, char ** argv)
 {
-    
     po::variables_map vm;
     po::options_description desc("Allowed options");
     parse_cmd_line(argc, argv, vm, desc);
@@ -44,7 +44,7 @@ int main(int argc, char ** argv)
 
     // set-up planning instance
     InstancePtr instance = std::make_shared<Instance>(vm);
-    instance->print();
+    // instance->print(); // print the map (for debugging etc.)
 
     // set-up low-level planners
     std::vector<MotionPlanningProblemPtr> mp_problems = set_up_all_MP_Problems(instance);
@@ -81,6 +81,15 @@ int main(int argc, char ** argv)
             ob::PlannerPtr p(std::make_shared<oc::KCBS>(mrmp_pdef));
             p->as<oc::KCBS>()->setMergeBound(vm["bound"].as<int>());
             bool solved = p->solve(vm["time"].as<double>());
+            if (solved) {
+                // extract and write results to file
+                std::vector<oc::PathControl*> plan;
+                for (int i=0; i < vm["numAgents"].as<int>(); i++) {
+                    oc::PathControl* path = mrmp_pdef->getRobotProblemDefinitionPtr(i)->getSolutionPath()->as<oc::PathControl>();
+                    plan.push_back(path);
+                }
+                exportBeliefPlan(plan, vm["output"].as<std::string>());
+            }
         } 
         else {
             OMPL_ERROR("%s: Implementation of K-CBS w/ %s is unavailable.", "main", low_level_planner.c_str());

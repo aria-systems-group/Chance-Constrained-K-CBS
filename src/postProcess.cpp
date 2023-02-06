@@ -1,4 +1,4 @@
-// #include "postProcess.h"
+#include "postProcess.h"
 // #include <ompl/base/spaces/RealVectorStateSpace.h>
 // #include <ompl/control/spaces/RealVectorControlSpace.h>
 // #include <ompl/base/spaces/SO2StateSpace.h>
@@ -377,44 +377,60 @@
 //     return fileName.stem().string() + "_" + GetCurrentTimeForFileName() + fileName.extension().string();
 // }
 
-// // write solultion to the system
-// void write2sys(const std::vector<oc::PathControl> plan, 
-//         const std::vector<Agent*> agents, const std::string problem_name,
-//         std::vector<int> costs)
-// {
-//     fs::path sol_dir = "solutions/" + problem_name;
-//     std::filesystem::remove_all(sol_dir);
-//     fs::create_directories(sol_dir);
-//     for (int i = 0; i < plan.size(); i++)
-//     {
-//         std::string fileName = "agent" + std::to_string(i) + ".txt";
-//         auto filePath = fs::current_path() / sol_dir / fs::path(fileName); // appendTimeToFileName(fileName); // e.g. MyPrettyFile_2018-06-09_01-42-00.txt
-//         std::ofstream file(filePath);
-//         plan[i].printAsMatrix(file);
-//         file.close();
-//         // go back to file and add cost to end of each line
-//         std::ifstream in(filePath);
-//         auto filePath2 = fs::current_path() / sol_dir / 
-//             fs::path("agent" + std::to_string(i) + "_explanation.txt"); // appendTimeToFileName(fileName); // e.g. MyPrettyFile_2018-06-09_01-42-00.txt
-// 		std::ofstream out(filePath2);
-// 		std::string line;
+// write solultion to the system
+void exportBeliefPlan(const std::vector<oc::PathControl*> plan, const std::string problem_name)
+{
+    fs::path sol_dir = "solution/" + problem_name;
+    std::filesystem::remove_all(sol_dir);
+    fs::create_directories(sol_dir);
+    for (int i = 0; i < plan.size(); i++)
+    {
+        std::string fileName = "agent" + std::to_string(i) + ".txt";
+        auto filePath = fs::current_path() / sol_dir / fs::path(fileName);
+        std::ofstream file(filePath);
+        plan[i]->printAsMatrix(file);
+        file.close();
 
-// 		int idx = 0;
-// 		while (getline(in, line))
-// 		{
-// 		    if (!line.empty())
-// 		    {
-// 		        out << line;
-		
-// 		        // process line as needed...
-		
-// 		        out << " " << costs[idx];
-// 		    }
-// 		    out << "\n";
-// 		    idx++;
-// 		}
+        // print covariances
+        std::string covName = "agent" + std::to_string(i) + "_covs.txt";
+        auto covFilePath = fs::current_path() / sol_dir / fs::path(covName);
+        std::ofstream MyFile(covFilePath);
+        std::vector<ob::State*> states = plan[i]->getStates();
+        for (auto itr = states.begin(); itr != states.end(); itr++) {
+            Eigen::Matrix2d Sigma = (*itr)->as<R2BeliefSpace::StateType>()->getCovariance();
+            int r = Sigma.rows();
+            int c = Sigma.cols();
+            for (int i = 0; i < r; ++i)
+            {
+                for (int j = 0; j < c; ++j)
+                {
+                    MyFile << Sigma(i,j) << " ";
+                }
+            }
+            MyFile << std::endl;
+        }
+        // // go back to file and add cost to end of each line
+        // std::ifstream in(filePath);
+        // auto filePath2 = fs::current_path() / sol_dir / 
+        //     fs::path("agent" + std::to_string(i) + "_explanation.txt"); // appendTimeToFileName(fileName); // e.g. MyPrettyFile_2018-06-09_01-42-00.txt
+		// std::ofstream out(filePath2);
+		// std::string line;
 
-// in.close();
-// out.close();
-//     }
-// }
+		// int idx = 0;
+		// while (getline(in, line))
+		// {
+		//     if (!line.empty())
+		//     {
+		//         out << line;
+		
+		//         // process line as needed...
+		
+		//         out << " " << costs[idx];
+		//     }
+		//     out << "\n";
+		//     idx++;
+		// }
+        // in.close();
+        // out.close();
+    }
+}

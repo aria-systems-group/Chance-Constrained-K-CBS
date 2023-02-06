@@ -216,9 +216,14 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
             si->setMinMaxControlDuration(1, 10);
             si->setup();
 
-            ob::ScopedState<> start(space);
-            start[0] = (*itr)->getStartLocation().x_;
-            start[1] = (*itr)->getStartLocation().y_;
+            // ob::ScopedState<> start(space);
+            // start[0] = (*itr)->getStartLocation().x_;
+            // start[1] = (*itr)->getStartLocation().y_;
+            ob::State *start = si->allocState();
+            Eigen::Matrix2d Sigma0;
+            Sigma0 << 0.1, 0, 0, 0.1;
+            start->as<R2BeliefSpace::StateType>()->setXY((*itr)->getStartLocation().x_, (*itr)->getStartLocation().y_);
+            start->as<R2BeliefSpace::StateType>()->setSigma(Sigma0);
 
             ob::ScopedState<> goal_loc(space);
             goal_loc[0] = (*itr)->getGoalLocation().x_;

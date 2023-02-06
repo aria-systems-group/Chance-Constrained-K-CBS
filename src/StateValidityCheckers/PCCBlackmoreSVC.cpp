@@ -6,14 +6,15 @@ PCCBlackmoreSVC::PCCBlackmoreSVC(const oc::SpaceInformationPtr &si, InstancePtr 
 
 	std::vector<Obstacle*> obs_list = mrmp_instance_->getObstacles();
 	n_obstacles_ = obs_list.size();
-	erf_inv_result_ = computeInverseErrorFunction(1 - 2 * p_collision_ / n_obstacles_);
+	erf_inv_result_ = computeInverseErrorFunction_(1 - 2 * p_collision_ / n_obstacles_);
 
 	// A_list_.resize(n_obstacles_); 
    
     
     for (auto itr = obs_list.begin(); itr != obs_list.end(); itr++) {
-        auto vertices = (*itr)->getPolyPoints();
-		Eigen::MatrixXf A(4, 2), B(4, 1);
+        auto exterior_points = (*itr)->getPolyPoints();
+		Eigen::MatrixXd A(4, 2);
+        Eigen::MatrixXd B(4, 1);
         for (int i=0; i<exterior_points.size()-1; i++)
         {
             double x1 = boost::geometry::get<0>(exterior_points[i]);
@@ -24,8 +25,11 @@ PCCBlackmoreSVC::PCCBlackmoreSVC(const oc::SpaceInformationPtr &si, InstancePtr 
             double a = y2 - y1;
             double b = x1 - x2;
             double c = a * x1 + b * y1;
-            A << a << b;
-            B << c;
+
+            A(i, 0) = a;
+            A(i, 1) = b;
+            
+            B(i,0) = c;
         }
         A_list_.push_back(A);
         B_list_.push_back(B);
@@ -49,13 +53,13 @@ bool PCCBlackmoreSVC::isValid(const ob::State *state) const {
     // }
 	double x = state->as<R2BeliefSpace::StateType>()->getX();
     double y = state->as<R2BeliefSpace::StateType>()->getY();
-    PX = state->as<R2BeliefSpace::StateType>()->getCovariance();
+    auto PX = state->as<R2BeliefSpace::StateType>()->getCovariance();
 	//=========================================================================
 	// Probabilistic collision checker
 	//=========================================================================
 	bool valid = true;
 	for (int o = 0; o < n_obstacles_; o++) {
-		if (not HyperplaneCCValidityChecker(A_list_.at(o), B_list_.at(o), x_pose, y_pose, PX)) {
+		if (not HyperplaneCCValidityChecker_(A_list_.at(o), B_list_.at(o), x, y, PX)) {
 			goto exit_switch;
 		}
 	}
@@ -64,14 +68,15 @@ bool PCCBlackmoreSVC::isValid(const ob::State *state) const {
 	return valid;
 }
 
-bool PCCBlackmoreSVC::HyperplaneCCValidityChecker_(const Eigen::MatrixXf &A, const Eigen::MatrixXf &B, const double &x_pose, const double &y_pose, const Eigen::MatrixXf &PX) const {
+bool PCCBlackmoreSVC::HyperplaneCCValidityChecker_(const Eigen::MatrixXd &A, const Eigen::MatrixXd &B, const double &x_pose, const double &y_pose, const Eigen::MatrixXd &PX) const {
 	
     bool valid = false;
 	double PV, b_bar;
 	Eigen::MatrixXf Pv_2;
 
 	for (int i = 0; i < 4; i++) {
-		PV = sqrt(A.row(i).transpose() * PX * A.row(i));
+        double tmp = (A.row(i).transpose() * PX * A.row(i)).value();
+		PV = sqrt(tmp);
 		b_bar = sqrt(2) * PV * erf_inv_result_;
 		if(x_pose * A(i, 0) + y_pose * A(i, 1) >= (B(i, 0) + b_bar)) {
 			valid = true;

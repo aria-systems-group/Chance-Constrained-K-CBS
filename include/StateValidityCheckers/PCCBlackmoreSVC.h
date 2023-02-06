@@ -26,13 +26,15 @@ class PCCBlackmoreSVC : public ob::StateValidityChecker {
     	const Robot *robot_; 
 		double p_collision_;
 		double erf_inv_result_;
+        int n_obstacles_ = -1;
 
-		std::vector<Eigen::Matrix<float, 6, 3> > A_list_;
-		std::vector<Eigen::Matrix<float, 6, 1> > B_list_;
+		std::vector<Eigen::Matrix<double, 4, 2> > A_list_;
+		std::vector<Eigen::Matrix<double, 4, 1> > B_list_;
+        Eigen::Matrix2d PX;
 
-		// inline double computeInverseErrorFunction_(const double &argument) {
-		// 	return boost::math::erf_inv(argument);
-		// }
-		bool HyperplaneCCValidityChecker_(const Eigen::MatrixXf &A, const Eigen::MatrixXf &B, const double &x_pose, const double &y_pose, const double &z_pose, const Eigen::MatrixXf &PX) const;
+		inline double computeInverseErrorFunction_(const double &argument) {
+			return boost::math::erf_inv(argument);
+		}
+		bool HyperplaneCCValidityChecker_(const Eigen::MatrixXd &A, const Eigen::MatrixXd &B, const double &x_pose, const double &y_pose, const Eigen::MatrixXd &PX) const;
 };
 

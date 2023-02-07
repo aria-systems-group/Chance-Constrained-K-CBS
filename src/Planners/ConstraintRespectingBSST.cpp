@@ -328,31 +328,33 @@ ompl::base::PlannerStatus ompl::control::ConstraintRespectingBSST::solve(const b
                             if (sufficientlyShort)
                                 break;
                         }
-                        if (solution == nullptr && dist < approxdif)
-                        {
-                            approxdif = dist;
-                            approxsol = motion;
+                        // removing the ability to return approximate solutions (HACK)
+                        // To-Do: Is there a way to set this behavior inside pdef_?
+                        // if (solution == nullptr && dist < approxdif)
+                        // {
+                        //     approxdif = dist;
+                        //     approxsol = motion;
 
-                            for (auto &i : prevSolution_)
-                                if (i)
-                                    si_->freeState(i);
-                            prevSolution_.clear();
-                            for (auto &prevSolutionControl : prevSolutionControls_)
-                                if (prevSolutionControl)
-                                    siC_->freeControl(prevSolutionControl);
-                            prevSolutionControls_.clear();
-                            prevSolutionSteps_.clear();
+                        //     for (auto &i : prevSolution_)
+                        //         if (i)
+                        //             si_->freeState(i);
+                        //     prevSolution_.clear();
+                        //     for (auto &prevSolutionControl : prevSolutionControls_)
+                        //         if (prevSolutionControl)
+                        //             siC_->freeControl(prevSolutionControl);
+                        //     prevSolutionControls_.clear();
+                        //     prevSolutionSteps_.clear();
 
-                            Motion *solTrav = approxsol;
-                            while (solTrav->parent_ != nullptr)
-                            {
-                                prevSolution_.push_back(si_->cloneState(solTrav->state_));
-                                prevSolutionControls_.push_back(siC_->cloneControl(solTrav->control_));
-                                prevSolutionSteps_.push_back(solTrav->steps_);
-                                solTrav = solTrav->parent_;
-                            }
-                            prevSolution_.push_back(si_->cloneState(solTrav->state_));
-                        }
+                        //     Motion *solTrav = approxsol;
+                        //     while (solTrav->parent_ != nullptr)
+                        //     {
+                        //         prevSolution_.push_back(si_->cloneState(solTrav->state_));
+                        //         prevSolutionControls_.push_back(siC_->cloneControl(solTrav->control_));
+                        //         prevSolutionSteps_.push_back(solTrav->steps_);
+                        //         solTrav = solTrav->parent_;
+                        //     }
+                        //     prevSolution_.push_back(si_->cloneState(solTrav->state_));
+                        // }
 
                         if (oldRep != rmotion)
                         {
@@ -436,31 +438,33 @@ ompl::base::PlannerStatus ompl::control::ConstraintRespectingBSST::solve(const b
                     if (sufficientlyShort)
                         break;
                     }
-                    if (solution == nullptr && dist < approxdif)
-                    {
-                        approxdif = dist;
-                        approxsol = motion;
+                    // removing the ability to return approximate solutions (HACK)
+                    // To-Do: Is there a way to set this behavior inside pdef_?
+                    // if (solution == nullptr && dist < approxdif)
+                    // {
+                    //     approxdif = dist;
+                    //     approxsol = motion;
 
-                        for (auto &i : prevSolution_)
-                            if (i)
-                                si_->freeState(i);
-                        prevSolution_.clear();
-                        for (auto &prevSolutionControl : prevSolutionControls_)
-                            if (prevSolutionControl)
-                                siC_->freeControl(prevSolutionControl);
-                        prevSolutionControls_.clear();
-                        prevSolutionSteps_.clear();
+                    //     for (auto &i : prevSolution_)
+                    //         if (i)
+                    //             si_->freeState(i);
+                    //     prevSolution_.clear();
+                    //     for (auto &prevSolutionControl : prevSolutionControls_)
+                    //         if (prevSolutionControl)
+                    //             siC_->freeControl(prevSolutionControl);
+                    //     prevSolutionControls_.clear();
+                    //     prevSolutionSteps_.clear();
 
-                        Motion *solTrav = approxsol;
-                        while (solTrav->parent_ != nullptr)
-                        {
-                            prevSolution_.push_back(si_->cloneState(solTrav->state_));
-                            prevSolutionControls_.push_back(siC_->cloneControl(solTrav->control_));
-                            prevSolutionSteps_.push_back(solTrav->steps_);
-                            solTrav = solTrav->parent_;
-                        }
-                        prevSolution_.push_back(si_->cloneState(solTrav->state_));
-                    }
+                    //     Motion *solTrav = approxsol;
+                    //     while (solTrav->parent_ != nullptr)
+                    //     {
+                    //         prevSolution_.push_back(si_->cloneState(solTrav->state_));
+                    //         prevSolutionControls_.push_back(siC_->cloneControl(solTrav->control_));
+                    //         prevSolutionSteps_.push_back(solTrav->steps_);
+                    //         solTrav = solTrav->parent_;
+                    //     }
+                    //     prevSolution_.push_back(si_->cloneState(solTrav->state_));
+                    // }
 
                     if (oldRep != rmotion)
                     {

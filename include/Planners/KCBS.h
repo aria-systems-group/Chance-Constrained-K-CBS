@@ -195,7 +195,7 @@ namespace ompl
 
             bool ready_;
 
-            double planningTime_{2};  // seconds
+            double planningTime_{5};  // seconds
 
             int B_{100};
 

@@ -2,6 +2,7 @@
 #include "ConstraintValidityCheckers/ConstraintValidityChecker.h"
 #include "Constraints/BeliefConstraint.h"
 #include "Spaces/R2BeliefSpace.h"
+#include <algorithm>
 
 class BeliefCVC: public ConstraintValidityChecker
 {

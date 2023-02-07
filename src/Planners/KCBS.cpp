@@ -258,7 +258,7 @@ oc::PathControl* ompl::control::KCBS::calcNewPath_(ConstraintRespectingPlannerPt
    oc::PathControl *traj = nullptr;
    planner->updateConstraints(constraints);
    ob::PlannerStatus solved = planner->solve(planningTime_);
-   if (solved)
+   if (solved==ob::PlannerStatus::EXACT_SOLUTION)
    {
       OMPL_INFORM("%s: Successfully Replanned.", getName().c_str());
       /* create new solution with updated traj. for conflicting agent */
@@ -394,7 +394,7 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
    for (auto itr = low_level_planners_.begin(); itr != low_level_planners_.end(); itr++)
    {
       ob::PlannerStatus solved = (*itr)->solve(planningTime_);
-      while (!solved && !ptc){
+      while (solved!=ob::PlannerStatus::EXACT_SOLUTION && !ptc){
          solved = (*itr)->solve(planningTime_);
          if (solved == base::PlannerStatus::INVALID_START) {
             return base::PlannerStatus::INVALID_START;
@@ -591,16 +591,16 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
                pq.emplace(nxt);
             }
             else {
-               /* Failed to find solution. 
-                  Need to save data to node and put at back of queue.
-               */
-               OMPL_WARN("%s: Failed to Save planning data and add node to priority queue.", getName().c_str());
-               // // save planner progress to node
-               // std::vector<ConstraintRRT::Motion *> m;
-               // treeSearchs[conflicting_agents[a]]->dumpTree2Motions(m);
-               // n.fillMotions(m);
-               // // add to queue with cost inf
-               // pq.emplace(n);
+            	/* Failed to find solution. 
+            	   Need to save data to node and put at back of queue.
+            	*/
+            	OMPL_WARN("%s: Failed to Save planning data and add node to priority queue.", getName().c_str());
+            	// // save planner progress to node
+            	// std::vector<ConstraintRRT::Motion *> m;
+            	// treeSearchs[conflicting_agents[a]]->dumpTree2Motions(m);
+            	// n.fillMotions(m);
+            	// // add to queue with cost inf
+            	// pq.emplace(n);
             }
          }
       }
@@ -612,24 +612,24 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
    bool solved = false;
    if (solution == nullptr)
    {
-      if (ptc == true)
-         OMPL_INFORM("%s: No solution found due to time.", getName().c_str());
-      return {solved, false};
+    	if (ptc == true)
+    	   OMPL_INFORM("%s: No solution found due to time.", getName().c_str());
+    	return {solved, false};
    }
    else
    {
-      // printf("%p\n", solution);
-      // printf("Sol. size: %lu \n", solution->getPlan().size());
-      solved = true;
-      OMPL_INFORM("%s: Found Solution in %0.3f seconds!", getName().c_str(), solveTime_);
-      // /* add correct path to all problem instances */
-      auto sol_plan = solution->getPlan();
-      for (int i = 0; i < sol_plan.size(); i++)
-      {
-         auto path(std::make_shared<PathControl>(sol_plan[i]));
-         mrmp_pdef_->getRobotProblemDefinitionPtr(i)->addSolutionPath(path, false, -1.0, getName().c_str());
-      }
-      OMPL_INFORM("%s: Planning Complete.", getName().c_str());
-      return {solved, false};
+    	// printf("%p\n", solution);
+    	// printf("Sol. size: %lu \n", solution->getPlan().size());
+    	solved = true;
+    	OMPL_INFORM("%s: Found Solution in %0.3f seconds!", getName().c_str(), solveTime_);
+    	// /* add correct path to all problem instances */
+    	auto sol_plan = solution->getPlan();
+    	for (int i = 0; i < sol_plan.size(); i++)
+    	{
+    	   auto path(std::make_shared<PathControl>(sol_plan[i]));
+    	   mrmp_pdef_->getRobotProblemDefinitionPtr(i)->addSolutionPath(path, false, -1.0, getName().c_str());
+    	}
+    	OMPL_INFORM("%s: Planning Complete.", getName().c_str());
+    	return {solved, false};
    }
 }

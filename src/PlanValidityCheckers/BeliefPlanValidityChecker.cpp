@@ -2,13 +2,15 @@
 
 BeliefPlanValidityChecker::BeliefPlanValidityChecker(MultiRobotProblemDefinitionPtr pdef):
 	PlanValidityChecker(pdef, "BeliefPlanValidityChecker"), p_safe_(0.7), 
-	p_coll_dist_( (1-p_safe_) / pdef->getInstance()->getObstacles().size()) //pdef->getInstance()->getObstacles().size()
+	p_coll_dist_( (1-p_safe_) / pdef->getInstance()->getObstacles().size())
 {
 	// this can be generalized in the future based on robot shapes
-	HalfPlanes_.push_back({1.0,0.0,1.0}) ; // right side
-    HalfPlanes_.push_back({-1.0,0.0,1.0}) ; // left side
-    HalfPlanes_.push_back({0.0,1.0,1.0}) ; // top side
-    HalfPlanes_.push_back({0.0,-1.0,1.0}) ; // bottom side
+	HalfPlanes_.push_back({1.0,0.0,0.5}) ; // right side
+    HalfPlanes_.push_back({-1.0,0.0,0.5}) ; // left side
+    HalfPlanes_.push_back({0.0,1.0,0.5}) ; // top side
+    HalfPlanes_.push_back({0.0,-1.0,0.5}) ; // bottom side
+
+    
 };
 
 BeliefPlanValidityChecker::~BeliefPlanValidityChecker(){};

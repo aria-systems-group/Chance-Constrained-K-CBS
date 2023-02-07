@@ -249,12 +249,27 @@ ompl::base::PlannerStatus ompl::control::ConstraintRespectingBSST::solve(const b
                 nmotion->numChildren_++;
 
                 if (!constraints_.empty()) {
-                    // check the motion for constraint validation prior to adding motion
-                    oc::PathControl p(si_);
-                    p.append(motion->parent_->state_);
-                    p.append(motion->state_, motion->control_, (motion->steps_ * siC_->getPropagationStepSize()));
-                    p.interpolate();
-                    if (constraintValidator_->satisfiesConstraints(p, constraints_)) {
+                    // get the path-segment from start ---> motion->state
+                    
+                    /* construct the solution path */
+        			std::vector<Motion *> mpath;
+        			Motion* mCpy = motion;
+        			while (mCpy != nullptr)
+        			{
+        			    mpath.push_back(mCpy);
+        			    mCpy = mCpy->parent_;
+        			}
+  
+        			/* set the solution path */
+        			oc::PathControl pathSegment(si_);
+        			for (int i = mpath.size() - 1; i >= 0; --i)
+        			    if (mpath[i]->parent_)
+        			        pathSegment.append(mpath[i]->state_, mpath[i]->control_, mpath[i]->steps_ * siC_->getPropagationStepSize());
+        			    else
+        			        pathSegment.append(mpath[i]->state_);
+                    pathSegment.interpolate();
+                    // check the path-segment for constraint validation prior to adding motion
+                    if (constraintValidator_->satisfiesConstraints(pathSegment, constraints_)) {
                         closestWitness->linkRep(motion);
 
                         nn_->add(motion);

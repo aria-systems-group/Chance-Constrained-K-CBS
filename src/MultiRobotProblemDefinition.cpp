@@ -20,11 +20,29 @@ ConstraintRespectingPlannerPtr MotionPlanningProblem::getPlanner()
 }
 
 MultiRobotProblemDefinition::MultiRobotProblemDefinition(std::vector<MotionPlanningProblemPtr> mrmp_problem):
-	ob::ProblemDefinition(mrmp_problem[0]->getSpaceInformation()), mrmp_problem_(mrmp_problem)
+	ob::ProblemDefinition(mrmp_problem[0]->getSpaceInformation()), mrmp_problem_(mrmp_problem) {}
+
+void MultiRobotProblemDefinition::replacePlanner(ConstraintRespectingPlannerPtr old_planner, const int idx)
 {
-	// for (auto itr = mrmp_problem.begin(); itr != mrmp_problem.end(); itr++) {
-	// 	// std::cout << *itr << std::endl;
-	// }
+	// create another planner instance based on pre-computed spaceInformation and problem definiton
+	// NOTE: this is problem specific
+	std::string ll_solver = mrmp_instance_->getLowLevelPlannerName();
+	Robot *r = mrmp_instance_->getRobots()[idx];
+	auto si = getRobotSpaceInformationPtr(idx);
+	auto pdef = getRobotProblemDefinitionPtr(idx);
+	std::string dynamics_model = r->getDynamicsModel();
+	if (ll_solver == "BSST") {
+		// create (and provide) the low-level motion planner object
+        ConstraintValidityCheckerPtr validator = std::make_shared<BeliefCVC>(r, mrmp_instance_->getObstacles().size());
+        ConstraintRespectingPlannerPtr planner(std::make_shared<oc::ConstraintRespectingBSST>(si));
+        planner->as<oc::ConstraintRespectingBSST>()->setProblemDefinition(pdef);
+        planner->as<oc::ConstraintRespectingBSST>()->setConstraintValidator(validator);
+        planner->as<oc::ConstraintRespectingBSST>()->setup();
+        mrmp_problem_[idx]->replacePlanner(planner);
+	}
+	else {
+		OMPL_ERROR("%s: You must add the ability to replace a planner!", "MultiRobotProblemDefinition");
+	}
 }
 
 void MultiRobotProblemDefinition::setMultiRobotInstance(InstancePtr &mrmp_instance)

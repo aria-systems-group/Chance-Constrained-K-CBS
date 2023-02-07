@@ -2,7 +2,7 @@
 
 
 BeliefCVC::BeliefCVC(Robot *robot, const int num_obs): ConstraintValidityChecker(robot, "BeliefCVC"),
-    p_safe_(0.99), 
+    p_safe_(0.7), 
     p_coll_dist_( (1-p_safe_) / num_obs)
 {
     // this can be generalized in the future based on robot shapes

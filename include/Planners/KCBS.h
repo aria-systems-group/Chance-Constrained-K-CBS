@@ -1,6 +1,9 @@
 #pragma once
 #include "Conflict.h"
 #include "MultiRobotProblemDefinition.h"
+#include <boost/serialization/export.hpp>
+#include <ompl/control/PlannerData.h>
+// BOOST_CLASS_EXPORT(ompl::control::PlannerDataEdgeControl);
 
 
 namespace ompl
@@ -55,6 +58,8 @@ namespace ompl
 
             void setMergeBound(int b) {B_ = b;};
 
+            void setLowLevelPlanningTime(const double t) {mp_comp_time_ = t;};
+
             // void performBypassing() {bypass_ = true;};
 
             // std::vector<std::pair<int, int>> getMergers() const {return merger_count_;};
@@ -76,7 +81,7 @@ namespace ompl
                     this->parent_ = n.getParent();
                     this->cost_ = n.getCost();
                     this->constraint_ = n.getConstraint();
-                    // this->motions_ = c.getMotions();
+                    this->planner_ = n.getPlanner();
                 }
 
                 ~KCBSNode()
@@ -127,6 +132,12 @@ namespace ompl
                 // get the constraint within a node
                 ConstraintPtr getConstraint() const {return constraint_;};
 
+                void savePlanner(ConstraintRespectingPlannerPtr planner) {
+                	planner_ = planner;
+                }
+
+                ConstraintRespectingPlannerPtr getPlanner() const {return planner_;};
+
                 // void fillMotions(std::vector<ConstraintRRT::Motion*> newMotions)
                 // {
                 //     motions_ = newMotions;
@@ -149,6 +160,8 @@ namespace ompl
 
                 /* the constraint that the node was created to resolve */
                 ConstraintPtr constraint_{nullptr};
+
+                ConstraintRespectingPlannerPtr planner_{nullptr};
 
                 /* list of motions--only filled if node fails to create plan_ */
                 // std::vector<ob::Planner::Motion*> motions_;
@@ -185,17 +198,14 @@ namespace ompl
             
             std::vector<ConstraintRespectingPlannerPtr> low_level_planners_;
 
-            /* Flag that tracks which agent we are replanning for */
-            // int replanningAgent_{0};
-
             /** \brief The most recent goal motion.  Used for PlannerData computation */
             // conflictNode *lastGoalNode_{nullptr};
 
-            // Instance *mrmp_instance_{nullptr};
-
             bool ready_;
 
-            double planningTime_{5};  // seconds
+            double mp_comp_time_{1};  // seconds
+
+            double prop_step_size_{-1};
 
             int B_{100};
 

@@ -2,7 +2,8 @@
 #include "Instance.h"
 #include "Mergers/Merger.h"
 #include "PlanValidityCheckers/PlanValidityChecker.h"
-#include "Planners/ConstraintRespectingPlanner.h"
+#include "Planners/ConstraintRespectingBSST.h"
+#include "ConstraintValidityCheckers/BeliefCVC.h"
 
 
 OMPL_CLASS_FORWARD(MotionPlanningProblem);
@@ -14,6 +15,10 @@ public:
     oc::SpaceInformationPtr getSpaceInformation();
     ob::ProblemDefinitionPtr getProblemDefinition();
     ConstraintRespectingPlannerPtr getPlanner();
+    void replacePlanner(ConstraintRespectingPlannerPtr new_p)
+    {
+    	planner_ = new_p;
+    }
 
 private:
     oc::SpaceInformationPtr si_;
@@ -48,6 +53,8 @@ public:
 	const std::vector<MotionPlanningProblemPtr> getAllProblemInformation();
 
 	const MotionPlanningProblemPtr getRobotMotionPlanningProblemPtr(const int idx);
+
+	 void replacePlanner(ConstraintRespectingPlannerPtr old_planner, const int idx);
 
 	double getSystemStepSize()
 	{

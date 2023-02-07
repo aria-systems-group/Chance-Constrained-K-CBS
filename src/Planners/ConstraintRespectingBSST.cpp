@@ -526,7 +526,7 @@ ompl::base::PlannerStatus ompl::control::ConstraintRespectingBSST::solve(const b
 
 void ompl::control::ConstraintRespectingBSST::getPlannerData(base::PlannerData &data) const
 {
-    ConstraintRespectingBSST::getPlannerData(data);
+    ConstraintRespectingPlanner::getPlannerData(data);
 
     std::vector<Motion *> motions;
     std::vector<Motion *> allMotions;

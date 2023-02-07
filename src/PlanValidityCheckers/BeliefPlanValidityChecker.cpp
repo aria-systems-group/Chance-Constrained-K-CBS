@@ -1,7 +1,8 @@
 #include "PlanValidityCheckers/BeliefPlanValidityChecker.h"
 
 BeliefPlanValidityChecker::BeliefPlanValidityChecker(MultiRobotProblemDefinitionPtr pdef):
-	PlanValidityChecker(pdef, "BeliefPlanValidityChecker"), p_safe_(0.7), 
+	PlanValidityChecker(pdef, "BeliefPlanValidityChecker"), 
+	p_safe_(0.7), 
 	p_coll_dist_( (1-p_safe_) / pdef->getInstance()->getObstacles().size())
 {
 	// this can be generalized in the future based on robot shapes
@@ -35,7 +36,7 @@ std::vector<ConflictPtr> BeliefPlanValidityChecker::validatePlan(Plan p)
 			// found initial conflict at step k
 			// must continue to propogate forward until conflict is finished
 			int step = k;
-			while (c && step < maxStates) {
+			while (c != nullptr && step < maxStates) {
 				// std::cout << "found: " << c << std::endl;
 				confs.push_back(c);
 				step++;
@@ -53,30 +54,20 @@ ConstraintPtr BeliefPlanValidityChecker::createConstraint(Plan p, std::vector<Co
 	const double step_duration = mrmp_pdef_->getSystemStepSize();
 	std::vector<double> times;
 	std::vector<ob::State*> states;
-    // std::cout << conflicts.size() << std::endl;
 	for (auto itr = conflicts.begin(); itr != conflicts.end(); itr++) {
 		times.push_back(((*itr)->timeStep_ * step_duration));
 		if ( (*itr)->timeStep_ <  p[robotIdx].getStates().size()) {
-            // std::cout << p[robotIdx].getState((*itr)->timeStep_) << std::endl;
-            // ob::State* st(p[robotIdx].getState((*itr)->timeStep_));
             ob::State* st = mrmp_pdef_->getRobotSpaceInformationPtr(robotIdx)->allocState();
             mrmp_pdef_->getRobotSpaceInformationPtr(robotIdx)->copyState(st, p[robotIdx].getState((*itr)->timeStep_));
-            // std::cout << st << std::endl;
 			states.push_back(st);
 		}
 		else {
-            // std::cout << p[robotIdx].getStates().back() << std::endl;
             ob::State* st = mrmp_pdef_->getRobotSpaceInformationPtr(robotIdx)->allocState();
             mrmp_pdef_->getRobotSpaceInformationPtr(robotIdx)->copyState(st, p[robotIdx].getStates().back());
-
-
-            // (p[robotIdx].getStates().back());
-            // std::cout << st << std::endl;
 			states.push_back(st);
 		}
 	}
 	ConstraintPtr c = std::make_shared<BeliefConstraint>(robotIdx, times, states);
-    // std::cout << "exiting createConstraint" << std::endl;
 	return c;
 }
 
@@ -156,14 +147,14 @@ bool BeliefPlanValidityChecker::isSafe_(const Eigen::Vector2d mu_ab, const Eigen
 {
 	Eigen::Vector2d a;
     for (std::vector<double> hp: HalfPlanes_){
-		a << hp[0],
+        a << hp[0],
              hp[1];
         double b = hp[0];
         double Pv = sqrt(double(a.transpose() * Sigma_ab * a));
         double vbar = sqrt(2) * Pv * boost::math::erf_inv(1 - 2*p_coll_dist_);
         bool sat = (hp[0] * mu_ab[0] + hp[1] * mu_ab[1] - hp[2] >= vbar);  
         if(sat) {
-           	return true;
+            return true;
         };      
     }
     return false;

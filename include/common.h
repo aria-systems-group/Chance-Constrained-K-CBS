@@ -4,6 +4,7 @@
 #include <fstream>
 #include <boost/geometry/io/io.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
+#include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/geometries/geometries.hpp>
 #include <ompl/util/Console.h>
 
@@ -16,7 +17,7 @@ namespace bg = boost::geometry;
 
 
 typedef bg::model::d2::point_xy<double> Point;
-typedef bg::model::polygon<Point> Polygon;
+typedef bg::model::polygon<Point, false, true> Polygon;
 // typedef std::vector<oc::PathControl> Plan;
 
 

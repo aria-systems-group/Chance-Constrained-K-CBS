@@ -6,7 +6,7 @@ PCCBlackmoreSVC::PCCBlackmoreSVC(const oc::SpaceInformationPtr &si, InstancePtr 
 
 	std::vector<Obstacle*> obs_list = mrmp_instance_->getObstacles();
 	n_obstacles_ = obs_list.size();
-	erf_inv_result_ = computeInverseErrorFunction_(1 - 2 * p_collision_ / n_obstacles_);
+	erf_inv_result_ = computeInverseErrorFunction_(1 - 2 * (p_collision_ / n_obstacles_));
 
 	// A_list_.resize(n_obstacles_); 
    
@@ -70,7 +70,7 @@ bool PCCBlackmoreSVC::HyperplaneCCValidityChecker_(const Eigen::MatrixXd &A, con
 	Eigen::MatrixXf Pv_2;
 
 	for (int i = 0; i < 4; i++) {
-        double tmp = (A.row(i).transpose() * PX * A.row(i)).value();
+        double tmp = (A.row(i) * PX * A.row(i).transpose()).value();
 		PV = sqrt(tmp);
 		b_bar = sqrt(2) * PV * erf_inv_result_;
 		if(x_pose * A(i, 0) + y_pose * A(i, 1) >= (B(i, 0) + b_bar)) {

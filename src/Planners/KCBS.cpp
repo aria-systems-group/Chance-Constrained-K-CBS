@@ -233,7 +233,7 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
 
       	/* If the current K-CBS Node does not contain a finite-length solution, must replan with existing tree */
       	if (curr->getCost() == std::numeric_limits<double>::infinity()) {
-         	pq.pop();
+      		pq.pop();
          	std::vector<ConstraintPtr> agent_constraints{curr->getConstraint()};
         	const KCBSNode *nCpy = curr->getParent();
         	while (nCpy->getParent() != nullptr) {
@@ -246,20 +246,24 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
         	oc::PathControl *new_path = calcNewPath_(p, agent_constraints);
 
         	if (new_path) {
+        		/* Remove curr, create new node, and add it to the queue */
+        		KCBSNode nxt;
+            	nxt.updateParent(curr);
+            	nxt.addConstraint(curr->getConstraint());
             	Plan new_plan = curr->getPlan();
             	new_plan[curr->getConstraint()->getAgent()] = *new_path;
-            	curr->updatePlanAndCost(new_plan);
-            	pq.emplace(*curr);
+            	nxt.updatePlanAndCost(new_plan);
+            	pq.emplace(nxt);
             }
             else {
-            	/* Failed to find solution. 
-            	   Need to save data to node and put at back of queue.
-            	*/
-            	// const SpaceInformationPtr siC = mrmp_pdef_->getRobotSpaceInformationPtr(new_constraint->getAgent());
-            	curr->savePlanner(p);
+            	/* Failed to find solution. Must copy data to new node and put at back of queue */
+            	KCBSNode nxt;
+            	nxt.updateParent(curr->getParent());
+            	nxt.addConstraint(curr->getConstraint());
+				nxt.savePlanner(curr->getPlanner());      	
+            	pq.emplace(nxt);
             	mrmp_pdef_->replacePlanner(p, curr->getConstraint()->getAgent());
-            	// add to queue with cost inf
-            	pq.emplace(*curr);
+            	pq.emplace(nxt);
             }
       	}
       	/* Current K-CBS Node has a finite-length plan */
@@ -332,6 +336,8 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
       	/* Plan contains conflicts. K-CBS must remove the current node from the priority queue and attempt to expand from it */
       	else {
          	pq.pop();
+         	// std::cout << "here" << std::endl;
+         	// exit(-1);
          	/* extract conflict information */
          	ConstraintPtr agent1IdxConflicts = mrmp_pdef_->getPlanValidator()->createConstraint(curr->getPlan(), confs, confs.front()->agent1Idx_);
          	ConstraintPtr agent2IdxConflicts = mrmp_pdef_->getPlanValidator()->createConstraint(curr->getPlan(), confs, confs.front()->agent2Idx_);

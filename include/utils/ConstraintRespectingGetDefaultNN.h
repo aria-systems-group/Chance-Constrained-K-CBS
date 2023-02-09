@@ -1,4 +1,6 @@
 #pragma once
+#include "Planners/ConstraintRespectingPlanner.h"
+#include <ompl/datastructures/NearestNeighbors.h>
 #include <ompl/tools/config/SelfConfig.h>
 /** \brief Select a default nearest neighbor datastructure for the given space
 *

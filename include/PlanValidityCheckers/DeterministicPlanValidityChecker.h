@@ -15,9 +15,16 @@ class DeterministicPlanValidityChecker: public PlanValidityChecker
 public:
 	DeterministicPlanValidityChecker(MultiRobotProblemDefinitionPtr pdef);
 
-	std::vector<ConflictPtr> validatePlan(Plan p);
+	std::vector<ConflictPtr> validatePlan(Plan p) override;
 
-	ConstraintPtr createConstraint(Plan p, std::vector<ConflictPtr> conflicts, const int robotIdx);
+	ConstraintPtr createConstraint(Plan p, std::vector<ConflictPtr> conflicts, const int robotIdx) override;
+
+	bool satisfiesConstraints(oc::PathControl path, std::vector<ConstraintPtr> constraints) override
+	{
+		OMPL_ERROR("Not yet implemented.");
+		return false;
+	}
+	
 private:
 	std::vector<std::pair<int, Polygon>> getActiveRobots_(Plan p, const int step, const int a1 = -1, const int a2 = -2);
 	Polygon getShapeFromState_(ob::State *st, const int robotIdx);

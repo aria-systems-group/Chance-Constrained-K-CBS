@@ -1,11 +1,18 @@
 #pragma once
 #include "Conflict.h"
 #include "MultiRobotProblemDefinition.h"
+#include "Planners/ConstraintRespectingPlanner.h"
 #include <boost/serialization/export.hpp>
-#include <ompl/control/PlannerData.h>
-// BOOST_CLASS_EXPORT(ompl::control::PlannerDataEdgeControl);
+#include <ompl/control/planners/PlannerIncludes.h>
+#include <ompl/util/ClassForward.h>
 
 
+namespace oc = ompl::control;
+typedef std::vector<oc::PathControl> Plan;
+
+
+OMPL_CLASS_FORWARD(ConstraintRespectingPlanner);
+OMPL_CLASS_FORWARD(MultiRobotProblemDefinition);
 namespace ompl
 {
     namespace control

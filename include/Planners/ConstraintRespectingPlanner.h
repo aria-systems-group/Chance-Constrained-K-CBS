@@ -1,12 +1,16 @@
 #pragma once
-#include "ConstraintValidityCheckers/ConstraintValidityChecker.h"
+#include "Constraints/Constraint.h"
 #include <ompl/base/goals/GoalSampleableRegion.h>
 #include <ompl/control/planners/PlannerIncludes.h>
 #include <boost/concept_check.hpp>
 #include <thread>
 
+namespace ob = ompl::base;
+namespace oc = ompl::control;
+
 
 OMPL_CLASS_FORWARD(ConstraintRespectingPlanner);
+OMPL_CLASS_FORWARD(PlanValidityChecker);
 namespace ompl
 {
     namespace control
@@ -134,9 +138,9 @@ public:
     virtual ~ConstraintRespectingPlanner() = default;
 
     // add my things required for planning w/ KCBS
-    virtual void setConstraintValidator(ConstraintValidityCheckerPtr &validator) = 0;
+    virtual void setPlanValidator(PlanValidityCheckerPtr &validator) = 0;
 
-    virtual const ConstraintValidityCheckerPtr getConstraintValidator() = 0;
+    virtual const PlanValidityCheckerPtr getPlanValidator() = 0;
     
     virtual void updateConstraints(std::vector<ConstraintPtr> c) = 0;
 
@@ -348,7 +352,7 @@ protected:
     bool setup_;
 
     // my additions for replanning w. KCBS
-    ConstraintValidityCheckerPtr constraintValidator_;
+    PlanValidityCheckerPtr planValidator_;
     std::vector<ConstraintPtr> constraints_;
     // Robot* robot_;
     bool replanning_;

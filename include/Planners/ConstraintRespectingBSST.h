@@ -2,9 +2,9 @@
 #include "Spaces/R2BeliefSpace.h"
 #include "Spaces/R2BeliefSpaceEuclidean.h"
 #include "Planners/ConstraintRespectingPlanner.h"
+#include "PlanValidityCheckers/PlanValidityChecker.h"
 #include <utils/ConstraintRespectingGetDefaultNN.h>
 #include <ompl/control/planners/PlannerIncludes.h>
-#include <ompl/datastructures/NearestNeighbors.h>
 #include <ompl/base/objectives/PathLengthOptimizationObjective.h>
 #include <ompl/base/objectives/MaximizeMinClearanceObjective.h>
 
@@ -31,14 +31,14 @@ namespace ompl
             void getPlannerDataAndCosts(base::PlannerData &data, std::vector<double > &costs) const;
 
             // add my things required for planning w/ KCBS
-            void setConstraintValidator(ConstraintValidityCheckerPtr &validator) override
+            void setPlanValidator(PlanValidityCheckerPtr &validator) override
             {
-                constraintValidator_ = validator;
+                planValidator_ = validator;
             }
 
-            const ConstraintValidityCheckerPtr getConstraintValidator() override
+            const PlanValidityCheckerPtr getPlanValidator() override
             {
-                return constraintValidator_;
+                return planValidator_;
             }
 
             void updateConstraints(std::vector<ConstraintPtr> c) override

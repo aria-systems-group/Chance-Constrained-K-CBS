@@ -40,23 +40,25 @@ std::vector<ConflictPtr> DeterministicPlanValidityChecker::validatePlan(Plan p)
 
 ConstraintPtr DeterministicPlanValidityChecker::createConstraint(Plan p, std::vector<ConflictPtr> conflicts, const int robotIdx)
 {
-	const double step_duration = mrmp_pdef_->getSystemStepSize();
-	std::vector<double> times;
-	std::vector<Polygon> polys;
-	for (auto itr = conflicts.begin(); itr != conflicts.end(); itr++) {
-		times.push_back(((*itr)->timeStep_ * step_duration));
-		if ( (*itr)->timeStep_ <  p[robotIdx].getStates().size()) {
-			Polygon r = getShapeFromState_(p[robotIdx].getState((*itr)->timeStep_), robotIdx);
-			polys.push_back(r);
-		}
-		else {
-			Polygon r = getShapeFromState_(p[robotIdx].getStates().back(), robotIdx);
-			polys.push_back(r);
-		}
+	// const double step_duration = mrmp_pdef_->getSystemStepSize();
+	// std::vector<double> times;
+	// std::vector<Polygon> polys;
+	// for (auto itr = conflicts.begin(); itr != conflicts.end(); itr++) {
+	// 	times.push_back(((*itr)->timeStep_ * step_duration));
+	// 	if ( (*itr)->timeStep_ <  p[robotIdx].getStates().size()) {
+	// 		Polygon r = getShapeFromState_(p[robotIdx].getState((*itr)->timeStep_), robotIdx);
+	// 		polys.push_back(r);
+	// 	}
+	// 	else {
+	// 		Polygon r = getShapeFromState_(p[robotIdx].getStates().back(), robotIdx);
+	// 		polys.push_back(r);
+	// 	}
 		
-	}
-	ConstraintPtr c = std::make_shared<DeterministicConstraint>(robotIdx, times, polys);
-	return c;
+	// }
+	// ConstraintPtr c = std::make_shared<DeterministicConstraint>(robotIdx, times, polys);
+	OMPL_ERROR("Not implemented yet!");
+	exit(-1);
+	return nullptr;
 }
 
 ConflictPtr DeterministicPlanValidityChecker::checkForConflicts_(std::vector<std::pair<int, Polygon>> shapes, const int step)

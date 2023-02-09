@@ -18,7 +18,6 @@ namespace bg = boost::geometry;
 
 typedef bg::model::d2::point_xy<double> Point;
 typedef bg::model::polygon<Point, false, true> Polygon;
-// typedef std::vector<oc::PathControl> Plan;
 
 
 class Location {

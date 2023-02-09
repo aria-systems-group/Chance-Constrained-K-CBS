@@ -2,8 +2,10 @@
 
 BeliefPlanValidityChecker::BeliefPlanValidityChecker(MultiRobotProblemDefinitionPtr pdef):
 	PlanValidityChecker(pdef, "BeliefPlanValidityChecker"), 
-	p_safe_(0.7), 
-	p_coll_dist_( (1-p_safe_) / 1) //pdef->getInstance()->getObstacles().size()
+	p_plan_safe_(0.7), 
+	p_plan_coll_dist_( (1 - p_plan_safe_) / 1),
+	p_constraint_safe_(0.8),
+	p_constraint_coll_dist_( (1 - p_constraint_safe_) / 1)
 {
 	std::vector<Robot*> robots = mrmp_pdef_->getInstance()->getRobots();
 	boost::tokenizer< boost::char_separator<char> >::iterator beg1;
@@ -62,26 +64,71 @@ std::vector<ConflictPtr> BeliefPlanValidityChecker::validatePlan(Plan p)
 	return {};
 }
 
-ConstraintPtr BeliefPlanValidityChecker::createConstraint(Plan p, std::vector<ConflictPtr> conflicts, const int robotIdx)
+ConstraintPtr BeliefPlanValidityChecker::createConstraint(Plan p, std::vector<ConflictPtr> conflicts, const int constrained_robot)
 {
+	int constraining_robot = (constrained_robot == conflicts.front()->agent1Idx_) ? conflicts.front()->agent2Idx_ : conflicts.front()->agent1Idx_;
+	assert(constrained_robot != constraining_robot);
+
 	const double step_duration = mrmp_pdef_->getSystemStepSize();
 	std::vector<double> times;
 	std::vector<ob::State*> states;
 	for (auto itr = conflicts.begin(); itr != conflicts.end(); itr++) {
 		times.push_back(((*itr)->timeStep_ * step_duration));
-		if ( (*itr)->timeStep_ <  p[robotIdx].getStates().size()) {
-            ob::State* st = mrmp_pdef_->getRobotSpaceInformationPtr(robotIdx)->allocState();
-            mrmp_pdef_->getRobotSpaceInformationPtr(robotIdx)->copyState(st, p[robotIdx].getState((*itr)->timeStep_));
+		if ( (*itr)->timeStep_ <  p[constraining_robot].getStates().size()) {
+            ob::State* st = mrmp_pdef_->getRobotSpaceInformationPtr(constraining_robot)->allocState();
+            mrmp_pdef_->getRobotSpaceInformationPtr(constraining_robot)->copyState(st, p[constraining_robot].getState((*itr)->timeStep_));
 			states.push_back(st);
 		}
 		else {
-            ob::State* st = mrmp_pdef_->getRobotSpaceInformationPtr(robotIdx)->allocState();
-            mrmp_pdef_->getRobotSpaceInformationPtr(robotIdx)->copyState(st, p[robotIdx].getStates().back());
+            ob::State* st = mrmp_pdef_->getRobotSpaceInformationPtr(constraining_robot)->allocState();
+            mrmp_pdef_->getRobotSpaceInformationPtr(constraining_robot)->copyState(st, p[constraining_robot].getStates().back());
 			states.push_back(st);
 		}
 	}
-	ConstraintPtr c = std::make_shared<BeliefConstraint>(robotIdx, times, states);
+	ConstraintPtr c = std::make_shared<BeliefConstraint>(constrained_robot, constraining_robot, times, states);
 	return c;
+}
+
+bool BeliefPlanValidityChecker::satisfiesConstraints(oc::PathControl path, std::vector<ConstraintPtr> constraints)
+{
+	/* Assume that the constrained robot is the "planning" robot. Check for satisfaction of all constraints */
+	const int constrained_robot = constraints.front()->getConstrainedAgent();
+	std::vector<ob::State*> states = path.getStates();
+    const double step_size = path.getControlDuration(0);
+    double current_time = 0.0;
+    for (auto itr = states.begin(); itr != states.end(); itr++) {
+    	// for every state along path, check if the time coincides with any constraints
+		for (auto c_itr = constraints.begin(); c_itr != constraints.end(); c_itr++) {
+			const std::vector<double> times = (*c_itr)->getTimes();
+			auto it = std::find_if(times.begin(), times.end(), 
+        		[&current_time](const double& t) { return abs(t - current_time) < 1E-9;});
+			if (it == times.end()) {
+        		break;
+        	}
+        	// must check this constraint at this time
+        	const int constraining_robot = (*c_itr)->getConstrainingAgent();
+        	assert(constrained_robot != constraining_robot);
+        	
+        	// get the correct half-plane for comparing constrained_robot with constraining_robot
+        	std::string key_name = std::to_string(constrained_robot) + "," + std::to_string(constraining_robot);
+			if (halfPlane_map_.find(key_name) == halfPlane_map_.end())
+				key_name = std::to_string(constraining_robot) + "," + std::to_string(constrained_robot);
+
+			// get both beliefs
+			int idx = it - times.begin();
+			std::pair<Eigen::Vector2d, Eigen::Matrix2d> constrained_robot_belief = getDistFromState_(*itr);
+        	std::pair<Eigen::Vector2d, Eigen::Matrix2d> constraining_robot_belief = getDistFromState_((*c_itr)->as<BeliefConstraint>()->getStates()[idx]);
+
+        	// check if constraint is violated
+        	Eigen::Vector2d mu_ab = constrained_robot_belief.first - constraining_robot_belief.first;
+        	Eigen::Matrix2d Sigma_ab = constrained_robot_belief.second + constraining_robot_belief.second;
+
+        	if (!isSafe_(mu_ab, Sigma_ab, halfPlane_map_[key_name], true))
+        		return false;
+		}
+		current_time += step_size;
+	}
+	return true;
 }
 
 std::unordered_map<std::string, std::pair<Eigen::Vector2d, Eigen::Matrix2d>> BeliefPlanValidityChecker::getActiveRobots_(Plan p, const int step, const int a1, const int a2)
@@ -167,7 +214,6 @@ ConflictPtr BeliefPlanValidityChecker::checkForConflicts_(std::unordered_map<std
 			if (halfPlane_map_.find(key_name) == halfPlane_map_.end())
 				key_name = (*beg_b) + "," + (*beg_a);
 
-			auto t = halfPlane_map_[key_name];
 			if (!isSafe_(mu_ab, Sigma_ab, halfPlane_map_[key_name])) {
 				int a_idx = std::atoi((*beg_a).c_str());
 				int b_idx = std::atoi((*beg_b).c_str());
@@ -179,7 +225,7 @@ ConflictPtr BeliefPlanValidityChecker::checkForConflicts_(std::unordered_map<std
 	return c;
 }
 
-bool BeliefPlanValidityChecker::isSafe_(const Eigen::Vector2d mu_ab, const Eigen::Matrix2d Sigma_ab, const std::pair<Eigen::MatrixXd, Eigen::MatrixXd> halfPlanes)
+bool BeliefPlanValidityChecker::isSafe_(const Eigen::Vector2d mu_ab, const Eigen::Matrix2d Sigma_ab, const std::pair<Eigen::MatrixXd, Eigen::MatrixXd> halfPlanes, const bool replanning)
 {
 	Eigen::MatrixXd A = halfPlanes.first;
 	Eigen::MatrixXd B = halfPlanes.second;
@@ -188,9 +234,12 @@ bool BeliefPlanValidityChecker::isSafe_(const Eigen::Vector2d mu_ab, const Eigen
 	for (int i = 0; i < n_rows; i++) {
         const double tmp = (A.row(i) * Sigma_ab * A.row(i).transpose()).value();
 		const double Pv = sqrt(tmp);
-		const double vbar = sqrt(2) * Pv * bm::erf_inv(1 - (2*p_coll_dist_));
-		const bool sat = (A(i, 0) * mu_ab[0] + A(i, 1) * mu_ab[1] - B(i, 0) >= vbar);  
-        if(sat) {
+		double vbar;
+		if (!replanning)
+			vbar = sqrt(2) * Pv * bm::erf_inv(1 - (2 * p_plan_coll_dist_));
+		else
+			vbar = sqrt(2) * Pv * bm::erf_inv(1 - (2 * p_constraint_coll_dist_));
+        if( (A(i, 0) * mu_ab[0] + A(i, 1) * mu_ab[1] - B(i, 0) >= vbar) ) {
             return true;
         };
 	}

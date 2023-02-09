@@ -1,5 +1,7 @@
 #pragma once
+#include <vector>
 #include <ompl/util/ClassForward.h>
+#include <boost/concept_check.hpp>
 
 
 // abstract class for constraint
@@ -7,14 +9,16 @@ OMPL_CLASS_FORWARD(Constraint);
 class Constraint
 {
 public:
-	Constraint(int agentIdx, std::vector<double> timeRange):
-		times_(timeRange), agentIdx_(agentIdx) {}
+	Constraint(int constrained_agent, int constraining_agent, std::vector<double> timeRange):
+		times_(timeRange), constrained_agent_(constrained_agent), constraining_agent_(constraining_agent) {}
 	~Constraint()
 	{
 		times_.clear();
 	}
+
 	const std::vector<double> getTimes() const {return times_;};
-	const int getAgent() const {return agentIdx_;};
+	const int getConstrainedAgent() const {return constrained_agent_;};
+	const int getConstrainingAgent() const {return constraining_agent_;};
 
 	/** \brief Cast this instance to a desired type. */
     template <class T>
@@ -35,5 +39,6 @@ public:
     }
 protected:
 	std::vector<double> times_;
-	const int agentIdx_;
+	const int constrained_agent_;
+	const int constraining_agent_;
 };

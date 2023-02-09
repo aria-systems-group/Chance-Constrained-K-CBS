@@ -86,7 +86,6 @@ int main(int argc, char ** argv)
                 std::vector<oc::PathControl*> plan;
                 for (int i=0; i < vm["numAgents"].as<int>(); i++) {
                     oc::PathControl* path = mrmp_pdef->getRobotProblemDefinitionPtr(i)->getSolutionPath()->as<oc::PathControl>();
-                    std::cout << path << std::endl;
                     plan.push_back(path);
                 }
                 exportBeliefPlan(plan, vm["output"].as<std::string>());

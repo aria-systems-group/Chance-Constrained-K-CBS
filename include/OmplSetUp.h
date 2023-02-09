@@ -14,9 +14,7 @@
 #include "Planners/ConstraintRespectingRRT.h"
 #include "Planners/ConstraintRespectingBSST.h"
 #include "OptimizationObjectives/StateCostObjectives.h"
-#include "ConstraintValidityCheckers/DeterministicCVC.h"
-#include "ConstraintValidityCheckers/BeliefCVC.h"
-#include "MultiRobotProblemDefinition.h"
+// #include "MultiRobotProblemDefinition.h"
 #include <ompl/control/SpaceInformation.h>
 #include <ompl/control/spaces/RealVectorControlSpace.h>
 #include <boost/program_options.hpp>
@@ -26,6 +24,7 @@ namespace po = boost::program_options;
 namespace bm = boost::math;
 
 
+OMPL_CLASS_FORWARD(MotionPlanningProblem);
 // the main ompl set-up function
 std::vector<MotionPlanningProblemPtr> set_up_all_MP_Problems(InstancePtr mrmp_instance);
 

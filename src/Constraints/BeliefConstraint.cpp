@@ -1,8 +1,8 @@
 #include "Constraints/BeliefConstraint.h"
 
-BeliefConstraint::BeliefConstraint(int agentIdx, 
+BeliefConstraint::BeliefConstraint(int constrained_agent, int constraining_agent, 
 	std::vector<double> timeRange, std::vector<ob::State*> beliefStates):
-		Constraint(agentIdx, timeRange), belief_states_(beliefStates) {}
+		Constraint(constrained_agent, constraining_agent, timeRange), belief_states_(beliefStates) {}
 
 BeliefConstraint::~BeliefConstraint(){}
 

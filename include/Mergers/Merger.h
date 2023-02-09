@@ -1,9 +1,8 @@
 #pragma once
 #include "common.h"
-#include "MultiRobotProblemDefinition.h"
+#include <ompl/util/ClassForward.h>
 
 
-OMPL_CLASS_FORWARD(Merger);
 OMPL_CLASS_FORWARD(MultiRobotProblemDefinition);
 class Merger
 {

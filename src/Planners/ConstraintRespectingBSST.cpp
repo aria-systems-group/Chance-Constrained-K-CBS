@@ -269,7 +269,7 @@ ompl::base::PlannerStatus ompl::control::ConstraintRespectingBSST::solve(const b
         			        pathSegment.append(mpath[i]->state_);
                     pathSegment.interpolate();
                     // check the path-segment for constraint validation prior to adding motion
-                    if (constraintValidator_->satisfiesConstraints(pathSegment, constraints_)) {
+                    if (planValidator_->satisfiesConstraints(pathSegment, constraints_)) {
                         closestWitness->linkRep(motion);
 
                         nn_->add(motion);

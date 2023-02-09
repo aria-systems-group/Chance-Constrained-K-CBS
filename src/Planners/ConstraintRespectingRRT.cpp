@@ -190,7 +190,7 @@ ob::PlannerStatus oc::ConstraintRespectingRRT::solve(const ob::PlannerTerminatio
                     p.append(motion->parent->state);
                     p.append(motion->state, motion->control, (motion->steps * siC_->getPropagationStepSize()));
                     p.interpolate();
-                    if (constraintValidator_->satisfiesConstraints(p, constraints_))
+                    if (planValidator_->satisfiesConstraints(p, constraints_))
                     {
                         nn_->add(motion);
                         double dist = 0.0;

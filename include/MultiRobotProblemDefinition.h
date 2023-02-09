@@ -1,12 +1,15 @@
 #pragma once
 #include "Instance.h"
 #include "Mergers/Merger.h"
-#include "PlanValidityCheckers/PlanValidityChecker.h"
+#include <ompl/control/SpaceInformation.h>
 #include "Planners/ConstraintRespectingBSST.h"
-#include "ConstraintValidityCheckers/BeliefCVC.h"
+
+namespace ob = ompl::base;
+namespace oc = ompl::control;
 
 
 OMPL_CLASS_FORWARD(MotionPlanningProblem);
+OMPL_CLASS_FORWARD(ConstraintRespectingPlanner);
 class MotionPlanningProblem
 {
 public:

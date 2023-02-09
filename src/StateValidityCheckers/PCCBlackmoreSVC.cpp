@@ -8,32 +8,19 @@ PCCBlackmoreSVC::PCCBlackmoreSVC(const oc::SpaceInformationPtr &si, InstancePtr 
 	n_obstacles_ = obs_list.size();
 	erf_inv_result_ = computeInverseErrorFunction_(1 - 2 * (p_collision_ / n_obstacles_));
 
-	// A_list_.resize(n_obstacles_); 
-   
-    
-    for (auto itr = obs_list.begin(); itr != obs_list.end(); itr++) {
-        auto exterior_points = (*itr)->getPolyPoints();
-		Eigen::MatrixXd A(4, 2);
-        Eigen::MatrixXd B(4, 1);
-        for (int i=0; i<exterior_points.size()-1; i++)
-        {
-            double x1 = boost::geometry::get<0>(exterior_points[i]);
-            double y1 = boost::geometry::get<1>(exterior_points[i]);
-            double x2 = boost::geometry::get<0>(exterior_points[i+1]);
-            double y2 = boost::geometry::get<1>(exterior_points[i+1]);
 
-            double a = y2 - y1;
-            double b = x1 - x2;
-            double c = a * x1 + b * y1;
+	/* 	Generate half-planes for robot to avoid obstacles.
+	//	This is done by iterating through all the obstacles, taking the Minkoski sum with robot bounding box, 
+	//	and then creating the half-planes for that.
+	*/ 
 
-            A(i, 0) = a;
-            A(i, 1) = b;
-            
-            B(i,0) = c;
-        }
-        A_list_.push_back(A);
-        B_list_.push_back(B);
-    }
+	for (auto itr = obs_list.begin(); itr != obs_list.end(); itr++) {
+		// take Minkoski sum of obstacle and robot
+		Polygon result_poly = getMinkowskiSum_(r, *itr);
+		std::pair<Eigen::MatrixXd, Eigen::MatrixXd> half_plane_matrices = getHalfPlanes_(result_poly);
+		A_list_.push_back(half_plane_matrices.first);
+		B_list_.push_back(half_plane_matrices.second);
+	}
 }
 
 PCCBlackmoreSVC::~PCCBlackmoreSVC() {}
@@ -47,10 +34,6 @@ bool PCCBlackmoreSVC::isValid(const ob::State *state) const {
 		return false;
 	}
 
-    
-    // if (x > 100.0 || x < 0.0 || y < 0.0 || y > 100.0){
-    //     return false;
-    // }
 	double x = state->as<R2BeliefSpace::StateType>()->getX();
     double y = state->as<R2BeliefSpace::StateType>()->getY();
     auto PX = state->as<R2BeliefSpace::StateType>()->getCovariance();
@@ -78,4 +61,135 @@ bool PCCBlackmoreSVC::HyperplaneCCValidityChecker_(const Eigen::MatrixXd &A, con
 		}
 	}
 	return false;
+}
+
+std::pair<Eigen::MatrixXd, Eigen::MatrixXd> PCCBlackmoreSVC::getHalfPlanes_(Polygon combined_poly)
+{
+	/* Converts a Polygon to a set of halfplanes */
+	auto exterior_points = bg::exterior_ring(combined_poly);
+	if (exterior_points.size() != 5) {
+		OMPL_WARN("%s: Generating Halfplanes currently supports closed rectangles. Please check the implementation.", "PCCBlackmoreSVC");
+	}
+	Eigen::MatrixXd A(4, 2);
+    Eigen::MatrixXd B(4, 1);
+    for (int i=0; i<exterior_points.size()-1; i++)
+    {
+        double x1 = bg::get<0>(exterior_points[i]);
+        double y1 = bg::get<1>(exterior_points[i]);
+        double x2 = bg::get<0>(exterior_points[i+1]);
+        double y2 = bg::get<1>(exterior_points[i+1]);
+        // std::cout << x1 << "," << y1 << std::endl;
+
+        double a = y2 - y1;
+        double b = x1 - x2;
+        double c = a * x1 + b * y1;
+
+        A(i, 0) = a;
+        A(i, 1) = b;
+        B(i,0) = c;
+    }
+    return std::make_pair(A,B);
+}
+
+Polygon PCCBlackmoreSVC::getMinkowskiSum_(const Robot* &r, Obstacle* &obs)
+{
+	// test: triangle and rectangle from web (centered at origin!)
+	// https://cp-algorithms.com/geometry/minkowski.html#algorithm
+	// Polygon shape1{{{0, -0.5}, {0.5, 0.5}, {-0.5, 0.5}}}; 
+	// Polygon shape2{{{-1, -1}, {1, -1}, {1, 1}, {-1,1}}};
+
+	/* First, center robot at obstacle location */
+    Polygon r_initial_poly;
+    Polygon r_origin_centered;
+
+    const double r_ix = r->getStartLocation().x_;
+    const double r_iy = r->getStartLocation().y_;
+    // const double o_x = obs->x_;
+    // const double o_y = obs->y_;
+    bg::correct(r_initial_poly);
+    bg::assign(r_initial_poly, r->getShape());
+    bg::strategy::transform::matrix_transformer<double, 2, 2> r_xfrm(
+             cos(0), sin(0), (0 - r_ix),
+            -sin(0), cos(0), (0 - r_iy),
+                      0,          0,  1);
+    bg::transform(r_initial_poly, r_origin_centered, r_xfrm);
+    bg::correct(r_origin_centered);
+
+    // for (const auto &a : boost::geometry::exterior_ring(r_origin_centered)) {
+    // 	const double x = bg::get<0>(a);
+	// 	const double y = bg::get<1>(a);
+	// 	std::cout << x << "," << y << std::endl;
+    // }
+
+    /* Next, create copy of obstacle polygon */
+    Polygon obs_poly = obs->getPolygon();
+    bg::correct(obs_poly);
+
+    /* Perform the Minkowski Sum */
+	std::vector<Point> shape1_points = boost::geometry::exterior_ring(r_origin_centered);
+	std::vector<Point> shape2_points = boost::geometry::exterior_ring(obs_poly);
+
+	shape1_points.push_back(shape1_points[1]);
+	shape2_points.push_back(shape2_points[1]);
+
+    std::vector<Point> result;
+    int i = 0, j = 0;
+    while(i < shape1_points.size() - 2 || j < shape2_points.size() - 2){
+        result.push_back(addPoints_(shape1_points[i], shape2_points[j]));
+        Point s1_diff = subtractPoints_(shape1_points[i + 1], shape1_points[i]);
+        Point s2_diff = subtractPoints_(shape2_points[j + 1], shape2_points[j]);
+        double cross = crossProduct_(s1_diff, s2_diff);
+        if(cross >= 0)
+            ++i;
+        if(cross <= 0)
+            ++j;
+    }
+
+    result.push_back(result.front()); // make polygon closed
+
+    Polygon result_poly;
+
+    for (auto itr = result.begin(); itr != result.end(); itr++) {
+		// double x = bg::get<0>(*itr);
+		// double y = bg::get<1>(*itr);
+		// std::cout << x << "," << y << std::endl;
+		bg::append(result_poly.outer(), *itr);
+	}
+	bg::correct(result_poly);
+    return result_poly;
+}
+
+double PCCBlackmoreSVC::crossProduct_(const Point &a, const Point &b)
+{
+	/* Performs A \times B */
+	const double ax = bg::get<0>(a);
+	const double ay = bg::get<1>(a);
+	const double bx = bg::get<0>(b);
+	const double by = bg::get<1>(b);
+
+	return (ax * by) - (ay * bx);
+}
+
+Point PCCBlackmoreSVC::subtractPoints_(const Point &a, const Point &b)
+{
+	/* Element-wise subtracts B from A ( i.e. A-B ) */
+	const double ax = bg::get<0>(a);
+	const double ay = bg::get<1>(a);
+	const double bx = bg::get<0>(b);
+	const double by = bg::get<1>(b);
+
+	Point difference(ax-bx, ay-by);
+	return difference;
+}
+
+Point PCCBlackmoreSVC::addPoints_(const Point &a, const Point &b)
+{
+	/* Element-wise subtracts B from A ( i.e. A-B ) */
+	const double ax = bg::get<0>(a);
+	const double ay = bg::get<1>(a);
+	const double bx = bg::get<0>(b);
+	const double by = bg::get<1>(b);
+
+	Point difference(ax+bx, ay+by);
+	return difference;
 }

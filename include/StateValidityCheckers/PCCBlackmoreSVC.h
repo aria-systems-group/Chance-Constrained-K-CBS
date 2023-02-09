@@ -36,5 +36,10 @@ class PCCBlackmoreSVC : public ob::StateValidityChecker {
 			return boost::math::erf_inv(argument);
 		}
 		bool HyperplaneCCValidityChecker_(const Eigen::MatrixXd &A, const Eigen::MatrixXd &B, const double &x_pose, const double &y_pose, const Eigen::MatrixXd &PX) const;
+		std::pair<Eigen::MatrixXd, Eigen::MatrixXd> getHalfPlanes_(Polygon combined_poly);
+		Polygon getMinkowskiSum_(const Robot* &r, Obstacle* &obs);
+		Point addPoints_(const Point &a, const Point &b);
+		Point subtractPoints_(const Point &a, const Point &b);
+		double crossProduct_(const Point &a, const Point &b);
 };
 

@@ -26,7 +26,6 @@ cmake_install.cmake
 *.o
 *.obj
 Makefile
-Dockerfile
 
 #IDE related
 .vscode

@@ -1,11 +1,8 @@
 #pragma once
-#include "common.h"
 #include "Spaces/R2BeliefSpace.h"
-#include <string>
-#include <vector>
-#include <ompl/control/PathControl.h>
 #include <fstream>
 #include <filesystem>
+#include <ompl/control/PathControl.h>
 
 namespace ob = ompl::base;
 namespace oc = ompl::control;

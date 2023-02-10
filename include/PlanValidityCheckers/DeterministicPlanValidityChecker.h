@@ -1,14 +1,12 @@
 #pragma once
-#include "common.h"
 #include "PlanValidityCheckers/PlanValidityChecker.h"
 #include "Constraints/DeterministicConstraint.h"
-#include <ompl/base/spaces/RealVectorStateSpace.h>
 #include <ompl/base/spaces/SO2StateSpace.h>
+#include <ompl/base/spaces/RealVectorStateSpace.h>
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/strategies/transform/matrix_transformers.hpp>
 
 
-OMPL_CLASS_FORWARD(MultiRobotProblemDefinition);
 OMPL_CLASS_FORWARD(DeterministicPlanValidityChecker);
 class DeterministicPlanValidityChecker: public PlanValidityChecker
 {

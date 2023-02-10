@@ -1,5 +1,4 @@
 #pragma once
-#include "common.h"
 #include "Constraints/Constraint.h"
 #include <ompl/base/State.h>
 

@@ -1,7 +1,7 @@
 #pragma once
 #include "Instance.h"
-#include <ompl/base/spaces/RealVectorStateSpace.h>
 #include <ompl/base/spaces/SO2StateSpace.h>
+#include <ompl/base/spaces/RealVectorStateSpace.h>
 #include <ompl/control/SpaceInformation.h>
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/strategies/transform/matrix_transformers.hpp>
@@ -10,7 +10,6 @@ namespace ob = ompl::base;
 namespace oc = ompl::control;
 
 
-OMPL_CLASS_FORWARD(Instance);
 class RealVectorStateSpaceSVC : public ob::StateValidityChecker
 {
 public:

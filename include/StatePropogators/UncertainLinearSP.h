@@ -1,7 +1,7 @@
 #pragma once
 #include "Spaces/R2BeliefSpace.h"
 #include <ompl/base/spaces/SE2StateSpace.h>
-#include <ompl/control/ODESolver.h>
+#include <ompl/control/SpaceInformation.h>
 #include <ompl/control/spaces/RealVectorControlSpace.h>
 
 namespace ob = ompl::base;

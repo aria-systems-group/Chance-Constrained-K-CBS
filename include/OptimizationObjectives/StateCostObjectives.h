@@ -1,9 +1,7 @@
 #pragma once
-#include "common.h"
 #include "Spaces/R2BeliefSpace.h"
 #include <ompl/base/objectives/PathLengthOptimizationObjective.h>
 #include <ompl/base/objectives/StateCostIntegralObjective.h>
-#include <ompl/base/objectives/MaximizeMinClearanceObjective.h>
 
 namespace ob = ompl::base;
 

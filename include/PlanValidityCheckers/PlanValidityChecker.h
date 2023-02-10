@@ -1,5 +1,4 @@
 #pragma once
-// #include "common.h"
 #include "Conflict.h"
 #include "MultiRobotProblemDefinition.h"
 #include "Constraints/Constraint.h"
@@ -9,7 +8,6 @@ namespace oc = ompl::control;
 typedef std::vector<oc::PathControl> Plan;
 
 
-OMPL_CLASS_FORWARD(MultiRobotProblemDefinition);
 OMPL_CLASS_FORWARD(PlanValidityChecker);
 class PlanValidityChecker
 {

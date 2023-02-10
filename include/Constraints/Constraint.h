@@ -1,7 +1,8 @@
 #pragma once
 #include <vector>
-#include <ompl/util/ClassForward.h>
 #include <boost/concept_check.hpp>
+#include <ompl/util/ClassForward.h>
+
 
 
 // abstract class for constraint

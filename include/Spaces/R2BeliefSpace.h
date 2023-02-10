@@ -2,10 +2,10 @@
 #include <ompl/base/spaces/RealVectorStateSpace.h>
 #include <boost/math/constants/constants.hpp>
 #include <unsupported/Eigen/MatrixFunctions>
-#include <eigen3/Eigen/Dense>
-
 
 using namespace ompl::base;
+
+
 class R2BeliefSpace : public ompl::base::RealVectorStateSpace
 {
 

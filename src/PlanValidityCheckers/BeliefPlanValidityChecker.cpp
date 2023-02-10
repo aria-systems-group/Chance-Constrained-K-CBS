@@ -2,9 +2,9 @@
 
 BeliefPlanValidityChecker::BeliefPlanValidityChecker(MultiRobotProblemDefinitionPtr pdef):
 	PlanValidityChecker(pdef, "BeliefPlanValidityChecker"), 
-	p_plan_safe_(0.7), 
+	p_plan_safe_(0.9), 
 	p_plan_coll_dist_( (1 - p_plan_safe_) / 1),
-	p_constraint_safe_(0.8),
+	p_constraint_safe_(0.9),
 	p_constraint_coll_dist_( (1 - p_constraint_safe_) / 1)
 {
 	std::vector<Robot*> robots = mrmp_pdef_->getInstance()->getRobots();
@@ -52,7 +52,6 @@ std::vector<ConflictPtr> BeliefPlanValidityChecker::validatePlan(Plan p)
 			// must continue to propogate forward until conflict is finished
 			int step = k;
 			while (c != nullptr && step < maxStates) {
-				// std::cout << "found: " << c << std::endl;
 				confs.push_back(c);
 				step++;
 				activeRobots = getActiveRobots_(p, step, c->agent1Idx_, c->agent2Idx_);

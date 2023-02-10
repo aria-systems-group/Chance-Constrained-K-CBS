@@ -11,6 +11,12 @@ void Obstacle::printPoints() const
         OMPL_INFORM("   - Point(%0.2f, %0.2f)", bg::get<0>(exterior_points[i]), bg::get<1>(exterior_points[i]));
     }
 }
+
+Polygon Obstacle::getPolygon() const
+{
+    return poly_;
+}
+
 Polygon::ring_type Obstacle::getPolyPoints() const
 {
     return boost::geometry::exterior_ring(poly_);

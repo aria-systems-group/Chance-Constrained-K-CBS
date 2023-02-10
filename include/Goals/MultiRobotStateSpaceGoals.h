@@ -7,7 +7,7 @@ namespace ob = ompl::base;
 namespace oc = ompl::control;
 
 
-class R2MultiRobotGoal : public ompl::base::Goal
+class R2MultiRobotGoal : public ob::Goal
 {
 public:
     R2MultiRobotGoal(const oc::SpaceInformationPtr &si, 

@@ -1,16 +1,15 @@
 #pragma once
-#include "common.h"
-#include "PlanValidityCheckers/PlanValidityChecker.h"
-#include "Conflict.h"
-#include "Constraints/BeliefConstraint.h"
+// #include "common.h"
+// #include "Conflict.h"
 #include "Spaces/R2BeliefSpace.h"
+#include "Constraints/BeliefConstraint.h"
+#include "PlanValidityCheckers/PlanValidityChecker.h"
 #include <boost/geometry/strategies/transform/matrix_transformers.hpp>
 #include <unordered_map>
 
 namespace bm = boost::math;
 
 
-OMPL_CLASS_FORWARD(MultiRobotProblemDefinition);
 OMPL_CLASS_FORWARD(BeliefPlanValidityChecker);
 class BeliefPlanValidityChecker: public PlanValidityChecker
 {
@@ -39,5 +38,4 @@ private:
 	const double p_plan_coll_dist_;
 	const double p_constraint_safe_;
 	const double p_constraint_coll_dist_;
-	
 };

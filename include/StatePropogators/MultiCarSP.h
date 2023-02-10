@@ -1,6 +1,6 @@
 #pragma once
-#include <ompl/base/spaces/SE2StateSpace.h>
 #include <ompl/control/ODESolver.h>
+#include <ompl/base/spaces/SE2StateSpace.h>
 #include <ompl/control/spaces/RealVectorControlSpace.h>
 
 namespace ob = ompl::base;

@@ -31,13 +31,4 @@ if (UNIX)
     )
 endif (UNIX)
 
-if (LINUX)
-    # os specific library importing
-    add_library(ompl SHARED IMPORTED)
-    set_target_properties(ompl PROPERTIES
-      IMPORTED_LOCATION ""
-      INTERFACE_INCLUDE_DIRECTORIES ""
-    )
-endif (LINUX)
-
 target_link_libraries(K-CBS ${Boost_LIBRARIES} ompl Eigen3::Eigen)

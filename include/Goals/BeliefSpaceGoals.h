@@ -1,10 +1,11 @@
 #pragma once
-#include "common.h"
 #include "Spaces/R2BeliefSpace.h"
 #include <ompl/base/goals/GoalRegion.h>
 
+namespace ob = ompl::base;
 
-class R2BeliefSpaceGoal : public ompl::base::GoalRegion
+
+class R2BeliefSpaceGoal : public ob::GoalRegion
 {
 public:
     R2BeliefSpaceGoal(const oc::SpaceInformationPtr &si, const ob::ScopedState<> goal) : 

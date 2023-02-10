@@ -3,21 +3,17 @@
 #include <string>
 #include <fstream>
 #include <boost/geometry/io/io.hpp>
-#include <boost/geometry/geometries/point_xy.hpp>
 #include <boost/geometry/geometries/geometries.hpp>
+#include <boost/geometry/algorithms/correct.hpp>
 #include <ompl/util/Console.h>
 
 
-// namespace fs = std::filesystem;
-// namespace bm = boost::math;
+
 namespace bg = boost::geometry;
-// namespace ob = ompl::base;
-// namespace oc = ompl::control;
 
 
 typedef bg::model::d2::point_xy<double> Point;
-typedef bg::model::polygon<Point> Polygon;
-// typedef std::vector<oc::PathControl> Plan;
+typedef bg::model::polygon<Point, false, true> Polygon;
 
 
 class Location {
@@ -32,6 +28,7 @@ class Obstacle: public Location {
 public:
     Obstacle(double x, double y);
     void printPoints() const;
+    Polygon getPolygon() const;
     Polygon::ring_type getPolyPoints() const;
 protected:
     Polygon poly_;

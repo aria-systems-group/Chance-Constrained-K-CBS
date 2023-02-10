@@ -82,20 +82,20 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintRRT_MP_Problems(InstanceP
             // create a problem instance
             auto pdef(std::make_shared<ob::ProblemDefinition>(si));
 
-            // set the start and goal states
-            pdef->addStartState(start);
-            pdef->setGoal(goal);
+            // // set the start and goal states
+            // pdef->addStartState(start);
+            // pdef->setGoal(goal);
 
-            // create (and provide) the low-level motion planner object
-            ConstraintValidityCheckerPtr validator = std::make_shared<DeterministicCVC>(*itr);
-            ConstraintRespectingPlannerPtr planner(std::make_shared<oc::ConstraintRespectingRRT>(si));
-            planner->as<oc::ConstraintRespectingRRT>()->setProblemDefinition(pdef);
-            planner->as<oc::ConstraintRespectingRRT>()->setConstraintValidator(validator);
-            planner->as<oc::ConstraintRespectingRRT>()->setup();
+            // // create (and provide) the low-level motion planner object
+            // ConstraintValidityCheckerPtr validator = std::make_shared<DeterministicCVC>(*itr);
+            // ConstraintRespectingPlannerPtr planner(std::make_shared<oc::ConstraintRespectingRRT>(si));
+            // planner->as<oc::ConstraintRespectingRRT>()->setProblemDefinition(pdef);
+            // planner->as<oc::ConstraintRespectingRRT>()->setConstraintValidator(validator);
+            // planner->as<oc::ConstraintRespectingRRT>()->setup();
 
-            // append to MRMP problem list
-            auto mp = std::make_shared<MotionPlanningProblem>(si, pdef, planner);
-            prob_defs.push_back(mp);
+            // // append to MRMP problem list
+            // auto mp = std::make_shared<MotionPlanningProblem>(si, pdef, planner);
+            // prob_defs.push_back(mp);
         }
         else if ((*itr)->getDynamicsModel() == "SecondOrderCar") {
             // set-up the compound State Space
@@ -156,15 +156,15 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintRRT_MP_Problems(InstanceP
             pdef->setGoal(goal);
 
             // create (and provide) the low-level motion planner object
-            ConstraintValidityCheckerPtr validator = std::make_shared<DeterministicCVC>(*itr);
-            ConstraintRespectingPlannerPtr planner(std::make_shared<oc::ConstraintRespectingRRT>(si));
-            planner->as<oc::ConstraintRespectingRRT>()->setProblemDefinition(pdef);
-            planner->as<oc::ConstraintRespectingRRT>()->setConstraintValidator(validator);
-            planner->as<oc::ConstraintRespectingRRT>()->setup();
+            // ConstraintValidityCheckerPtr validator = std::make_shared<DeterministicCVC>(*itr);
+            // ConstraintRespectingPlannerPtr planner(std::make_shared<oc::ConstraintRespectingRRT>(si));
+            // planner->as<oc::ConstraintRespectingRRT>()->setProblemDefinition(pdef);
+            // planner->as<oc::ConstraintRespectingRRT>()->setConstraintValidator(validator);
+            // planner->as<oc::ConstraintRespectingRRT>()->setup();
 
-            // append to MRMP problem list
-            auto mp = std::make_shared<MotionPlanningProblem>(si, pdef, planner);
-            prob_defs.push_back(mp);
+            // // append to MRMP problem list
+            // auto mp = std::make_shared<MotionPlanningProblem>(si, pdef, planner);
+            // prob_defs.push_back(mp);
         }
         else {
             OMPL_ERROR("%s: Dynamics model named %s is not yet implemented!", 
@@ -242,11 +242,10 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
             // set optimization objective
             pdef->setOptimizationObjective(getEuclideanPathLengthObjective(si));
 
-            // create (and provide) the low-level motion planner object
-            ConstraintValidityCheckerPtr validator = std::make_shared<BeliefCVC>(*itr, mrmp_instance->getObstacles().size());
+            // // create (and provide) the low-level motion planner object
             ConstraintRespectingPlannerPtr planner(std::make_shared<oc::ConstraintRespectingBSST>(si));
             planner->as<oc::ConstraintRespectingBSST>()->setProblemDefinition(pdef);
-            planner->as<oc::ConstraintRespectingBSST>()->setConstraintValidator(validator);
+            // planner->as<oc::ConstraintRespectingBSST>()->setConstraintValidator(validator);
             planner->as<oc::ConstraintRespectingBSST>()->setup();
 
             // append to MRMP problem list

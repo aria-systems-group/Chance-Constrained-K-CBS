@@ -3,7 +3,11 @@
 #include "Mergers/Merger.h"
 #include "PlanValidityCheckers/PlanValidityChecker.h"
 #include "Planners/ConstraintRespectingBSST.h"
-#include "ConstraintValidityCheckers/BeliefCVC.h"
+// #include <ompl/control/SpaceInformation.h>
+
+
+namespace ob = ompl::base;
+namespace oc = ompl::control;
 
 
 OMPL_CLASS_FORWARD(MotionPlanningProblem);
@@ -26,9 +30,7 @@ private:
     ConstraintRespectingPlannerPtr planner_;
 };
 
-OMPL_CLASS_FORWARD(Merger);
 OMPL_CLASS_FORWARD(MultiRobotProblemDefinition);
-OMPL_CLASS_FORWARD(PlanValidityChecker);
 class MultiRobotProblemDefinition: public ob::ProblemDefinition
 {
 public:

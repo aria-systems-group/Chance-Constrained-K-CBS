@@ -1,18 +1,14 @@
 #pragma once
 #include "Instance.h"
 #include "Spaces/R2BeliefSpace.h"
-#include <ompl/base/spaces/RealVectorStateSpace.h>
-#include <ompl/base/spaces/SO2StateSpace.h>
 #include <ompl/control/SpaceInformation.h>
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/strategies/transform/matrix_transformers.hpp>
-#include <eigen3/Eigen/Dense>
 
 namespace ob = ompl::base;
 namespace oc = ompl::control;
 
 
-OMPL_CLASS_FORWARD(Instance);
 class PCCBlackmoreSVC : public ob::StateValidityChecker {
 	public:
 		PCCBlackmoreSVC(const oc::SpaceInformationPtr &si, InstancePtr mrmp_instance, const Robot *r, const double accep_prob);
@@ -36,5 +32,9 @@ class PCCBlackmoreSVC : public ob::StateValidityChecker {
 			return boost::math::erf_inv(argument);
 		}
 		bool HyperplaneCCValidityChecker_(const Eigen::MatrixXd &A, const Eigen::MatrixXd &B, const double &x_pose, const double &y_pose, const Eigen::MatrixXd &PX) const;
+		std::pair<Eigen::MatrixXd, Eigen::MatrixXd> getHalfPlanes_(Polygon combined_poly);
+		Polygon getMinkowskiSum_(const Robot* &r, Obstacle* &obs);
+		Point addPoints_(const Point &a, const Point &b);
+		Point subtractPoints_(const Point &a, const Point &b);
+		double crossProduct_(const Point &a, const Point &b);
 };
-

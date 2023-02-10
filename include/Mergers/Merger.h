@@ -1,10 +1,10 @@
 #pragma once
-#include "common.h"
-#include "MultiRobotProblemDefinition.h"
+#include <ompl/util/Console.h>
+#include <ompl/util/ClassForward.h>
 
 
-OMPL_CLASS_FORWARD(Merger);
 OMPL_CLASS_FORWARD(MultiRobotProblemDefinition);
+OMPL_CLASS_FORWARD(Merger);
 class Merger
 {
 public:

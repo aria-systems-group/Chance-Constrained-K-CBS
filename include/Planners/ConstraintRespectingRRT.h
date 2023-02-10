@@ -1,5 +1,6 @@
 #pragma once
 #include "Planners/ConstraintRespectingPlanner.h"
+#include "PlanValidityCheckers/PlanValidityChecker.h"
 #include <utils/ConstraintRespectingGetDefaultNN.h>
 #include <ompl/tools/config/SelfConfig.h>
 #include <ompl/control/planners/PlannerIncludes.h>
@@ -40,14 +41,14 @@ namespace ompl
             base::PlannerStatus solve(const base::PlannerTerminationCondition &ptc) override;
 
             // add my things required for planning w/ KCBS
-            void setConstraintValidator(ConstraintValidityCheckerPtr &validator) override
+            void setPlanValidator(PlanValidityCheckerPtr &validator) override
             {
-                constraintValidator_ = validator;
+                planValidator_ = validator;
             }
 
-            const ConstraintValidityCheckerPtr getConstraintValidator() override
+            const PlanValidityCheckerPtr getPlanValidator() override
             {
-                return constraintValidator_;
+                return planValidator_;
             }
 
             void updateConstraints(std::vector<ConstraintPtr> c) override
@@ -178,7 +179,7 @@ namespace ompl
             Motion *lastGoalMotion_{nullptr};
 
             // my additions for replanning w. KCBS
-            ConstraintValidityCheckerPtr constraintValidator_;
+            PlanValidityCheckerPtr planValidator_;
             std::vector<ConstraintPtr> constraints_;
             // Robot* robot_;
             bool replanning_;

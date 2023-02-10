@@ -7,6 +7,7 @@
 namespace ob = ompl::base;
 namespace oc = ompl::control;
 
+
 // Defines a circular goal region centered at goal, with radius = toll
 class R2Goal : public ompl::base::GoalRegion
 {

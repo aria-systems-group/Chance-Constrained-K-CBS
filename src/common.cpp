@@ -8,9 +8,15 @@ void Obstacle::printPoints() const
     auto exterior_points = boost::geometry::exterior_ring(poly_);
     for (int i=0; i<exterior_points.size(); i++)
     {
-        OMPL_INFORM("   - Point(%0.2f, %0.2f)", boost::geometry::get<0>(exterior_points[i]), boost::geometry::get<1>(exterior_points[i]));
+        OMPL_INFORM("   - Point(%0.2f, %0.2f)", bg::get<0>(exterior_points[i]), bg::get<1>(exterior_points[i]));
     }
 }
+
+Polygon Obstacle::getPolygon() const
+{
+    return poly_;
+}
+
 Polygon::ring_type Obstacle::getPolyPoints() const
 {
     return boost::geometry::exterior_ring(poly_);
@@ -30,6 +36,9 @@ RectangularObstacle::RectangularObstacle(double x, double y, double len, double 
     bg::append(poly_.outer(), top_right);
     bg::append(poly_.outer(), top_left);
     bg::append(poly_.outer(), bott_left);
+
+    // assures that the polygon (1) has counter-clockwise points, and (2) is closed
+    bg::correct(poly_);
 }
 
 Robot::Robot(std::string name, std::string model, Location start, Location goal):
@@ -70,4 +79,6 @@ RectangularRobot::RectangularRobot(std::string name, std::string model, Location
     bg::append(shape_.outer(), top_right);
     bg::append(shape_.outer(), top_left);
     bg::append(shape_.outer(), bott_left);
+    // assures that the polygon (1) has counter-clockwise points, and (2) is closed
+    bg::correct(shape_);
 }

@@ -1,5 +1,4 @@
 #pragma once
-// #include "common.h"
 #include "Conflict.h"
 #include "MultiRobotProblemDefinition.h"
 #include "Constraints/Constraint.h"
@@ -9,7 +8,6 @@ namespace oc = ompl::control;
 typedef std::vector<oc::PathControl> Plan;
 
 
-OMPL_CLASS_FORWARD(MultiRobotProblemDefinition);
 OMPL_CLASS_FORWARD(PlanValidityChecker);
 class PlanValidityChecker
 {
@@ -20,6 +18,8 @@ public:
 	virtual std::vector<ConflictPtr> validatePlan(Plan p) = 0;
 
 	virtual ConstraintPtr createConstraint(Plan p, std::vector<ConflictPtr> conflicts, const int agent) = 0;
+
+	virtual bool satisfiesConstraints(oc::PathControl path, std::vector<ConstraintPtr> constraints) = 0;
 
 protected:
 	MultiRobotProblemDefinitionPtr mrmp_pdef_;

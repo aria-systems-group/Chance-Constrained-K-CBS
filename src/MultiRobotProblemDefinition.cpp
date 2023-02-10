@@ -33,10 +33,9 @@ void MultiRobotProblemDefinition::replacePlanner(ConstraintRespectingPlannerPtr 
 	std::string dynamics_model = r->getDynamicsModel();
 	if (ll_solver == "BSST") {
 		// create (and provide) the low-level motion planner object
-        ConstraintValidityCheckerPtr validator = std::make_shared<BeliefCVC>(r, mrmp_instance_->getObstacles().size());
         ConstraintRespectingPlannerPtr planner(std::make_shared<oc::ConstraintRespectingBSST>(si));
         planner->as<oc::ConstraintRespectingBSST>()->setProblemDefinition(pdef);
-        planner->as<oc::ConstraintRespectingBSST>()->setConstraintValidator(validator);
+        planner->as<oc::ConstraintRespectingBSST>()->setPlanValidator(validator_);
         planner->as<oc::ConstraintRespectingBSST>()->setup();
         mrmp_problem_[idx]->replacePlanner(planner);
 	}
@@ -58,6 +57,9 @@ void MultiRobotProblemDefinition::setMerger(MergerPtr &merger)
 void MultiRobotProblemDefinition::setPlanValidator(PlanValidityCheckerPtr &validator)
 {
 	validator_ = validator;
+	for (MotionPlanningProblemPtr &mp: mrmp_problem_) {
+		mp->getPlanner()->setPlanValidator(validator_);
+	}
 }
 
 const oc::SpaceInformationPtr MultiRobotProblemDefinition::getRobotSpaceInformationPtr(const int idx)

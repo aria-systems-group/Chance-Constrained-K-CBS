@@ -386,7 +386,7 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
    	}
    	/* End of main loop. If possible, add solutions to every MotionPlanningProblem */
    	auto stop = std::chrono::high_resolution_clock::now();
-   	auto duration = duration_cast<std::chrono::microseconds>(stop - start);
+   	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
    	solveTime_ = (duration.count() / 1000000.0);
    	bool solved = false;
    	if (solution == nullptr) {

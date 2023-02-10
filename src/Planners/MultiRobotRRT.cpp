@@ -319,7 +319,7 @@ ompl::base::PlannerStatus ompl::control::MultiRobotRRT::solve(const base::Planne
         siC_->freeControl(rmotion->control);
     delete rmotion;
     si_->freeState(xstate);
-    auto duration = duration_cast<std::chrono::microseconds>(stop - start);
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
     solveTime_ = (duration.count() / 1000000.0);
     OMPL_INFORM("%s: Created %u states", getName().c_str(), nn_->size());
     clear();

@@ -30,27 +30,6 @@ namespace ompl
 
             void getPlannerDataAndCosts(base::PlannerData &data, std::vector<double > &costs) const;
 
-            // add my things required for planning w/ KCBS
-            void setPlanValidator(PlanValidityCheckerPtr &validator) override
-            {
-                planValidator_ = validator;
-            }
-
-            const PlanValidityCheckerPtr getPlanValidator() override
-            {
-                return planValidator_;
-            }
-
-            void updateConstraints(std::vector<ConstraintPtr> c) override
-            {
-                /* clear old data */
-                clear();
-                /* clear old solutions */
-                getProblemDefinition()->clearSolutionPaths();
-                /* update constraints */
-                constraints_ = c;
-            }
-
             /** \brief Clear datastructures. Call this function if the
                 input data to the planner has changed and you do not
                 want to continue planning */

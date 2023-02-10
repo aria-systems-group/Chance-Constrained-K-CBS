@@ -3,6 +3,8 @@
 #include "Spaces/R2BeliefSpace.h"
 #include <ompl/control/SpaceInformation.h>
 #include <boost/geometry/algorithms/correct.hpp>
+#include <boost/math/special_functions/next.hpp>
+#include <boost/math/special_functions/erf.hpp>
 #include <boost/geometry/strategies/transform/matrix_transformers.hpp>
 
 namespace ob = ompl::base;

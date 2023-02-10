@@ -99,7 +99,7 @@ ompl::base::PlannerStatus ompl::control::PBS::solve(const base::PlannerTerminati
             break;
     }
     auto stop = std::chrono::high_resolution_clock::now();
-    auto duration = duration_cast<std::chrono::microseconds>(stop - start);
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
     solveTime_ = (duration.count() / 1000000.0);
     if (solution.size() == treeSearchs.size())
         solved = true;

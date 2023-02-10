@@ -4,6 +4,7 @@
 #include <fstream>
 #include <boost/geometry/io/io.hpp>
 #include <boost/geometry/geometries/geometries.hpp>
+#include <boost/geometry/geometries/point_xy.hpp>
 #include <boost/geometry/algorithms/correct.hpp>
 #include <ompl/util/Console.h>
 

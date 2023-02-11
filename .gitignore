@@ -25,6 +25,7 @@ cmake_install.cmake
 *.lo
 *.o
 *.obj
+*.a
 Makefile
 
 #IDE related

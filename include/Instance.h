@@ -17,15 +17,13 @@ public:
     Instance(po::variables_map &vm, std::string name = "Instance");
     // methods for dimensions
     const double getPsafe() const {return p_safe_;};
+    const std::string getCollisionChecker() const {return colision_checker_;};
     std::vector<double> getDimensions() const {return {x_max_, y_max_};};
     void printDimensions(){OMPL_INFORM("Space Dimensions: \n"
         "x: [0, %0.2f] \n"
         "y: [0, %0.2f]", x_max_, y_max_);};
-    // methods for obstacles
     std::vector<Obstacle*> getObstacles() const {return obstacles_;};
-    // methods for agents
     std::vector<Robot*> getRobots() const {return robots_;};
-    // methods for instance
     const std::string getPlannerName() const {return mrmp_planner_;};
     const std::string getLowLevelPlannerName() const {return low_level_planner_;};
     // printing methods for usability
@@ -42,6 +40,7 @@ private:
     const fs::path map_fpath_;
     const fs::path scen_fpath_;
     const std::string name_;
+    const std::string colision_checker_;
     const std::string mrmp_planner_;
     const std::string low_level_planner_;
     std::vector<Obstacle*> obstacles_;

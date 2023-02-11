@@ -270,7 +270,7 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
       	else {
       		/* Current K-CBS Node has a finite-length plan */
       		/* Simulate the plan in search of conflicts. If no conflicts arrise, return correct solution */
-      		std::vector<ConflictPtr> confs {}; //= mrmp_pdef_->getPlanValidator()->validatePlan(curr->getPlan());
+      		std::vector<ConflictPtr> confs = mrmp_pdef_->getPlanValidator()->validatePlan(curr->getPlan());
     		if (confs.empty()) {
         	 	solution = curr;
         	 	break;

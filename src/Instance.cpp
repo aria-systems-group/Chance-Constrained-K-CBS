@@ -9,7 +9,8 @@ Instance::Instance(po::variables_map &vm, std::string name):
     num_agents_(vm["numAgents"].as<int>()),
     map_fpath_(vm["map"].as<std::string>()),
     scen_fpath_(vm["scen"].as<std::string>()),
-    p_safe_(vm["p_safe"].as<double>())
+    p_safe_(vm["p_safe"].as<double>()),
+    colision_checker_(vm["collision_checker"].as<std::string>())
 {
     bool succ = load_map_();
     if (!succ) {

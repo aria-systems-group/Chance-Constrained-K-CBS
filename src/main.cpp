@@ -25,6 +25,7 @@ void parse_cmd_line(int &argc, char ** &argv, po::variables_map &vm, po::options
         ("bound,b", po::value<int>()->default_value(std::numeric_limits<int>::max()), "The merge bound of K-CBS.")
         ("time,t", po::value<double>()->default_value(600), "cutoff time (seconds)")
         ("output,o", po::value<std::string>()->default_value("results"), "output file name (no extension)")
+        ("p_safe,p", po::value<double>()->default_value(0.95), "Probability of safe (only used for non-deterministic planning sequences)")
         ("screen", po::value<int>()->default_value(0),
                 "screen option \n0 := none \n1 := K-CBS updates \n2 := Low-Level Planner updates \n3 := MRMP detailed updates")
         ;
@@ -75,7 +76,7 @@ int main(int argc, char ** argv)
             MergerPtr merger = std::make_shared<BeliefMerger>(mrmp_pdef);
             mrmp_pdef->setMerger(merger);
             // set-up (and include) a PlanValidityChecker for agent-to-agent collision checking
-            PlanValidityCheckerPtr planValidator = std::make_shared<BeliefPlanValidityChecker>(mrmp_pdef);
+            PlanValidityCheckerPtr planValidator = std::make_shared<BeliefPlanValidityChecker>(mrmp_pdef, instance->getPsafe());
             mrmp_pdef->setPlanValidator(planValidator);
             // create instance of K-CBS, set-up, and solve
             ob::PlannerPtr p(std::make_shared<oc::KCBS>(mrmp_pdef));

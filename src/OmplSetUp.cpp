@@ -178,8 +178,7 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintRRT_MP_Problems(InstanceP
 
 std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(InstancePtr mrmp_instance)
 {
-    const double goalRadius = 0.25;
-    const double pi = bm::constants::pi<double>();
+    const double goalTollorance = 1.0;
     const double stepSize = 0.1;
     
     std::vector<MotionPlanningProblemPtr> prob_defs{};
@@ -207,7 +206,7 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
             auto si(std::make_shared<oc::SpaceInformation>(space, cspace));
 
             // construct (and include) an instance of PCCBlackmore State Validity Checker
-            si->setStateValidityChecker(std::make_shared<PCCBlackmoreSVC>(si, mrmp_instance, (*itr), 0.95));
+            si->setStateValidityChecker(std::make_shared<PCCBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafe()));
 
             // construct (and include) an instance of 2D-Uncertain-Linear State Propogator
             si->setStatePropagator(oc::StatePropagatorPtr(new R2_UncertainLinearStatePropagator(si)));
@@ -221,16 +220,13 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
             // start[1] = (*itr)->getStartLocation().y_;
             ob::State *start = si->allocState();
             Eigen::Matrix2d Sigma0;
-            Sigma0 << 0.1, 0, 0, 0.1;
+            Sigma0 << 0.1, 0.0, 0.0, 0.1;
+            std::cout << Sigma0 << std::endl;
             start->as<R2BeliefSpace::StateType>()->setXY((*itr)->getStartLocation().x_, (*itr)->getStartLocation().y_);
             start->as<R2BeliefSpace::StateType>()->setSigma(Sigma0);
 
-            ob::ScopedState<> goal_loc(space);
-            goal_loc[0] = (*itr)->getGoalLocation().x_;
-            goal_loc[1] = (*itr)->getGoalLocation().y_;
-
-            // create goal
-            ob::GoalPtr goal(new R2BeliefSpaceGoal(si, goal_loc));
+            // // create goal
+            ob::GoalPtr goal(new ChanceConstrainedGoal(si, (*itr)->getGoalLocation(), goalTollorance, mrmp_instance->getPsafe()));
 
             // create a problem instance
             auto pdef(std::make_shared<ob::ProblemDefinition>(si));

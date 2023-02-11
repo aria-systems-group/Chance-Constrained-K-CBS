@@ -1,11 +1,9 @@
 #include "PlanValidityCheckers/BeliefPlanValidityChecker.h"
 
-BeliefPlanValidityChecker::BeliefPlanValidityChecker(MultiRobotProblemDefinitionPtr pdef):
+BeliefPlanValidityChecker::BeliefPlanValidityChecker(MultiRobotProblemDefinitionPtr pdef, const double p_safe):
 	PlanValidityChecker(pdef, "BeliefPlanValidityChecker"), 
-	p_plan_safe_(0.9), 
-	p_plan_coll_dist_( (1 - p_plan_safe_) / 1),
-	p_constraint_safe_(0.9),
-	p_constraint_coll_dist_( (1 - p_constraint_safe_) / 1)
+	p_plan_safe_(p_safe), 
+	p_plan_coll_dist_( (1 - p_plan_safe_) / 1)
 {
 	std::vector<Robot*> robots = mrmp_pdef_->getInstance()->getRobots();
 	boost::tokenizer< boost::char_separator<char> >::iterator beg1;
@@ -233,11 +231,11 @@ bool BeliefPlanValidityChecker::isSafe_(const Eigen::Vector2d mu_ab, const Eigen
 	for (int i = 0; i < n_rows; i++) {
         const double tmp = (A.row(i) * Sigma_ab * A.row(i).transpose()).value();
 		const double Pv = sqrt(tmp);
-		double vbar;
-		if (!replanning)
-			vbar = sqrt(2) * Pv * bm::erf_inv(1 - (2 * p_plan_coll_dist_));
-		else
-			vbar = sqrt(2) * Pv * bm::erf_inv(1 - (2 * p_constraint_coll_dist_));
+		const double vbar = sqrt(2) * Pv * bm::erf_inv(1 - (2 * p_plan_coll_dist_));
+		// if (!replanning)
+		// 	vbar = sqrt(2) * Pv * bm::erf_inv(1 - (2 * p_plan_coll_dist_));
+		// else
+		// 	vbar = sqrt(2) * Pv * bm::erf_inv(1 - (2 * p_constraint_coll_dist_));
         if( (A(i, 0) * mu_ab[0] + A(i, 1) * mu_ab[1] - B(i, 0) >= vbar) ) {
             return true;
         };

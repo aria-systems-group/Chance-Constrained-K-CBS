@@ -81,12 +81,13 @@ void ompl::control::KCBS::freeMemory_()
 	OMPL_WARN("%s: freeMemory_ called but not yet implemented. Possible memory leak.", getName().c_str());
 }
 
-oc::PathControl* ompl::control::KCBS::calcNewPath_(ConstraintRespectingPlannerPtr planner, std::vector<ConstraintPtr> constraints)
+oc::PathControl* ompl::control::KCBS::calcNewPath_(ConstraintRespectingPlannerPtr planner, std::vector<ConstraintPtr> constraints, bool restart)
 {
 	/* Update the constraints for planner and attempt to resolve them in mp_comp_time_ seconds */
 	/* If replanning was successful, return new path. Otherwise, return nullptr */
    	oc::PathControl *traj = nullptr;
-   	planner->updateConstraints(constraints);
+   	if (restart)
+   		planner->updateConstraints(constraints);
    	ob::PlannerStatus solved = planner->solve(mp_comp_time_);
    	if (solved==ob::PlannerStatus::EXACT_SOLUTION) {
    	   	OMPL_INFORM("%s: Successfully Replanned.", getName().c_str());
@@ -234,16 +235,16 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
       	/* If the current K-CBS Node does not contain a finite-length solution, must replan with existing tree */
       	if (curr->getCost() == std::numeric_limits<double>::infinity()) {
       		pq.pop();
-         	std::vector<ConstraintPtr> agent_constraints{curr->getConstraint()};
-        	const KCBSNode *nCpy = curr->getParent();
-        	while (nCpy->getParent() != nullptr) {
-           		if (nCpy->getConstraint()->getConstrainedAgent() == curr->getConstraint()->getConstrainedAgent())
-              		agent_constraints.emplace_back(nCpy->getConstraint());
-           		nCpy = nCpy->getParent();
-        	}
+         	// std::vector<ConstraintPtr> agent_constraints{curr->getConstraint()};
+        	// const KCBSNode *nCpy = curr->getParent();
+        	// while (nCpy->getParent() != nullptr) {
+           	// 	if (nCpy->getConstraint()->getConstrainedAgent() == curr->getConstraint()->getConstrainedAgent())
+            //   		agent_constraints.emplace_back(nCpy->getConstraint());
+           	// 	nCpy = nCpy->getParent();
+        	// }
         	/* replan for conflicting agent w/ new constraint */
         	ConstraintRespectingPlannerPtr p = curr->getPlanner();
-        	oc::PathControl *new_path = calcNewPath_(p, agent_constraints);
+        	oc::PathControl *new_path = calcNewPath_(p, {}, false);
 
         	if (new_path) {
         		/* Create new node and add it to the queue */
@@ -269,7 +270,7 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
       	else {
       		/* Current K-CBS Node has a finite-length plan */
       		/* Simulate the plan in search of conflicts. If no conflicts arrise, return correct solution */
-      		std::vector<ConflictPtr> confs = mrmp_pdef_->getPlanValidator()->validatePlan(curr->getPlan());
+      		std::vector<ConflictPtr> confs {}; //= mrmp_pdef_->getPlanValidator()->validatePlan(curr->getPlan());
     		if (confs.empty()) {
         	 	solution = curr;
         	 	break;

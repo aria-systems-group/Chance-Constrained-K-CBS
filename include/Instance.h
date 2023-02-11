@@ -16,6 +16,7 @@ public:
     Instance(Instance &other);
     Instance(po::variables_map &vm, std::string name = "Instance");
     // methods for dimensions
+    const double getPsafe() const {return p_safe_;};
     std::vector<double> getDimensions() const {return {x_max_, y_max_};};
     void printDimensions(){OMPL_INFORM("Space Dimensions: \n"
         "x: [0, %0.2f] \n"
@@ -37,6 +38,7 @@ private:
     double x_max_;
     double y_max_;
     const int num_agents_;
+    const double p_safe_;
     const fs::path map_fpath_;
     const fs::path scen_fpath_;
     const std::string name_;

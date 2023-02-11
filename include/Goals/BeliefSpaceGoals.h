@@ -1,28 +1,32 @@
 #pragma once
+#include "common.h"
 #include "Spaces/R2BeliefSpace.h"
-#include <ompl/base/goals/GoalRegion.h>
+#include <ompl/base/Goal.h>
+#include <ompl/control/SpaceInformation.h>
+#include <boost/math/special_functions/erf.hpp>
 
 namespace ob = ompl::base;
+namespace oc = ompl::control;
+namespace bm = boost::math;
 
 
-class R2BeliefSpaceGoal : public ob::GoalRegion
+class ChanceConstrainedGoal : public ob::Goal
 {
 public:
-    R2BeliefSpaceGoal(const oc::SpaceInformationPtr &si, const ob::ScopedState<> goal) : 
-    	ompl::base::GoalRegion(si), goal_(goal)
-    {
-        setThreshold(0.25);
-    }
- 
-    virtual double distanceGoal(const ob::State *st) const
-    {
+    ChanceConstrainedGoal(const oc::SpaceInformationPtr &si, const Location goal, const double toll, const double p_safe);
 
-        double dx = st->as<R2BeliefSpace::StateType>()->getX() - goal_[0];
-        double dy = st->as<R2BeliefSpace::StateType>()->getY() - goal_[1];
+    bool isSatisfied(const ob::State *st) const override;
+  
+    bool isSatisfied(const ob::State *st, double *distance) const override;
 
-        return (dx*dx + dy*dy);
-        // perform any operations and return a double indicating the distance to the goal
-    }
 private:
-	const ob::ScopedState<> goal_;
+	std::pair<Eigen::Vector2d, Eigen::Matrix2d> getDistFromState_(const ob::State* st) const;
+	void setHalfPlanes_(Polygon combined_poly);
+	bool isSafe_(const ob::State* st, double *distance = nullptr) const;
+
+	Eigen::MatrixXd A_;
+	Eigen::MatrixXd B_;
+	Eigen::VectorXd goal_;
+	const double p_safe_;
+	const double threshold_;
 };

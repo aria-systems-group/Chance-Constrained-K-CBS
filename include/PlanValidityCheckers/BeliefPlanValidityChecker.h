@@ -14,7 +14,7 @@ OMPL_CLASS_FORWARD(BeliefPlanValidityChecker);
 class BeliefPlanValidityChecker: public PlanValidityChecker
 {
 public:
-	BeliefPlanValidityChecker(MultiRobotProblemDefinitionPtr pdef);
+	BeliefPlanValidityChecker(MultiRobotProblemDefinitionPtr pdef, const double p_safe);
 	~BeliefPlanValidityChecker();
 
 	std::vector<ConflictPtr> validatePlan(Plan p) override;
@@ -36,6 +36,6 @@ private:
 	std::unordered_map<std::string, std::pair<Eigen::MatrixXd, Eigen::MatrixXd>> halfPlane_map_;
 	const double p_plan_safe_;
 	const double p_plan_coll_dist_;
-	const double p_constraint_safe_;
-	const double p_constraint_coll_dist_;
+	// const double p_constraint_safe_;
+	// const double p_constraint_coll_dist_;
 };

@@ -178,7 +178,7 @@ namespace ompl
 
             void setUp_();
 
-            oc::PathControl* calcNewPath_(ConstraintRespectingPlannerPtr planner, std::vector<ConstraintPtr> constraints);
+            oc::PathControl* calcNewPath_(ConstraintRespectingPlannerPtr planner, std::vector<ConstraintPtr> constraints, bool restart = true);
 
             bool shouldMerge_(
                 std::vector< std::pair< std::pair<int, int>, int> > &conf_cntr, 

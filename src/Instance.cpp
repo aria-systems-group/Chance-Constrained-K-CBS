@@ -8,7 +8,8 @@ Instance::Instance(po::variables_map &vm, std::string name):
     x_max_(-1), y_max_(-1), 
     num_agents_(vm["numAgents"].as<int>()),
     map_fpath_(vm["map"].as<std::string>()),
-    scen_fpath_(vm["scen"].as<std::string>())
+    scen_fpath_(vm["scen"].as<std::string>()),
+    p_safe_(vm["p_safe"].as<double>())
 {
     bool succ = load_map_();
     if (!succ) {
@@ -29,7 +30,8 @@ Instance::Instance(Instance &other):
     x_max_(other.x_max_), y_max_(other.y_max_), 
     num_agents_(other.num_agents_),
     map_fpath_(other.map_fpath_),
-    scen_fpath_(other.scen_fpath_) 
+    scen_fpath_(other.scen_fpath_),
+    p_safe_(other.p_safe_) 
 {
     this->obstacles_ = other.obstacles_;
 }

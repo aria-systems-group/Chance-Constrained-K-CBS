@@ -34,7 +34,7 @@ std::vector<ConflictPtr> DiskBoundedPVC::validatePlan(Plan p)
     }
 
     for (int k = 0; k < maxStates; k++) {
-        std::unordered_map<std::string, Belief> activeRobots = getActiveRobots_(p, k);
+        std::map<std::string, Belief> activeRobots = getActiveRobots_(p, k);
         ConflictPtr c = checkForConflicts_(activeRobots, k);
         if (c) {
             // found initial conflict at step k
@@ -87,7 +87,7 @@ bool DiskBoundedPVC::satisfiesConstraints(oc::PathControl path, std::vector<Cons
     return true;
 }
 
-ConflictPtr DiskBoundedPVC::checkForConflicts_(std::unordered_map<std::string, Belief> states_map, const int step)
+ConflictPtr DiskBoundedPVC::checkForConflicts_(std::map<std::string, Belief> states_map, const int step)
 {
     ConflictPtr c = nullptr;
     

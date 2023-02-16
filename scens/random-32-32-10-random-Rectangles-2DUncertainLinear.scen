@@ -4,7 +4,6 @@ version 1
 5	random-32-32-10.map	32	32	9	0	13	21	Rectangle	2D-Uncertain-Linear-Model	22.65685425
 2	random-32-32-10.map	32	32	11	16	18	18	Rectangle	2D-Uncertain-Linear-Model	8.41421356
 3	random-32-32-10.map	32	32	3	26	7	15	Rectangle	2D-Uncertain-Linear-Model	12.65685425
-6	random-32-32-10.map	32	32	23	1	6	14	Rectangle	2D-Uncertain-Linear-Model	24.72792206
 5	random-32-32-10.map	32	32	19	21	27	4	Rectangle	2D-Uncertain-Linear-Model	20.31370850
 9	random-32-32-10.map	32	32	24	0	0	29	Rectangle	2D-Uncertain-Linear-Model	39.52691193
 1	random-32-32-10.map	32	32	29	10	25	9	Rectangle	2D-Uncertain-Linear-Model	5.00000000
@@ -99,3 +98,4 @@ version 1
 4	random-32-32-10.map	32	32	5	31	13	16	Rectangle	2D-Uncertain-Linear-Model	18.31370850
 7	random-32-32-10.map	32	32	15	1	26	27	Rectangle	2D-Uncertain-Linear-Model	31.14213562
 5	random-32-32-10.map	32	32	2	11	17	28	Rectangle	2D-Uncertain-Linear-Model	23.79898987
+6   random-32-32-10.map 32  32  23  1   6   14  Rectangle   2D-Uncertain-Linear-Model   24.72792206

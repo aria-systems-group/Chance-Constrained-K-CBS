@@ -1,8 +1,8 @@
-#include "PlanValidityCheckers/PolygonBoundedPVC.h"
+#include "PlanValidityCheckers/RectangleCDFPVC.h"
 
 
-PolygonBoundedPVC::PolygonBoundedPVC(MultiRobotProblemDefinitionPtr pdef, const double p_safe):
-    BeliefPVC(pdef, "PolygonBoundedPVC", p_safe)
+RectangleCDFPVC::RectangleCDFPVC(MultiRobotProblemDefinitionPtr pdef, const double p_safe):
+    BeliefPVC(pdef, "RectangleCDFPVC", p_safe)
 {
     std::vector<Robot*> robots = mrmp_pdef_->getInstance()->getRobots();
     boost::tokenizer< boost::char_separator<char> >::iterator beg1;
@@ -10,23 +10,25 @@ PolygonBoundedPVC::PolygonBoundedPVC(MultiRobotProblemDefinitionPtr pdef, const 
     boost::char_separator<char> sep(" ");
     for (auto itr1 = robots.begin(); itr1 != robots.end(); itr1++) {
         std::string r1_name = (*itr1)->getName();
+        double max_rad_1 = findBoundingRadius_((*itr1));
         boost::tokenizer< boost::char_separator<char> > tok1(r1_name, sep);
         beg1 = tok1.begin();
         beg1++;
         for (auto itr2 = itr1 + 1; itr2 != robots.end(); itr2++) {
             std::string r2_name = (*itr2)->getName();
+            double max_rad_2 = findBoundingRadius_((*itr2));
             boost::tokenizer< boost::char_separator<char> > tok2(r2_name, sep);
             beg2 = tok2.begin();
             beg2++;
             std::string key_name = (*beg1) + "," + (*beg2);
-            Polygon combined_poly = getMinkowskiSumOfRobots_(*itr1, *itr2);
+            Polygon combined_poly = getBoundingBox_(max_rad_1, max_rad_2);
             std::pair<Eigen::MatrixXd, Eigen::MatrixXd> robot_pair_halfplanes = getHalfPlanes_(combined_poly);
             halfPlane_map_.insert({key_name, robot_pair_halfplanes});
         }
     }
 }
 
-std::vector<ConflictPtr> PolygonBoundedPVC::validatePlan(Plan p)
+std::vector<ConflictPtr> RectangleCDFPVC::validatePlan(Plan p)
 {
     std::vector<ConflictPtr> confs{};
     const double step_duration = mrmp_pdef_->getSystemStepSize();
@@ -50,6 +52,9 @@ std::vector<ConflictPtr> PolygonBoundedPVC::validatePlan(Plan p)
                 confs.push_back(c);
                 step++;
                 activeRobots = getActiveRobots_(p, step, c->agent1Idx_, c->agent2Idx_);
+                // for (auto itr = activeRobots.begin(); itr != activeRobots.end(); itr++) {
+                    // std::cout << "Post initial conflict agent: " << itr->first << std::endl;
+                // }
                 c = checkForConflicts_(activeRobots, step);
             }
             return confs;
@@ -58,7 +63,7 @@ std::vector<ConflictPtr> PolygonBoundedPVC::validatePlan(Plan p)
     return {};
 }
 
-bool PolygonBoundedPVC::satisfiesConstraints(oc::PathControl path, std::vector<ConstraintPtr> constraints)
+bool RectangleCDFPVC::satisfiesConstraints(oc::PathControl path, std::vector<ConstraintPtr> constraints)
 {
     /* Assume that the constrained robot is the "planning" robot. Check for satisfaction of all constraints */
     const int constrained_robot = constraints.front()->getConstrainedAgent();
@@ -72,6 +77,10 @@ bool PolygonBoundedPVC::satisfiesConstraints(oc::PathControl path, std::vector<C
             auto it = std::find_if(times.begin(), times.end(), 
                 [&current_time](const double& t) { return abs(t - current_time) < 1E-9;});
             if (it == times.end()) {
+                if (current_time >= times.front() && current_time <=  times.back()) {
+                    std::cout << "ERROR" << std::endl;
+                    exit(-1);
+                }
                 break;
             }
             // must check this constraint at this time
@@ -100,7 +109,7 @@ bool PolygonBoundedPVC::satisfiesConstraints(oc::PathControl path, std::vector<C
     return true;
 }
 
-ConflictPtr PolygonBoundedPVC::checkForConflicts_(std::map<std::string, Belief> states_map, const int step)
+ConflictPtr RectangleCDFPVC::checkForConflicts_(std::map<std::string, Belief> states_map, const int step)
 {
     ConflictPtr c = nullptr;
     
@@ -144,7 +153,58 @@ ConflictPtr PolygonBoundedPVC::checkForConflicts_(std::map<std::string, Belief> 
     return c;
 }
 
-bool PolygonBoundedPVC::isSafe_(const Eigen::Vector2d mu_ab, const Eigen::Matrix2d Sigma_ab, const std::pair<Eigen::MatrixXd, Eigen::MatrixXd> halfPlanes)
+double RectangleCDFPVC::findBoundingRadius_(const Robot* r)
+{
+    /* First, center robot at origin */
+    Polygon r_initial_poly;
+    Polygon r_origin_centered;
+
+    const double r_ix = r->getStartLocation().x_;
+    const double r_iy = r->getStartLocation().y_;
+    bg::correct(r_initial_poly);
+    bg::assign(r_initial_poly, r->getShape());
+    bg::strategy::transform::matrix_transformer<double, 2, 2> r_xfrm(
+             cos(0), sin(0), (0 - r_ix),
+            -sin(0), cos(0), (0 - r_iy),
+                      0,          0,  1);
+    bg::transform(r_initial_poly, r_origin_centered, r_xfrm);
+    bg::correct(r_origin_centered);
+    double max_rad = 0.0;
+    for (const auto &pt : boost::geometry::exterior_ring(r_origin_centered)) {
+        const double x = bg::get<0>(pt);
+        const double y = bg::get<1>(pt);
+        // std::cout << x << "," << y << std::endl;
+        double curr_rad = sqrt(x*x + y*y);
+        if (curr_rad > max_rad)
+            max_rad = curr_rad;
+    }
+    return max_rad;
+}
+
+Polygon RectangleCDFPVC::getBoundingBox_(const double r_1, const double r_2)
+{
+    /* Create Bounding Box of both radii */
+    const double r = r_1 + r_2;
+
+    /* construct the rectangular polygon w/ ref in the center */
+    Polygon integration_box;
+    Point bott_left(-r, -r);
+    Point bott_right(r, -r);
+    Point top_right(r, r);
+    Point top_left(-r, r);
+
+    bg::append(integration_box.outer(), bott_left);
+    bg::append(integration_box.outer(), bott_right);
+    bg::append(integration_box.outer(), top_right);
+    bg::append(integration_box.outer(), top_left);
+    bg::append(integration_box.outer(), bott_left);
+
+    // assures that the polygon (1) has counter-clockwise points, and (2) is closed
+    bg::correct(integration_box);
+    return integration_box;
+}
+
+bool RectangleCDFPVC::isSafe_(const Eigen::Vector2d mu_ab, const Eigen::Matrix2d Sigma_ab, const std::pair<Eigen::MatrixXd, Eigen::MatrixXd> halfPlanes)
 {
     Eigen::MatrixXd A = halfPlanes.first;
     Eigen::MatrixXd B = halfPlanes.second;
@@ -161,7 +221,7 @@ bool PolygonBoundedPVC::isSafe_(const Eigen::Vector2d mu_ab, const Eigen::Matrix
     return false;
 }
 
-std::pair<Eigen::MatrixXd, Eigen::MatrixXd> PolygonBoundedPVC::getHalfPlanes_(Polygon combined_poly)
+std::pair<Eigen::MatrixXd, Eigen::MatrixXd> RectangleCDFPVC::getHalfPlanes_(Polygon combined_poly)
 {
     /* Converts a Polygon to a set of halfplanes */
     auto exterior_points = bg::exterior_ring(combined_poly);
@@ -189,120 +249,3 @@ std::pair<Eigen::MatrixXd, Eigen::MatrixXd> PolygonBoundedPVC::getHalfPlanes_(Po
     return std::make_pair(A,B);
 }
 
-Polygon PolygonBoundedPVC::getMinkowskiSumOfRobots_(Robot* r1, Robot* r2)
-{
-    // // test: triangle and rectangle from web (centered at origin!)
-    // // https://cp-algorithms.com/geometry/minkowski.html#algorithm
-    // Polygon shape1{{{0, -0.5}, {0.5, 0.5}, {-0.5, 0.5}}}; 
-    // Polygon shape2{{{-1, -1}, {1, -1}, {1, 1}, {-1,1}}};
-
-    /* First, center robot 1 at origin */
-    Polygon r1_initial_poly;
-    Polygon r1_origin_centered;
-
-    const double r1_ix = r1->getStartLocation().x_;
-    const double r1_iy = r1->getStartLocation().y_;
-    bg::correct(r1_initial_poly);
-    bg::assign(r1_initial_poly, r1->getShape());
-    bg::strategy::transform::matrix_transformer<double, 2, 2> r1_xfrm(
-             cos(0), sin(0), (0 - r1_ix),
-            -sin(0), cos(0), (0 - r1_iy),
-                      0,          0,  1);
-    bg::transform(r1_initial_poly, r1_origin_centered, r1_xfrm);
-    bg::correct(r1_origin_centered);
-
-    /* Next, center robot 2 at origin */
-    Polygon r2_initial_poly;
-    Polygon r2_origin_centered;
-
-    const double r2_ix = r2->getStartLocation().x_;
-    const double r2_iy = r2->getStartLocation().y_;
-    bg::correct(r2_initial_poly);
-    bg::assign(r2_initial_poly, r2->getShape());
-    bg::strategy::transform::matrix_transformer<double, 2, 2> r2_xfrm(
-             cos(0), sin(0), (0 - r2_ix),
-            -sin(0), cos(0), (0 - r2_iy),
-                      0,          0,  1);
-    bg::transform(r2_initial_poly, r2_origin_centered, r2_xfrm);
-    bg::correct(r2_origin_centered);
-
-    // for (const auto &a : boost::geometry::exterior_ring(r2_initial_poly)) {
-    //     const double x = bg::get<0>(a);
-    //     const double y = bg::get<1>(a);
-    //     std::cout << x << "," << y << std::endl;
-    // }
-    // std::cout << "moved to" << std::endl;
-    // for (const auto &a : boost::geometry::exterior_ring(r2_origin_centered)) {
-    //     const double x = bg::get<0>(a);
-    //     const double y = bg::get<1>(a);
-    //     std::cout << x << "," << y << std::endl;
-    // }
-
-    /* Perform the Minkowski Sum */
-    std::vector<Point> shape1_points = boost::geometry::exterior_ring(r1_origin_centered);
-    std::vector<Point> shape2_points = boost::geometry::exterior_ring(r2_origin_centered);
-
-    shape1_points.push_back(shape1_points[1]);
-    shape2_points.push_back(shape2_points[1]);
-
-    std::vector<Point> result;
-    int i = 0, j = 0;
-    while(i < shape1_points.size() - 2 || j < shape2_points.size() - 2){
-        result.push_back(addPoints_(shape1_points[i], shape2_points[j]));
-        Point s1_diff = subtractPoints_(shape1_points[i + 1], shape1_points[i]);
-        Point s2_diff = subtractPoints_(shape2_points[j + 1], shape2_points[j]);
-        double cross = crossProduct_(s1_diff, s2_diff);
-        if(cross >= 0)
-            ++i;
-        if(cross <= 0)
-            ++j;
-    }
-
-    result.push_back(result.front()); // make polygon closed
-
-    Polygon result_poly;
-
-    for (auto itr = result.begin(); itr != result.end(); itr++) {
-        // double x = bg::get<0>(*itr);
-        // double y = bg::get<1>(*itr);
-        // std::cout << x << "," << y << std::endl;
-        bg::append(result_poly.outer(), *itr);
-    }
-    bg::correct(result_poly);
-    return result_poly;
-}
-
-double PolygonBoundedPVC::crossProduct_(const Point &a, const Point &b)
-{
-    /* Performs A \times B */
-    const double ax = bg::get<0>(a);
-    const double ay = bg::get<1>(a);
-    const double bx = bg::get<0>(b);
-    const double by = bg::get<1>(b);
-
-    return (ax * by) - (ay * bx);
-}
-
-Point PolygonBoundedPVC::subtractPoints_(const Point &a, const Point &b)
-{
-    /* Element-wise subtracts B from A ( i.e. A-B ) */
-    const double ax = bg::get<0>(a);
-    const double ay = bg::get<1>(a);
-    const double bx = bg::get<0>(b);
-    const double by = bg::get<1>(b);
-
-    Point difference(ax-bx, ay-by);
-    return difference;
-}
-
-Point PolygonBoundedPVC::addPoints_(const Point &a, const Point &b)
-{
-    /* Element-wise subtracts B from A ( i.e. A-B ) */
-    const double ax = bg::get<0>(a);
-    const double ay = bg::get<1>(a);
-    const double bx = bg::get<0>(b);
-    const double by = bg::get<1>(b);
-
-    Point difference(ax+bx, ay+by);
-    return difference;
-}

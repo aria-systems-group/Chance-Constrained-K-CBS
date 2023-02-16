@@ -206,7 +206,7 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
             auto si(std::make_shared<oc::SpaceInformation>(space, cspace));
 
             // construct (and include) an instance of PCCBlackmore State Validity Checker
-            si->setStateValidityChecker(std::make_shared<PCCBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafe()));
+            si->setStateValidityChecker(std::make_shared<PCCBlackmoreSVC>(si, mrmp_instance, (*itr), 0.95));
 
             // construct (and include) an instance of 2D-Uncertain-Linear State Propogator
             si->setStatePropagator(oc::StatePropagatorPtr(new R2_UncertainLinearStatePropagator(si)));
@@ -222,7 +222,7 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
             start->as<R2BeliefSpace::StateType>()->setSigma(Sigma0);
 
             // // create goal
-            ob::GoalPtr goal(new ChanceConstrainedGoal(si, (*itr)->getGoalLocation(), goalTollorance, mrmp_instance->getPsafe()));
+            ob::GoalPtr goal(new ChanceConstrainedGoal(si, (*itr)->getGoalLocation(), goalTollorance, 0.95));
 
             // create a problem instance
             auto pdef(std::make_shared<ob::ProblemDefinition>(si));

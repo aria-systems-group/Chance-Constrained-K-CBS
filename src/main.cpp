@@ -4,6 +4,7 @@
 #include "PlanValidityCheckers/DeterministicPVC.h"
 #include "PlanValidityCheckers/PolygonBoundedPVC.h"
 #include "PlanValidityCheckers/DiskBoundedPVC.h"
+#include "PlanValidityCheckers/RectangleCDFPVC.h"
 #include "Planners/KCBS.h"
 #include "postProcess.h"
 
@@ -11,6 +12,8 @@
 // OMPL_WARN("OMPL version: %s", OMPL_VERSION);  // yellow font
 // OMPL_ERROR("OMPL version: %s", OMPL_VERSION); // red font
 // these follow syntax of printf see (https://www.cplusplus.com/reference/cstdio/printf/)
+
+// docker command to run docker run -it --volume `pwd`:/home/K-CBS --name k-cbs-container ompl-image
 
 void parse_cmd_line(int &argc, char ** &argv, po::variables_map &vm, po::options_description &desc)
 {
@@ -26,8 +29,10 @@ void parse_cmd_line(int &argc, char ** &argv, po::variables_map &vm, po::options
         ("bound,b", po::value<int>()->default_value(std::numeric_limits<int>::max()), "The merge bound of K-CBS.")
         ("time,t", po::value<double>()->default_value(600), "cutoff time (seconds)")
         ("output,o", po::value<std::string>()->default_value("results"), "output file name (no extension)")
-        ("p_safe,p", po::value<double>()->default_value(0.95), "Probability of safe (only used for non-deterministic planning sequences)")
-        ("collision_checker,c", po::value<std::string>()->default_value("DiskBounded"), "The Collision-Checker to be used. (only used for non-deterministic planning sequences)")
+        ("p_safe,p", po::value<double>()->default_value(0.95), "Probability of safe in decimal form (only used for non-deterministic planning sequences)")
+        ("collision_checker,c", po::value<std::string>()->default_value("DiskBounded"), "The Collision-Checker to be used."
+            "This is only used for non-deterministic planning instances."
+            "(DiskBounded, PolygonBoundedPVC, or RectangleCDF)")
         ("screen", po::value<int>()->default_value(0),
                 "screen option \n0 := none \n1 := K-CBS updates \n2 := Low-Level Planner updates \n3 := MRMP detailed updates")
         ;
@@ -82,8 +87,11 @@ int main(int argc, char ** argv)
             if (instance->getCollisionChecker() == "DiskBounded") {
                 planValidator = std::make_shared<DiskBoundedPVC>(mrmp_pdef, instance->getPsafe());
             }
-            else if (instance->getCollisionChecker() == "PolygonBoundedPVC") {
+            else if (instance->getCollisionChecker() == "PolygonBounded") {
                 planValidator = std::make_shared<PolygonBoundedPVC>(mrmp_pdef, instance->getPsafe());
+            }
+            else if (instance->getCollisionChecker() == "RectangleCDF") {
+                planValidator = std::make_shared<RectangleCDFPVC>(mrmp_pdef, instance->getPsafe());
             }
             else {
                 OMPL_ERROR("Plan Validity Checker ``%s`` is not available.", instance->getCollisionChecker().c_str());

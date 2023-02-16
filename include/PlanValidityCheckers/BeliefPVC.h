@@ -14,7 +14,8 @@ public:
     ConstraintPtr createConstraint(Plan p, std::vector<ConflictPtr> conflicts, const int robotIdx) override;
 
 protected:
-    std::unordered_map<std::string, Belief> getActiveRobots_(Plan p, const int step, const int a1 = -1, const int a2 = -1);
+    std::map<std::string, Belief> getActiveRobots_(Plan p, const int step, const int a1 = -1, const int a2 = -1);
     Belief getDistribution_(const ob::State* st);
     const double p_safe_;
+    double p_coll_dist_;
 };

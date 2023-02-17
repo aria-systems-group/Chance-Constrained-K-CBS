@@ -1,8 +1,10 @@
 #include "OmplSetUp.h"
 #include "Mergers/DeterministicMerger.h"
 #include "Mergers/BeliefMerger.h"
-#include "PlanValidityCheckers/DeterministicPlanValidityChecker.h"
-#include "PlanValidityCheckers/BeliefPlanValidityChecker.h"
+#include "PlanValidityCheckers/DeterministicPVC.h"
+#include "PlanValidityCheckers/MinkowskiSumBlackmorePVC.h"
+#include "PlanValidityCheckers/ChiSquaredBoundaryPVC.h"
+#include "PlanValidityCheckers/BoundingBoxBlackmorePVC.h"
 #include "Planners/KCBS.h"
 #include "postProcess.h"
 
@@ -10,6 +12,8 @@
 // OMPL_WARN("OMPL version: %s", OMPL_VERSION);  // yellow font
 // OMPL_ERROR("OMPL version: %s", OMPL_VERSION); // red font
 // these follow syntax of printf see (https://www.cplusplus.com/reference/cstdio/printf/)
+
+// docker command to run docker run -it --volume `pwd`:/home/K-CBS --name k-cbs-container ompl-image
 
 void parse_cmd_line(int &argc, char ** &argv, po::variables_map &vm, po::options_description &desc)
 {
@@ -25,7 +29,10 @@ void parse_cmd_line(int &argc, char ** &argv, po::variables_map &vm, po::options
         ("bound,b", po::value<int>()->default_value(std::numeric_limits<int>::max()), "The merge bound of K-CBS.")
         ("time,t", po::value<double>()->default_value(600), "cutoff time (seconds)")
         ("output,o", po::value<std::string>()->default_value("results"), "output file name (no extension)")
-        ("p_safe,p", po::value<double>()->default_value(0.95), "Probability of safe (only used for non-deterministic planning sequences)")
+        ("p_safe,p", po::value<double>()->default_value(0.95), "Probability of safe in decimal form (only used for non-deterministic planning sequences)")
+        ("collision_checker,c", po::value<std::string>()->default_value("ChiSquaredBoundary"), "The Collision-Checker to be used."
+            "This is only used for non-deterministic planning instances."
+            "(ChiSquaredBoundary, MinkowskiSumBlackmore, or BoundingBoxBlackmore)")
         ("screen", po::value<int>()->default_value(0),
                 "screen option \n0 := none \n1 := K-CBS updates \n2 := Low-Level Planner updates \n3 := MRMP detailed updates")
         ;
@@ -76,7 +83,20 @@ int main(int argc, char ** argv)
             MergerPtr merger = std::make_shared<BeliefMerger>(mrmp_pdef);
             mrmp_pdef->setMerger(merger);
             // set-up (and include) a PlanValidityChecker for agent-to-agent collision checking
-            PlanValidityCheckerPtr planValidator = std::make_shared<BeliefPlanValidityChecker>(mrmp_pdef, instance->getPsafe());
+            PlanValidityCheckerPtr planValidator = nullptr;
+            if (instance->getCollisionChecker() == "ChiSquaredBoundary") {
+                planValidator = std::make_shared<ChiSquaredBoundaryPVC>(mrmp_pdef, instance->getPsafe());
+            }
+            else if (instance->getCollisionChecker() == "MinkowskiSumBlackmore") {
+                planValidator = std::make_shared<MinkowskiSumBlackmorePVC>(mrmp_pdef, instance->getPsafe());
+            }
+            else if (instance->getCollisionChecker() == "BoundingBoxBlackmore") {
+                planValidator = std::make_shared<BoundingBoxBlackmorePVC>(mrmp_pdef, instance->getPsafe());
+            }
+            else {
+                OMPL_ERROR("Plan Validity Checker ``%s`` is not available.", instance->getCollisionChecker().c_str());
+            }
+            assert(planValidator != nullptr);
             mrmp_pdef->setPlanValidator(planValidator);
             // create instance of K-CBS, set-up, and solve
             ob::PlannerPtr p(std::make_shared<oc::KCBS>(mrmp_pdef));

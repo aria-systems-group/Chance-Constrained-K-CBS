@@ -220,7 +220,9 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
    	}
 
    	/* create root node */
+    int count = 0;
    	KCBSNode rootNode;
+    rootNode.id = count;
    	if (root_plan.size() == all_mp_pdefs.size()) {
    	   	rootNode.updatePlanAndCost(root_plan);
    	   	pq.emplace(rootNode);
@@ -231,6 +233,9 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
    	while (ptc == false && !pq.empty()) {
     	/* Get the lowest cost in priority queue */
       	auto curr = new KCBSNode(pq.top());
+        std::cout << curr->id << std::endl;
+        if (curr->getParent())
+            std::cout << curr->getParent()->id << std::endl;
 
       	/* If the current K-CBS Node does not contain a finite-length solution, must replan with existing tree */
       	if (curr->getCost() == std::numeric_limits<double>::infinity()) {
@@ -248,29 +253,32 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
 
         	if (new_path) {
         		/* Create new node and add it to the queue */
-        		KCBSNode nxt;
-            	nxt.updateParent(curr);
-            	nxt.addConstraint(curr->getConstraint());
+        		// KCBSNode nxt;
+                // nxt.id = curr->id;
+            	// nxt.updateParent(curr);
+            	// nxt.addConstraint(curr->getConstraint());
             	Plan new_plan = curr->getParent()->getPlan();
             	new_plan[curr->getConstraint()->getConstrainedAgent()] = *new_path;
-            	nxt.updatePlanAndCost(new_plan);
-            	pq.emplace(nxt);
+            	curr->updatePlanAndCost(new_plan);
+            	pq.emplace(*curr);
             }
             else {
             	/* Failed to find solution. Must copy data to new node and put at back of queue */
-            	KCBSNode nxt;
-            	nxt.updateParent(curr->getParent());
-            	nxt.addConstraint(curr->getConstraint());
-				nxt.savePlanner(curr->getPlanner());
-            	pq.emplace(nxt);
-            	mrmp_pdef_->replacePlanner(p, curr->getConstraint()->getConstrainedAgent());
-            	pq.emplace(nxt);
+                pq.emplace(*curr);
+            	// KCBSNode nxt;
+                // nxt.id = curr->id;
+            	// nxt.updateParent(curr->getParent());
+            	// nxt.addConstraint(curr->getConstraint());
+				// nxt.savePlanner(curr->getPlanner());
+            	// pq.emplace(nxt);
+            	// mrmp_pdef_->replacePlanner(p, curr->getConstraint()->getConstrainedAgent());
+            	// pq.emplace(nxt);
             }
       	}
       	else {
       		/* Current K-CBS Node has a finite-length plan */
       		/* Simulate the plan in search of conflicts. If no conflicts arrise, return correct solution */
-      		std::vector<ConflictPtr> confs {}; //= mrmp_pdef_->getPlanValidator()->validatePlan(curr->getPlan());
+      		std::vector<ConflictPtr> confs = mrmp_pdef_->getPlanValidator()->validatePlan(curr->getPlan());
     		if (confs.empty()) {
         	 	solution = curr;
         	 	break;
@@ -338,19 +346,57 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
       		/* Plan contains conflicts. K-CBS must remove the current node from the priority queue and attempt to expand from it */
       		else {
         	 	pq.pop();
+                // auto plan = curr->getPlan();
+                // for (int i = 0; i < plan.size(); i++)
+                // {
+                //     std::cout << "Agent " << i << std::endl;
+                //     auto path(std::make_shared<PathControl>(plan[i]));
+                //     path->interpolate();
+                //     path->print(std::cout);
+                //     // for (auto st: path->getStates()) {
+                //     //     std::cout << st->as<R2BeliefSpace::StateType>()->getX() << "," << st->as<R2BeliefSpace::StateType>()->getY() << std::endl;
+                //     // }
+                // }
+                // for (auto path = curr->getPlan().begin(); path != curr->getPlan().end(); path++) {
+                //     // std::vector<ob::State*> states = path->getStates();
+                //     std::cout << "Agent " << i << std::endl;
+                //     for (auto st: path->getStates()) {
+                //         std::cout << st->as<R2BeliefSpace::StateType>()->getX() << "," << st->as<R2BeliefSpace::StateType>()->getY() << std::endl;
+                //     }
+                //     i++;
+                // }
+
+
+                OMPL_INFORM("Conflict between agents: (%d, %d) at time range [%0.1f, %0.1f]", 
+                    confs.front()->agent1Idx_, confs.front()->agent2Idx_, confs.front()->timeStep_ * prop_step_size_, confs.back()->timeStep_ * prop_step_size_);
+
+                // /* Debug information for the conflics */
+                // for (auto itr = confs.begin(); itr != confs.end(); itr++) {
+                //     std::cout << "Agent 1: " << (*itr)->agent1Idx_ << "\t" << "Agent 2: " << (*itr)->agent2Idx_ << "\t" << "Time: " << (*itr)->timeStep_ << std::endl;
+                // }
+                // // exit(-1);
+                // std::cout << "entering createConstraint" << std::endl;
+
         	 	/* extract conflict information */
         	 	ConstraintPtr agent1IdxConstraint = mrmp_pdef_->getPlanValidator()->createConstraint(curr->getPlan(), confs, confs.front()->agent1Idx_);
         	 	ConstraintPtr agent2IdxConstraint = mrmp_pdef_->getPlanValidator()->createConstraint(curr->getPlan(), confs, confs.front()->agent2Idx_);
         	 	std::vector<ConstraintPtr> new_constraints{agent1IdxConstraint, agent2IdxConstraint};
 
-         		OMPL_INFORM("Conflict between agents: (%d, %d) at time range [%0.1f, %0.1f]", 
-         			confs.front()->agent1Idx_, confs.front()->agent2Idx_, confs.front()->timeStep_ * prop_step_size_, confs.back()->timeStep_ * prop_step_size_);
+                for (int i = 0; i < 2; i++) {
+                    std::cout << "Printing New Constraints " << std::endl;
+                    std::cout << "Constrained agent: " << new_constraints[i]->getConstrainedAgent() << std::endl;
+                    std::cout << "Constraining agent: " << new_constraints[i]->getConstrainingAgent() << std::endl;
+                    std::cout << new_constraints[i]->getTimes().front() << "," << new_constraints[i]->getTimes().back() << std::endl;
+                    std::cout << new_constraints[i]->as<BeliefConstraint>()->getStates().front()->as<R2BeliefSpace::StateType>()->getXY().transpose() << 
+                                 "," << new_constraints[i]->as<BeliefConstraint>()->getStates().back()->as<R2BeliefSpace::StateType>()->getXY().transpose() << std::endl;
+                }
 
          		for (int a = 0; a < 2; a++)
          		{
          			/* Prepare one child K-CBS Node for every new constraint */
          			auto new_constraint = new_constraints[a];
             		KCBSNode nxt;
+                    nxt.id = curr->id + a + 1;
             		nxt.updateParent(curr);
             		nxt.addConstraint(new_constraint);
             	
@@ -363,6 +409,13 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
             		      agent_constraints.emplace_back(nCpy->getConstraint());
             		   nCpy = nCpy->getParent();
             		}
+
+                    std::cout << "here" << std::endl;
+                    for (auto c: agent_constraints)
+                    {
+                        std::cout << c->getConstrainedAgent() << ", " << c->getConstrainingAgent() << std::endl;
+                    }
+                    std::cout << "done" << std::endl;
             	
             		/* Replan for conflicting agent w/ new constraint */
             		ConstraintRespectingPlannerPtr p = mrmp_pdef_->getRobotMotionPlanningProblemPtr(new_constraint->getConstrainedAgent())->getPlanner();

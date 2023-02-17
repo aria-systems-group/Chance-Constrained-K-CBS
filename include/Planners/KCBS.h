@@ -1,5 +1,6 @@
 #pragma once
 #include "Conflict.h"
+#include "Constraints/BeliefConstraint.h"
 #include "MultiRobotProblemDefinition.h"
 #include "Planners/ConstraintRespectingPlanner.h"
 #include <boost/serialization/export.hpp>
@@ -79,11 +80,13 @@ namespace ompl
             class KCBSNode
             {
             public:
+                int id=-1;
                 KCBSNode(){};
 
                 KCBSNode(KCBSNode const &n)
                 {
                     // create a copy of conflict node
+                    this->id = n.id;
                     this->plan_ = n.getPlan();
                     this->parent_ = n.getParent();
                     this->cost_ = n.getCost();
@@ -128,7 +131,7 @@ namespace ompl
                 void addConstraint(ConstraintPtr constraint) {constraint_ = constraint;};
 
                 // get the plan, but cannot change it
-                const Plan getPlan() const {return plan_;};
+                Plan getPlan() const {return plan_;};
 
                 // get the parent, but no not change it
                 const KCBSNode* getParent() const {return parent_;};

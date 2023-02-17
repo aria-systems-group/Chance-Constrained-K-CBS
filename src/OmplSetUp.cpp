@@ -206,7 +206,7 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
             auto si(std::make_shared<oc::SpaceInformation>(space, cspace));
 
             // construct (and include) an instance of PCCBlackmore State Validity Checker
-            si->setStateValidityChecker(std::make_shared<PCCBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafe()));
+            si->setStateValidityChecker(std::make_shared<PCCBlackmoreSVC>(si, mrmp_instance, (*itr), 0.95));
 
             // construct (and include) an instance of 2D-Uncertain-Linear State Propogator
             si->setStatePropagator(oc::StatePropagatorPtr(new R2_UncertainLinearStatePropagator(si)));
@@ -215,18 +215,14 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
             si->setMinMaxControlDuration(1, 10);
             si->setup();
 
-            // ob::ScopedState<> start(space);
-            // start[0] = (*itr)->getStartLocation().x_;
-            // start[1] = (*itr)->getStartLocation().y_;
             ob::State *start = si->allocState();
             Eigen::Matrix2d Sigma0;
-            Sigma0 << 0.1, 0.0, 0.0, 0.1;
-            std::cout << Sigma0 << std::endl;
+            Sigma0 << 0.00001, 0.0, 0.0, 0.00001;
             start->as<R2BeliefSpace::StateType>()->setXY((*itr)->getStartLocation().x_, (*itr)->getStartLocation().y_);
             start->as<R2BeliefSpace::StateType>()->setSigma(Sigma0);
 
             // // create goal
-            ob::GoalPtr goal(new ChanceConstrainedGoal(si, (*itr)->getGoalLocation(), goalTollorance, mrmp_instance->getPsafe()));
+            ob::GoalPtr goal(new ChanceConstrainedGoal(si, (*itr)->getGoalLocation(), goalTollorance, 0.95));
 
             // create a problem instance
             auto pdef(std::make_shared<ob::ProblemDefinition>(si));
@@ -241,7 +237,6 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
             // // create (and provide) the low-level motion planner object
             ConstraintRespectingPlannerPtr planner(std::make_shared<oc::ConstraintRespectingBSST>(si));
             planner->as<oc::ConstraintRespectingBSST>()->setProblemDefinition(pdef);
-            // planner->as<oc::ConstraintRespectingBSST>()->setConstraintValidator(validator);
             planner->as<oc::ConstraintRespectingBSST>()->setup();
 
             // append to MRMP problem list

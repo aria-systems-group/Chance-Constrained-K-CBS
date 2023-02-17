@@ -12,7 +12,7 @@ OMPL_CLASS_FORWARD(PlanValidityChecker);
 class PlanValidityChecker
 {
 public:
-	PlanValidityChecker(MultiRobotProblemDefinitionPtr pdef, std::string name = "PlanValidityChecker"):
+	PlanValidityChecker(MultiRobotProblemDefinitionPtr pdef, const std::string name):
 		mrmp_pdef_(pdef), name_(name) {}
 
 	virtual std::vector<ConflictPtr> validatePlan(Plan p) = 0;
@@ -23,5 +23,5 @@ public:
 
 protected:
 	MultiRobotProblemDefinitionPtr mrmp_pdef_;
-	std::string name_;
+	const std::string name_;
 };

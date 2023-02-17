@@ -1,4 +1,4 @@
-#include "PlanValidityCheckers/DeterministicPlanValidityChecker.h"
+#include "PlanValidityCheckers/DeterministicPVC.h"
 
 DeterministicPlanValidityChecker::DeterministicPlanValidityChecker(MultiRobotProblemDefinitionPtr pdef):
 	PlanValidityChecker(pdef, "DeterministicPlanValidityChecker") {};

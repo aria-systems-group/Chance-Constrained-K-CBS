@@ -4,7 +4,7 @@
 BeliefPVC::BeliefPVC(MultiRobotProblemDefinitionPtr pdef, const std::string name, const double p_safe):
     PlanValidityChecker(pdef, name), p_safe_(p_safe), p_coll_dist_(-1)
 {
-    int norm = (pdef->getInstance()->getRobots().size() - 1) + pdef->getInstance()->getObstacles().size();
+    int norm = (pdef->getInstance()->getRobots().size() - 1);
     p_coll_dist_ = (1-p_safe) / norm;
 }
 

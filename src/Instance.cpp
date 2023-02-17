@@ -12,6 +12,14 @@ Instance::Instance(po::variables_map &vm, std::string name):
     p_safe_(vm["p_safe"].as<double>()),
     colision_checker_(vm["collision_checker"].as<std::string>())
 {
+    if (mrmp_planner_ == "K-CBS") {
+        // divide p_coll amongst PVC & SVC
+        const double p_coll = 1 - p_safe_;
+        const double p_coll_obs = p_coll / 2;
+        const double p_coll_agnts = p_coll / 2;
+        p_safe_agnts_ = 1 - p_coll_agnts;
+        p_safe_obs_ = 1 - p_coll_obs;
+    }
     bool succ = load_map_();
     if (!succ) {
         OMPL_ERROR("%s: Unable to load map.", name_.c_str());

@@ -85,13 +85,13 @@ int main(int argc, char ** argv)
             // set-up (and include) a PlanValidityChecker for agent-to-agent collision checking
             PlanValidityCheckerPtr planValidator = nullptr;
             if (instance->getCollisionChecker() == "ChiSquaredBoundary") {
-                planValidator = std::make_shared<ChiSquaredBoundaryPVC>(mrmp_pdef, instance->getPsafe());
+                planValidator = std::make_shared<ChiSquaredBoundaryPVC>(mrmp_pdef, instance->getPsafeAgents());
             }
             else if (instance->getCollisionChecker() == "MinkowskiSumBlackmore") {
-                planValidator = std::make_shared<MinkowskiSumBlackmorePVC>(mrmp_pdef, instance->getPsafe());
+                planValidator = std::make_shared<MinkowskiSumBlackmorePVC>(mrmp_pdef, instance->getPsafeAgents());
             }
             else if (instance->getCollisionChecker() == "BoundingBoxBlackmore") {
-                planValidator = std::make_shared<BoundingBoxBlackmorePVC>(mrmp_pdef, instance->getPsafe());
+                planValidator = std::make_shared<BoundingBoxBlackmorePVC>(mrmp_pdef, instance->getPsafeAgents());
             }
             else {
                 OMPL_ERROR("Plan Validity Checker ``%s`` is not available.", instance->getCollisionChecker().c_str());

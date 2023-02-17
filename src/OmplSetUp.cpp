@@ -206,7 +206,12 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
             auto si(std::make_shared<oc::SpaceInformation>(space, cspace));
 
             // construct (and include) an instance of PCCBlackmore State Validity Checker
-            si->setStateValidityChecker(std::make_shared<PCCBlackmoreSVC>(si, mrmp_instance, (*itr), 0.95));
+            if (mrmp_instance->getPlannerName() == "K-CBS") {
+                si->setStateValidityChecker(std::make_shared<PCCBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
+            }
+            else {
+                si->setStateValidityChecker(std::make_shared<PCCBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafe()));
+            }
 
             // construct (and include) an instance of 2D-Uncertain-Linear State Propogator
             si->setStatePropagator(oc::StatePropagatorPtr(new R2_UncertainLinearStatePropagator(si)));

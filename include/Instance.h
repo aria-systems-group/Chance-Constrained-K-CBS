@@ -17,6 +17,8 @@ public:
     Instance(po::variables_map &vm, std::string name = "Instance");
     // methods for dimensions
     const double getPsafe() const {return p_safe_;};
+    const double getPsafeObs() const {return p_safe_obs_;};
+    const double getPsafeAgents() const {return p_safe_agnts_;};
     const std::string getCollisionChecker() const {return colision_checker_;};
     std::vector<double> getDimensions() const {return {x_max_, y_max_};};
     void printDimensions(){OMPL_INFORM("Space Dimensions: \n"
@@ -35,6 +37,8 @@ private:
     bool load_agents_();
     double x_max_;
     double y_max_;
+    double p_safe_agnts_ = -1;
+    double p_safe_obs_ = -1;
     const int num_agents_;
     const double p_safe_;
     const fs::path map_fpath_;

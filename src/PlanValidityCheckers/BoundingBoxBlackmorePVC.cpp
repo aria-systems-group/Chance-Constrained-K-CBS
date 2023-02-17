@@ -1,8 +1,8 @@
-#include "PlanValidityCheckers/RectangleCDFPVC.h"
+#include "PlanValidityCheckers/BoundingBoxBlackmorePVC.h"
 
 
-RectangleCDFPVC::RectangleCDFPVC(MultiRobotProblemDefinitionPtr pdef, const double p_safe):
-    BeliefPVC(pdef, "RectangleCDFPVC", p_safe)
+BoundingBoxBlackmorePVC::BoundingBoxBlackmorePVC(MultiRobotProblemDefinitionPtr pdef, const double p_safe):
+    BeliefPVC(pdef, "BoundingBoxBlackmorePVC", p_safe)
 {
     std::vector<Robot*> robots = mrmp_pdef_->getInstance()->getRobots();
     boost::tokenizer< boost::char_separator<char> >::iterator beg1;
@@ -28,7 +28,7 @@ RectangleCDFPVC::RectangleCDFPVC(MultiRobotProblemDefinitionPtr pdef, const doub
     }
 }
 
-std::vector<ConflictPtr> RectangleCDFPVC::validatePlan(Plan p)
+std::vector<ConflictPtr> BoundingBoxBlackmorePVC::validatePlan(Plan p)
 {
     std::vector<ConflictPtr> confs{};
     const double step_duration = mrmp_pdef_->getSystemStepSize();
@@ -63,7 +63,7 @@ std::vector<ConflictPtr> RectangleCDFPVC::validatePlan(Plan p)
     return {};
 }
 
-bool RectangleCDFPVC::satisfiesConstraints(oc::PathControl path, std::vector<ConstraintPtr> constraints)
+bool BoundingBoxBlackmorePVC::satisfiesConstraints(oc::PathControl path, std::vector<ConstraintPtr> constraints)
 {
     /* Assume that the constrained robot is the "planning" robot. Check for satisfaction of all constraints */
     const int constrained_robot = constraints.front()->getConstrainedAgent();
@@ -109,7 +109,7 @@ bool RectangleCDFPVC::satisfiesConstraints(oc::PathControl path, std::vector<Con
     return true;
 }
 
-ConflictPtr RectangleCDFPVC::checkForConflicts_(std::map<std::string, Belief> states_map, const int step)
+ConflictPtr BoundingBoxBlackmorePVC::checkForConflicts_(std::map<std::string, Belief> states_map, const int step)
 {
     ConflictPtr c = nullptr;
     
@@ -153,7 +153,7 @@ ConflictPtr RectangleCDFPVC::checkForConflicts_(std::map<std::string, Belief> st
     return c;
 }
 
-double RectangleCDFPVC::findBoundingRadius_(const Robot* r)
+double BoundingBoxBlackmorePVC::findBoundingRadius_(const Robot* r)
 {
     /* First, center robot at origin */
     Polygon r_initial_poly;
@@ -181,7 +181,7 @@ double RectangleCDFPVC::findBoundingRadius_(const Robot* r)
     return max_rad;
 }
 
-Polygon RectangleCDFPVC::getBoundingBox_(const double r_1, const double r_2)
+Polygon BoundingBoxBlackmorePVC::getBoundingBox_(const double r_1, const double r_2)
 {
     /* Create Bounding Box of both radii */
     const double r = r_1 + r_2;
@@ -204,7 +204,7 @@ Polygon RectangleCDFPVC::getBoundingBox_(const double r_1, const double r_2)
     return integration_box;
 }
 
-bool RectangleCDFPVC::isSafe_(const Eigen::Vector2d mu_ab, const Eigen::Matrix2d Sigma_ab, const std::pair<Eigen::MatrixXd, Eigen::MatrixXd> halfPlanes)
+bool BoundingBoxBlackmorePVC::isSafe_(const Eigen::Vector2d mu_ab, const Eigen::Matrix2d Sigma_ab, const std::pair<Eigen::MatrixXd, Eigen::MatrixXd> halfPlanes)
 {
     Eigen::MatrixXd A = halfPlanes.first;
     Eigen::MatrixXd B = halfPlanes.second;
@@ -221,7 +221,7 @@ bool RectangleCDFPVC::isSafe_(const Eigen::Vector2d mu_ab, const Eigen::Matrix2d
     return false;
 }
 
-std::pair<Eigen::MatrixXd, Eigen::MatrixXd> RectangleCDFPVC::getHalfPlanes_(Polygon combined_poly)
+std::pair<Eigen::MatrixXd, Eigen::MatrixXd> BoundingBoxBlackmorePVC::getHalfPlanes_(Polygon combined_poly)
 {
     /* Converts a Polygon to a set of halfplanes */
     auto exterior_points = bg::exterior_ring(combined_poly);

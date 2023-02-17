@@ -8,10 +8,10 @@
 namespace bm = boost::math;
 
 
-class DiskBoundedPVC: public BeliefPVC
+class ChiSquaredBoundaryPVC: public BeliefPVC
 {
 public:
-    DiskBoundedPVC(MultiRobotProblemDefinitionPtr pdef, const double p_safe);
+    ChiSquaredBoundaryPVC(MultiRobotProblemDefinitionPtr pdef, const double p_safe);
 
     std::vector<ConflictPtr> validatePlan(Plan p) override;
 

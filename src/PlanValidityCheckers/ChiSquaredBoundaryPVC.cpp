@@ -1,8 +1,8 @@
-#include "PlanValidityCheckers/DiskBoundedPVC.h"
+#include "PlanValidityCheckers/ChiSquaredBoundaryPVC.h"
 
 
-DiskBoundedPVC::DiskBoundedPVC(MultiRobotProblemDefinitionPtr pdef, const double p_safe):
-    BeliefPVC(pdef, "DiskBoundedPVC", p_safe), sc_(-1)
+ChiSquaredBoundaryPVC::ChiSquaredBoundaryPVC(MultiRobotProblemDefinitionPtr pdef, const double p_safe):
+    BeliefPVC(pdef, "ChiSquaredBoundaryPVC", p_safe), sc_(-1)
 {
     std::vector<Robot*> robots = mrmp_pdef_->getInstance()->getRobots();
     boost::tokenizer< boost::char_separator<char> >::iterator beg1;
@@ -20,7 +20,7 @@ DiskBoundedPVC::DiskBoundedPVC(MultiRobotProblemDefinitionPtr pdef, const double
     sc_ = bm::cdf(mydist, p_safe_);
 }
 
-std::vector<ConflictPtr> DiskBoundedPVC::validatePlan(Plan p)
+std::vector<ConflictPtr> ChiSquaredBoundaryPVC::validatePlan(Plan p)
 {
     std::vector<ConflictPtr> confs{};
     const double step_duration = mrmp_pdef_->getSystemStepSize();
@@ -52,7 +52,7 @@ std::vector<ConflictPtr> DiskBoundedPVC::validatePlan(Plan p)
     return {};
 }
 
-bool DiskBoundedPVC::satisfiesConstraints(oc::PathControl path, std::vector<ConstraintPtr> constraints)
+bool ChiSquaredBoundaryPVC::satisfiesConstraints(oc::PathControl path, std::vector<ConstraintPtr> constraints)
 {
     /* Assume that the constrained robot is the "planning" robot. Check for satisfaction of all constraints */
     const int constrained_robot = constraints.front()->getConstrainedAgent();
@@ -87,7 +87,7 @@ bool DiskBoundedPVC::satisfiesConstraints(oc::PathControl path, std::vector<Cons
     return true;
 }
 
-ConflictPtr DiskBoundedPVC::checkForConflicts_(std::map<std::string, Belief> states_map, const int step)
+ConflictPtr ChiSquaredBoundaryPVC::checkForConflicts_(std::map<std::string, Belief> states_map, const int step)
 {
     ConflictPtr c = nullptr;
     
@@ -123,7 +123,7 @@ ConflictPtr DiskBoundedPVC::checkForConflicts_(std::map<std::string, Belief> sta
     return c;
 }
 
-bool DiskBoundedPVC::isSafe_(const Belief belief_a, const double rad_a, const Belief belief_b, const double rad_b)
+bool ChiSquaredBoundaryPVC::isSafe_(const Belief belief_a, const double rad_a, const Belief belief_b, const double rad_b)
 {
     /* Find maximum eigenvalues of the covariances */
     Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver_a(belief_a.second.rows());
@@ -152,7 +152,7 @@ bool DiskBoundedPVC::isSafe_(const Belief belief_a, const double rad_a, const Be
         return false;
 }
 
-double DiskBoundedPVC::findBoundingRadius_(const Robot* r)
+double ChiSquaredBoundaryPVC::findBoundingRadius_(const Robot* r)
 {
     /* First, center robot at origin */
     Polygon r_initial_poly;

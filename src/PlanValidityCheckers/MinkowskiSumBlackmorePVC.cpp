@@ -1,8 +1,8 @@
-#include "PlanValidityCheckers/PolygonBoundedPVC.h"
+#include "PlanValidityCheckers/MinkowskiSumBlackmorePVC.h"
 
 
-PolygonBoundedPVC::PolygonBoundedPVC(MultiRobotProblemDefinitionPtr pdef, const double p_safe):
-    BeliefPVC(pdef, "PolygonBoundedPVC", p_safe)
+MinkowskiSumBlackmorePVC::MinkowskiSumBlackmorePVC(MultiRobotProblemDefinitionPtr pdef, const double p_safe):
+    BeliefPVC(pdef, "MinkowskiSumBlackmorePVC", p_safe)
 {
     std::vector<Robot*> robots = mrmp_pdef_->getInstance()->getRobots();
     boost::tokenizer< boost::char_separator<char> >::iterator beg1;
@@ -26,7 +26,7 @@ PolygonBoundedPVC::PolygonBoundedPVC(MultiRobotProblemDefinitionPtr pdef, const 
     }
 }
 
-std::vector<ConflictPtr> PolygonBoundedPVC::validatePlan(Plan p)
+std::vector<ConflictPtr> MinkowskiSumBlackmorePVC::validatePlan(Plan p)
 {
     std::vector<ConflictPtr> confs{};
     const double step_duration = mrmp_pdef_->getSystemStepSize();
@@ -58,7 +58,7 @@ std::vector<ConflictPtr> PolygonBoundedPVC::validatePlan(Plan p)
     return {};
 }
 
-bool PolygonBoundedPVC::satisfiesConstraints(oc::PathControl path, std::vector<ConstraintPtr> constraints)
+bool MinkowskiSumBlackmorePVC::satisfiesConstraints(oc::PathControl path, std::vector<ConstraintPtr> constraints)
 {
     /* Assume that the constrained robot is the "planning" robot. Check for satisfaction of all constraints */
     const int constrained_robot = constraints.front()->getConstrainedAgent();
@@ -100,7 +100,7 @@ bool PolygonBoundedPVC::satisfiesConstraints(oc::PathControl path, std::vector<C
     return true;
 }
 
-ConflictPtr PolygonBoundedPVC::checkForConflicts_(std::map<std::string, Belief> states_map, const int step)
+ConflictPtr MinkowskiSumBlackmorePVC::checkForConflicts_(std::map<std::string, Belief> states_map, const int step)
 {
     ConflictPtr c = nullptr;
     
@@ -144,7 +144,7 @@ ConflictPtr PolygonBoundedPVC::checkForConflicts_(std::map<std::string, Belief> 
     return c;
 }
 
-bool PolygonBoundedPVC::isSafe_(const Eigen::Vector2d mu_ab, const Eigen::Matrix2d Sigma_ab, const std::pair<Eigen::MatrixXd, Eigen::MatrixXd> halfPlanes)
+bool MinkowskiSumBlackmorePVC::isSafe_(const Eigen::Vector2d mu_ab, const Eigen::Matrix2d Sigma_ab, const std::pair<Eigen::MatrixXd, Eigen::MatrixXd> halfPlanes)
 {
     Eigen::MatrixXd A = halfPlanes.first;
     Eigen::MatrixXd B = halfPlanes.second;
@@ -161,7 +161,7 @@ bool PolygonBoundedPVC::isSafe_(const Eigen::Vector2d mu_ab, const Eigen::Matrix
     return false;
 }
 
-std::pair<Eigen::MatrixXd, Eigen::MatrixXd> PolygonBoundedPVC::getHalfPlanes_(Polygon combined_poly)
+std::pair<Eigen::MatrixXd, Eigen::MatrixXd> MinkowskiSumBlackmorePVC::getHalfPlanes_(Polygon combined_poly)
 {
     /* Converts a Polygon to a set of halfplanes */
     auto exterior_points = bg::exterior_ring(combined_poly);
@@ -189,7 +189,7 @@ std::pair<Eigen::MatrixXd, Eigen::MatrixXd> PolygonBoundedPVC::getHalfPlanes_(Po
     return std::make_pair(A,B);
 }
 
-Polygon PolygonBoundedPVC::getMinkowskiSumOfRobots_(Robot* r1, Robot* r2)
+Polygon MinkowskiSumBlackmorePVC::getMinkowskiSumOfRobots_(Robot* r1, Robot* r2)
 {
     // // test: triangle and rectangle from web (centered at origin!)
     // // https://cp-algorithms.com/geometry/minkowski.html#algorithm
@@ -272,7 +272,7 @@ Polygon PolygonBoundedPVC::getMinkowskiSumOfRobots_(Robot* r1, Robot* r2)
     return result_poly;
 }
 
-double PolygonBoundedPVC::crossProduct_(const Point &a, const Point &b)
+double MinkowskiSumBlackmorePVC::crossProduct_(const Point &a, const Point &b)
 {
     /* Performs A \times B */
     const double ax = bg::get<0>(a);
@@ -283,7 +283,7 @@ double PolygonBoundedPVC::crossProduct_(const Point &a, const Point &b)
     return (ax * by) - (ay * bx);
 }
 
-Point PolygonBoundedPVC::subtractPoints_(const Point &a, const Point &b)
+Point MinkowskiSumBlackmorePVC::subtractPoints_(const Point &a, const Point &b)
 {
     /* Element-wise subtracts B from A ( i.e. A-B ) */
     const double ax = bg::get<0>(a);
@@ -295,7 +295,7 @@ Point PolygonBoundedPVC::subtractPoints_(const Point &a, const Point &b)
     return difference;
 }
 
-Point PolygonBoundedPVC::addPoints_(const Point &a, const Point &b)
+Point MinkowskiSumBlackmorePVC::addPoints_(const Point &a, const Point &b)
 {
     /* Element-wise subtracts B from A ( i.e. A-B ) */
     const double ax = bg::get<0>(a);

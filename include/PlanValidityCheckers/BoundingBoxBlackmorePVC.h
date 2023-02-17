@@ -7,10 +7,10 @@
 namespace bm = boost::math;
 
 
-class RectangleCDFPVC: public BeliefPVC
+class BoundingBoxBlackmorePVC: public BeliefPVC
 {
 public:
-    RectangleCDFPVC(MultiRobotProblemDefinitionPtr pdef, const double p_safe);
+    BoundingBoxBlackmorePVC(MultiRobotProblemDefinitionPtr pdef, const double p_safe);
 
     std::vector<ConflictPtr> validatePlan(Plan p) override;
 

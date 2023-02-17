@@ -7,10 +7,10 @@
 namespace bm = boost::math;
 
 
-class PolygonBoundedPVC: public BeliefPVC
+class MinkowskiSumBlackmorePVC: public BeliefPVC
 {
 public:
-    PolygonBoundedPVC(MultiRobotProblemDefinitionPtr pdef, const double p_safe);
+    MinkowskiSumBlackmorePVC(MultiRobotProblemDefinitionPtr pdef, const double p_safe);
 
     std::vector<ConflictPtr> validatePlan(Plan p) override;
 

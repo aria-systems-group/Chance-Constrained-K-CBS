@@ -151,31 +151,3 @@ bool ChiSquaredBoundaryPVC::isSafe_(const Belief belief_a, const double rad_a, c
     else
         return false;
 }
-
-// double ChiSquaredBoundaryPVC::findBoundingRadius_(const Robot* r)
-// {
-//     /* First, center robot at origin */
-//     Polygon r_initial_poly;
-//     Polygon r_origin_centered;
-
-//     const double r_ix = r->getStartLocation().x_;
-//     const double r_iy = r->getStartLocation().y_;
-//     bg::correct(r_initial_poly);
-//     bg::assign(r_initial_poly, r->getShape());
-//     bg::strategy::transform::matrix_transformer<double, 2, 2> r_xfrm(
-//              cos(0), sin(0), (0 - r_ix),
-//             -sin(0), cos(0), (0 - r_iy),
-//                       0,          0,  1);
-//     bg::transform(r_initial_poly, r_origin_centered, r_xfrm);
-//     bg::correct(r_origin_centered);
-//     double max_rad = 0.0;
-//     for (const auto &pt : boost::geometry::exterior_ring(r_origin_centered)) {
-//         const double x = bg::get<0>(pt);
-//         const double y = bg::get<1>(pt);
-//         // std::cout << x << "," << y << std::endl;
-//         double curr_rad = sqrt(x*x + y*y);
-//         if (curr_rad > max_rad)
-//             max_rad = curr_rad;
-//     }
-//     return max_rad;
-// }

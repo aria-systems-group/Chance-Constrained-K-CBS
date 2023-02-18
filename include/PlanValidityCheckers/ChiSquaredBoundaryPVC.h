@@ -20,7 +20,6 @@ public:
 private:
     ConflictPtr checkForConflicts_(std::map<std::string, Belief> states_map, const int step);
     bool isSafe_(const Belief belief_a, const double rad_a, const Belief belief_b, const double rad_b);
-    // double findBoundingRadius_(const Robot* r);
     std::unordered_map<std::string, double> boundingRadii_map;
     double sc_;
 };

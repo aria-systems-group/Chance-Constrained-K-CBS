@@ -207,10 +207,15 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
 
             // construct (and include) an instance of PCCBlackmore State Validity Checker
             if (mrmp_instance->getPlannerName() == "K-CBS") {
-                si->setStateValidityChecker(std::make_shared<PCCBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
+                if (mrmp_instance->getSVC() == "Blackmore") {
+                    si->setStateValidityChecker(std::make_shared<PCCBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
+                }
+                else if (mrmp_instance->getSVC() == "AdaptiveRiskBlackmore") {
+                    si->setStateValidityChecker(std::make_shared<AdaptiveRiskBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
+                }
             }
             else {
-                si->setStateValidityChecker(std::make_shared<PCCBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafe()));
+                std::cout << "ERROR when allocating State-Validity-Checker" << std::endl;
             }
 
             // construct (and include) an instance of 2D-Uncertain-Linear State Propogator

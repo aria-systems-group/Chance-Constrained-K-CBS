@@ -3,6 +3,7 @@
 #include "Mergers/BeliefMerger.h"
 #include "PlanValidityCheckers/DeterministicPVC.h"
 #include "PlanValidityCheckers/MinkowskiSumBlackmorePVC.h"
+#include "PlanValidityCheckers/AdaptiveRiskBlackmorePVC.h"
 #include "PlanValidityCheckers/ChiSquaredBoundaryPVC.h"
 #include "PlanValidityCheckers/BoundingBoxBlackmorePVC.h"
 #include "Planners/KCBS.h"
@@ -30,12 +31,23 @@ void parse_cmd_line(int &argc, char ** &argv, po::variables_map &vm, po::options
         ("time,t", po::value<double>()->default_value(600), "cutoff time (seconds)")
         ("output,o", po::value<std::string>()->default_value("results"), "output file name (no extension)")
         ("p_safe,p", po::value<double>()->default_value(0.95), "Probability of safe in decimal form (only used for non-deterministic planning sequences)")
-        ("collision_checker,c", po::value<std::string>()->default_value("ChiSquaredBoundary"), "The Collision-Checker to be used."
+        
+
+
+
+        ("pvc,c", po::value<std::string>()->default_value("ChiSquaredBoundary"), "The Collision-Checker to be used."
             "This is only used for non-deterministic planning instances."
-            "(ChiSquaredBoundary, MinkowskiSumBlackmore, or BoundingBoxBlackmore)")
+            "(ChiSquaredBoundary, MinkowskiSumBlackmore, BoundingBoxBlackmore, AdaptiveRiskBlackmore)")
+        ("svc,v", po::value<std::string>()->default_value("Blackmore"), "The Low-Level collision-checker to be used."
+            "This is only used for non-deterministic planning instances."
+            "(Blackmore, AdaptiveRiskBlackmore)")
+
+
+
+
+
         ("screen", po::value<int>()->default_value(0),
-                "screen option \n0 := none \n1 := K-CBS updates \n2 := Low-Level Planner updates \n3 := MRMP detailed updates")
-        ;
+                "screen option \n0 := none \n1 := K-CBS updates \n2 := Low-Level Planner updates \n3 := MRMP detailed updates");
     po::store(po::parse_command_line(argc, argv, desc), vm);
 }
 
@@ -84,17 +96,20 @@ int main(int argc, char ** argv)
             mrmp_pdef->setMerger(merger);
             // set-up (and include) a PlanValidityChecker for agent-to-agent collision checking
             PlanValidityCheckerPtr planValidator = nullptr;
-            if (instance->getCollisionChecker() == "ChiSquaredBoundary") {
+            if (instance->getPVC() == "ChiSquaredBoundary") {
                 planValidator = std::make_shared<ChiSquaredBoundaryPVC>(mrmp_pdef, instance->getPsafeAgents());
             }
-            else if (instance->getCollisionChecker() == "MinkowskiSumBlackmore") {
+            else if (instance->getPVC() == "MinkowskiSumBlackmore") {
                 planValidator = std::make_shared<MinkowskiSumBlackmorePVC>(mrmp_pdef, instance->getPsafeAgents());
             }
-            else if (instance->getCollisionChecker() == "BoundingBoxBlackmore") {
+            else if (instance->getPVC() == "BoundingBoxBlackmore") {
                 planValidator = std::make_shared<BoundingBoxBlackmorePVC>(mrmp_pdef, instance->getPsafeAgents());
             }
+            else if (instance->getPVC() == "AdaptiveRiskBlackmore") {
+                planValidator = std::make_shared<AdaptiveRiskBlackmorePVC>(mrmp_pdef, instance->getPsafeAgents());
+            }
             else {
-                OMPL_ERROR("Plan Validity Checker ``%s`` is not available.", instance->getCollisionChecker().c_str());
+                OMPL_ERROR("Plan Validity Checker ``%s`` is not available.", instance->getPVC().c_str());
             }
             assert(planValidator != nullptr);
             mrmp_pdef->setPlanValidator(planValidator);

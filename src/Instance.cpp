@@ -10,7 +10,8 @@ Instance::Instance(po::variables_map &vm, std::string name):
     map_fpath_(vm["map"].as<std::string>()),
     scen_fpath_(vm["scen"].as<std::string>()),
     p_safe_(vm["p_safe"].as<double>()),
-    colision_checker_(vm["collision_checker"].as<std::string>())
+    pvc_(vm["pvc"].as<std::string>()),
+    svc_(vm["svc"].as<std::string>())
 {
     if (mrmp_planner_ == "K-CBS") {
         // divide p_coll amongst PVC & SVC

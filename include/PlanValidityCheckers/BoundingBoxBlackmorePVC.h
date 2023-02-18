@@ -23,4 +23,5 @@ private:
     Polygon getBoundingBox_(const double r_1, const double r_2);
     std::pair<Eigen::MatrixXd, Eigen::MatrixXd> getHalfPlanes_(Polygon combined_poly);
     std::unordered_map<std::string, std::pair<Eigen::MatrixXd, Eigen::MatrixXd>> halfPlane_map_;
+    double p_coll_dist_;
 };

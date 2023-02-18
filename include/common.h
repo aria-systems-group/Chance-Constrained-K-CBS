@@ -2,10 +2,12 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <iostream>
 #include <boost/geometry/io/io.hpp>
 #include <boost/geometry/geometries/geometries.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
 #include <boost/geometry/algorithms/correct.hpp>
+#include <boost/geometry/strategies/transform/matrix_transformers.hpp>
 #include <ompl/util/Console.h>
 
 
@@ -52,14 +54,17 @@ public:
     std::string getName() const;
     std::string getDynamicsModel() const;
     Polygon getShape() const;
+    Polygon getBoundingShape() const;
     Location getStartLocation() const;
     Location getGoalLocation() const;
     void changeDynamics(const std::string newModel);
     void printShape() const;
+    Polygon createBoundingShape();
 protected:
     std::string name_;
     std::string dyn_model_;
     Polygon shape_;
+    Polygon bounding_poly_;
     Location start_;
     Location goal_;
 };

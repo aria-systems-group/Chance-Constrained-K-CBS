@@ -66,6 +66,11 @@ bool PCCBlackmoreSVC::HyperplaneCCValidityChecker_(const Eigen::MatrixXd &A, con
 std::pair<Eigen::MatrixXd, Eigen::MatrixXd> PCCBlackmoreSVC::getHalfPlanes_(Polygon combined_poly)
 {
 	/* Converts a Polygon to a set of halfplanes */
+    // for (const auto &pt : boost::geometry::exterior_ring(combined_poly)) {
+    //     const double x = bg::get<0>(pt);
+    //     const double y = bg::get<1>(pt);
+    //     std::cout << x << "," << y << std::endl;
+    // }
 	auto exterior_points = bg::exterior_ring(combined_poly);
 	if (exterior_points.size() != 5) {
 		OMPL_WARN("%s: Generating Halfplanes currently supports closed rectangles. Please check the implementation.", "PCCBlackmoreSVC");
@@ -91,42 +96,14 @@ std::pair<Eigen::MatrixXd, Eigen::MatrixXd> PCCBlackmoreSVC::getHalfPlanes_(Poly
     return std::make_pair(A,B);
 }
 
-Polygon PCCBlackmoreSVC::getMinkowskiSum_(const Robot* &r, Obstacle* &obs)
+Polygon PCCBlackmoreSVC::getMinkowskiSum_(const Robot* r, Obstacle* &obs)
 {
-	// test: triangle and rectangle from web (centered at origin!)
-	// https://cp-algorithms.com/geometry/minkowski.html#algorithm
-	// Polygon shape1{{{0, -0.5}, {0.5, 0.5}, {-0.5, 0.5}}}; 
-	// Polygon shape2{{{-1, -1}, {1, -1}, {1, 1}, {-1,1}}};
-
-	/* First, center robot at obstacle location */
-    Polygon r_initial_poly;
-    Polygon r_origin_centered;
-
-    const double r_ix = r->getStartLocation().x_;
-    const double r_iy = r->getStartLocation().y_;
-    // const double o_x = obs->x_;
-    // const double o_y = obs->y_;
-    bg::correct(r_initial_poly);
-    bg::assign(r_initial_poly, r->getShape());
-    bg::strategy::transform::matrix_transformer<double, 2, 2> r_xfrm(
-             cos(0), sin(0), (0 - r_ix),
-            -sin(0), cos(0), (0 - r_iy),
-                      0,          0,  1);
-    bg::transform(r_initial_poly, r_origin_centered, r_xfrm);
-    bg::correct(r_origin_centered);
-
-    // for (const auto &a : boost::geometry::exterior_ring(r_origin_centered)) {
-    // 	const double x = bg::get<0>(a);
-	// 	const double y = bg::get<1>(a);
-	// 	std::cout << x << "," << y << std::endl;
-    // }
-
     /* Next, create copy of obstacle polygon */
     Polygon obs_poly = obs->getPolygon();
     bg::correct(obs_poly);
 
     /* Perform the Minkowski Sum */
-	std::vector<Point> shape1_points = boost::geometry::exterior_ring(r_origin_centered);
+	std::vector<Point> shape1_points = boost::geometry::exterior_ring(r->getBoundingShape());
 	std::vector<Point> shape2_points = boost::geometry::exterior_ring(obs_poly);
 
 	shape1_points.push_back(shape1_points[1]);
@@ -150,9 +127,6 @@ Polygon PCCBlackmoreSVC::getMinkowskiSum_(const Robot* &r, Obstacle* &obs)
     Polygon result_poly;
 
     for (auto itr = result.begin(); itr != result.end(); itr++) {
-		// double x = bg::get<0>(*itr);
-		// double y = bg::get<1>(*itr);
-		// std::cout << x << "," << y << std::endl;
 		bg::append(result_poly.outer(), *itr);
 	}
 	bg::correct(result_poly);

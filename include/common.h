@@ -31,7 +31,7 @@ class Obstacle: public Location {
 public:
     Obstacle(double x, double y);
     void printPoints() const;
-    Polygon getPolygon() const;
+    const Polygon& getPolygon() const;
     Polygon::ring_type getPolyPoints() const;
 protected:
     Polygon poly_;
@@ -53,18 +53,20 @@ public:
     Robot(std::string name, std::string model, Location start, Location goal);
     std::string getName() const;
     std::string getDynamicsModel() const;
-    Polygon getShape() const;
-    Polygon getBoundingShape() const;
+    const Polygon& getShape() const;
+    const Polygon& getBoundingShape() const;
+    const double getBoundingRadius() const;
     Location getStartLocation() const;
     Location getGoalLocation() const;
     void changeDynamics(const std::string newModel);
     void printShape() const;
-    Polygon createBoundingShape();
+    void createBoundingShape();
 protected:
     std::string name_;
     std::string dyn_model_;
     Polygon shape_;
     Polygon bounding_poly_;
+    double bounding_rad_;
     Location start_;
     Location goal_;
 };

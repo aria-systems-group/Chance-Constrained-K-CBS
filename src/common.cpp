@@ -12,7 +12,7 @@ void Obstacle::printPoints() const
     }
 }
 
-Polygon Obstacle::getPolygon() const
+const Polygon& Obstacle::getPolygon() const
 {
     return poly_;
 }
@@ -45,8 +45,9 @@ Robot::Robot(std::string name, std::string model, Location start, Location goal)
     name_(name), dyn_model_(model), start_(start), goal_(goal) {}
 std::string Robot::getName() const {return name_;}
 std::string Robot::getDynamicsModel() const {return dyn_model_;}
-Polygon Robot::getShape() const {return shape_;}
-Polygon Robot::getBoundingShape() const {return bounding_poly_;};
+const Polygon& Robot::getShape() const {return shape_;}
+const double Robot::getBoundingRadius() const {return bounding_rad_;};
+const Polygon& Robot::getBoundingShape() const {return bounding_poly_;};
 Location Robot::getStartLocation() const {return start_;}
 Location Robot::getGoalLocation() const {return goal_;}
 void Robot::changeDynamics(const std::string newModel) {dyn_model_ = newModel;}
@@ -57,7 +58,7 @@ void Robot::printShape() const
         OMPL_INFORM("   - Point(%0.2f, %0.2f)", boost::geometry::get<0>(exterior_points[i]), boost::geometry::get<1>(exterior_points[i]));
     }
 }
-Polygon Robot::createBoundingShape()
+void Robot::createBoundingShape()
 {
     /* Get radius of bounding disk */
     /* First, center robot at origin */
@@ -82,12 +83,13 @@ Polygon Robot::createBoundingShape()
         if (curr_rad > max_rad)
             max_rad = curr_rad;
     }
+    bounding_rad_ = max_rad;
     /* Create box around disk */
     // reference point is the center
     Point bott_left(-max_rad, -max_rad);
     Point bott_right(max_rad, -max_rad);
-    Point top_left(max_rad, max_rad);
-    Point top_right(-max_rad, max_rad);
+    Point top_right(max_rad, max_rad);
+    Point top_left(-max_rad, max_rad);
 
     bg::append(bounding_poly_.outer(), bott_left);
     bg::append(bounding_poly_.outer(), bott_right);
@@ -95,11 +97,14 @@ Polygon Robot::createBoundingShape()
     bg::append(bounding_poly_.outer(), top_left);
     bg::append(bounding_poly_.outer(), bott_left);
 
-    for (const auto &pt : boost::geometry::exterior_ring(bounding_poly_)) {
-        const double x = bg::get<0>(pt);
-        const double y = bg::get<1>(pt);
-        std::cout << x << "," << y << std::endl;
-    }
+    bg::correct(bounding_poly_);
+
+    // for (const auto &pt : boost::geometry::exterior_ring(bounding_poly_)) {
+    //     const double x = bg::get<0>(pt);
+    //     const double y = bg::get<1>(pt);
+    //     std::cout << x << "," << y << std::endl;
+    // }
+    // std::cout << "done with initialization" << std::endl;
 }
 
 PointRobot::PointRobot(std::string name, std::string model, Location start, Location goal):

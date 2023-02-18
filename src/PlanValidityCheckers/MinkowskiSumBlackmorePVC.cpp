@@ -199,35 +199,35 @@ Polygon MinkowskiSumBlackmorePVC::getMinkowskiSumOfRobots_(Robot* r1, Robot* r2)
     // Polygon shape1{{{0, -0.5}, {0.5, 0.5}, {-0.5, 0.5}}}; 
     // Polygon shape2{{{-1, -1}, {1, -1}, {1, 1}, {-1,1}}};
 
-    /* First, center robot 1 at origin */
-    Polygon r1_initial_poly;
-    Polygon r1_origin_centered;
+    // /* First, center robot 1 at origin */
+    // Polygon r1_initial_poly;
+    // Polygon r1_origin_centered;
 
-    const double r1_ix = r1->getStartLocation().x_;
-    const double r1_iy = r1->getStartLocation().y_;
-    bg::correct(r1_initial_poly);
-    bg::assign(r1_initial_poly, r1->getShape());
-    bg::strategy::transform::matrix_transformer<double, 2, 2> r1_xfrm(
-             cos(0), sin(0), (0 - r1_ix),
-            -sin(0), cos(0), (0 - r1_iy),
-                      0,          0,  1);
-    bg::transform(r1_initial_poly, r1_origin_centered, r1_xfrm);
-    bg::correct(r1_origin_centered);
+    // const double r1_ix = r1->getStartLocation().x_;
+    // const double r1_iy = r1->getStartLocation().y_;
+    // bg::correct(r1_initial_poly);
+    // bg::assign(r1_initial_poly, r1->getBoundingShape());
+    // bg::strategy::transform::matrix_transformer<double, 2, 2> r1_xfrm(
+    //          cos(0), sin(0), (0 - r1_ix),
+    //         -sin(0), cos(0), (0 - r1_iy),
+    //                   0,          0,  1);
+    // bg::transform(r1_initial_poly, r1_origin_centered, r1_xfrm);
+    // bg::correct(r1_origin_centered);
 
-    /* Next, center robot 2 at origin */
-    Polygon r2_initial_poly;
-    Polygon r2_origin_centered;
+    // /* Next, center robot 2 at origin */
+    // Polygon r2_initial_poly;
+    // Polygon r2_origin_centered;
 
-    const double r2_ix = r2->getStartLocation().x_;
-    const double r2_iy = r2->getStartLocation().y_;
-    bg::correct(r2_initial_poly);
-    bg::assign(r2_initial_poly, r2->getShape());
-    bg::strategy::transform::matrix_transformer<double, 2, 2> r2_xfrm(
-             cos(0), sin(0), (0 - r2_ix),
-            -sin(0), cos(0), (0 - r2_iy),
-                      0,          0,  1);
-    bg::transform(r2_initial_poly, r2_origin_centered, r2_xfrm);
-    bg::correct(r2_origin_centered);
+    // const double r2_ix = r2->getStartLocation().x_;
+    // const double r2_iy = r2->getStartLocation().y_;
+    // bg::correct(r2_initial_poly);
+    // bg::assign(r2_initial_poly, r2->getShape());
+    // bg::strategy::transform::matrix_transformer<double, 2, 2> r2_xfrm(
+    //          cos(0), sin(0), (0 - r2_ix),
+    //         -sin(0), cos(0), (0 - r2_iy),
+    //                   0,          0,  1);
+    // bg::transform(r2_initial_poly, r2_origin_centered, r2_xfrm);
+    // bg::correct(r2_origin_centered);
 
     // for (const auto &a : boost::geometry::exterior_ring(r2_initial_poly)) {
     //     const double x = bg::get<0>(a);
@@ -242,8 +242,8 @@ Polygon MinkowskiSumBlackmorePVC::getMinkowskiSumOfRobots_(Robot* r1, Robot* r2)
     // }
 
     /* Perform the Minkowski Sum */
-    std::vector<Point> shape1_points = boost::geometry::exterior_ring(r1_origin_centered);
-    std::vector<Point> shape2_points = boost::geometry::exterior_ring(r2_origin_centered);
+    std::vector<Point> shape1_points = boost::geometry::exterior_ring(r1->getBoundingShape());
+    std::vector<Point> shape2_points = boost::geometry::exterior_ring(r2->getBoundingShape());
 
     shape1_points.push_back(shape1_points[1]);
     shape2_points.push_back(shape2_points[1]);

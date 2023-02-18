@@ -146,5 +146,6 @@ Polygon DeterministicPlanValidityChecker::getShapeFromState_(ob::State *st, cons
             -sin(theta), cos(theta), (cy - iy),
                       0,          0,  1);
     bg::transform(raw, result, xfrm);
+    
     return result;
 }

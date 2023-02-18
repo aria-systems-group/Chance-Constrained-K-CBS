@@ -13,13 +13,13 @@ BoundingBoxBlackmorePVC::BoundingBoxBlackmorePVC(MultiRobotProblemDefinitionPtr 
     boost::char_separator<char> sep(" ");
     for (auto itr1 = robots.begin(); itr1 != robots.end(); itr1++) {
         std::string r1_name = (*itr1)->getName();
-        double max_rad_1 = findBoundingRadius_((*itr1));
+        double max_rad_1 = (*itr1)->getBoundingRadius();
         boost::tokenizer< boost::char_separator<char> > tok1(r1_name, sep);
         beg1 = tok1.begin();
         beg1++;
         for (auto itr2 = itr1 + 1; itr2 != robots.end(); itr2++) {
             std::string r2_name = (*itr2)->getName();
-            double max_rad_2 = findBoundingRadius_((*itr2));
+            double max_rad_2 = (*itr2)->getBoundingRadius();
             boost::tokenizer< boost::char_separator<char> > tok2(r2_name, sep);
             beg2 = tok2.begin();
             beg2++;
@@ -156,33 +156,34 @@ ConflictPtr BoundingBoxBlackmorePVC::checkForConflicts_(std::map<std::string, Be
     return c;
 }
 
-double BoundingBoxBlackmorePVC::findBoundingRadius_(const Robot* r)
-{
-    /* First, center robot at origin */
-    Polygon r_initial_poly;
-    Polygon r_origin_centered;
+// double BoundingBoxBlackmorePVC::findBoundingRadius_(const Robot* r)
+// {
+//     // /* First, center robot at origin */
+//     // Polygon r_initial_poly;
+//     // Polygon r_origin_centered;
 
-    const double r_ix = r->getStartLocation().x_;
-    const double r_iy = r->getStartLocation().y_;
-    bg::correct(r_initial_poly);
-    bg::assign(r_initial_poly, r->getShape());
-    bg::strategy::transform::matrix_transformer<double, 2, 2> r_xfrm(
-             cos(0), sin(0), (0 - r_ix),
-            -sin(0), cos(0), (0 - r_iy),
-                      0,          0,  1);
-    bg::transform(r_initial_poly, r_origin_centered, r_xfrm);
-    bg::correct(r_origin_centered);
-    double max_rad = 0.0;
-    for (const auto &pt : boost::geometry::exterior_ring(r_origin_centered)) {
-        const double x = bg::get<0>(pt);
-        const double y = bg::get<1>(pt);
-        // std::cout << x << "," << y << std::endl;
-        double curr_rad = sqrt(x*x + y*y);
-        if (curr_rad > max_rad)
-            max_rad = curr_rad;
-    }
-    return max_rad;
-}
+//     // const double r_ix = r->getStartLocation().x_;
+//     // const double r_iy = r->getStartLocation().y_;
+//     // bg::correct(r_initial_poly);
+//     // bg::assign(r_initial_poly, r->getShape());
+//     // bg::strategy::transform::matrix_transformer<double, 2, 2> r_xfrm(
+//     //          cos(0), sin(0), (0 - r_ix),
+//     //         -sin(0), cos(0), (0 - r_iy),
+//     //                   0,          0,  1);
+//     // bg::transform(r_initial_poly, r_origin_centered, r_xfrm);
+//     // bg::correct(r_origin_centered);
+//     // double max_rad = 0.0;
+//     // for (const auto &pt : boost::geometry::exterior_ring(r_origin_centered)) {
+//     //     const double x = bg::get<0>(pt);
+//     //     const double y = bg::get<1>(pt);
+//     //     // std::cout << x << "," << y << std::endl;
+//     //     double curr_rad = sqrt(x*x + y*y);
+//     //     if (curr_rad > max_rad)
+//     //         max_rad = curr_rad;
+//     // }
+//     max_rad = r->getBoundingRadius();
+//     return max_rad;
+// }
 
 Polygon BoundingBoxBlackmorePVC::getBoundingBox_(const double r_1, const double r_2)
 {

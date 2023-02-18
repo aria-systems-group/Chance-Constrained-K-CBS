@@ -19,7 +19,8 @@ public:
     const double getPsafe() const {return p_safe_;};
     const double getPsafeObs() const {return p_safe_obs_;};
     const double getPsafeAgents() const {return p_safe_agnts_;};
-    const std::string getCollisionChecker() const {return colision_checker_;};
+    const std::string getPVC() const {return pvc_;};
+    const std::string getSVC() const {return svc_;};
     std::vector<double> getDimensions() const {return {x_max_, y_max_};};
     void printDimensions(){OMPL_INFORM("Space Dimensions: \n"
         "x: [0, %0.2f] \n"
@@ -44,7 +45,8 @@ private:
     const fs::path map_fpath_;
     const fs::path scen_fpath_;
     const std::string name_;
-    const std::string colision_checker_;
+    const std::string pvc_;
+    const std::string svc_;
     const std::string mrmp_planner_;
     const std::string low_level_planner_;
     std::vector<Obstacle*> obstacles_;

@@ -17,7 +17,7 @@ ChiSquaredBoundaryPVC::ChiSquaredBoundaryPVC(MultiRobotProblemDefinitionPtr pdef
 
     // set sc_ value
     bm::chi_squared mydist(2);
-    sc_ = bm::cdf(mydist, p_safe_);
+    sc_ = bm::cdf(mydist, p_safe_agnts_);
 }
 
 std::vector<ConflictPtr> ChiSquaredBoundaryPVC::validatePlan(Plan p)

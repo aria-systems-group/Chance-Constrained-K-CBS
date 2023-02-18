@@ -1,6 +1,7 @@
 #pragma once
 #include "StateValidityCheckers/RealVectorStateSpaceSVC.h"
 #include "StateValidityCheckers/PCCBlackmoreSVC.h"
+#include "StateValidityCheckers/AdaptiveRiskBlackmoreSVC.h"
 #include "StatePropogators/CarSP.h"
 #include "StatePropogators/UncertainLinearSP.h"
 #include "Goals/RealVectorStateSpaceGoals.h"

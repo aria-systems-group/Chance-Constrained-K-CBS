@@ -1,12 +1,9 @@
-#include "PlanValidityCheckers/MinkowskiSumBlackmorePVC.h"
+#include "PlanValidityCheckers/AdaptiveRiskBlackmorePVC.h"
 
 
-MinkowskiSumBlackmorePVC::MinkowskiSumBlackmorePVC(MultiRobotProblemDefinitionPtr pdef, const double p_safe):
-    BeliefPVC(pdef, "MinkowskiSumBlackmorePVC", p_safe), p_coll_dist_(-1)
+AdaptiveRiskBlackmorePVC::AdaptiveRiskBlackmorePVC(MultiRobotProblemDefinitionPtr pdef, const double p_safe):
+    BeliefPVC(pdef, "AdaptiveRiskBlackmorePVC", p_safe)
 {
-    int norm = (pdef->getInstance()->getRobots().size() - 1);
-    p_coll_dist_ = p_coll_agnts_ / norm;
-
     std::vector<Robot*> robots = mrmp_pdef_->getInstance()->getRobots();
     boost::tokenizer< boost::char_separator<char> >::iterator beg1;
     boost::tokenizer< boost::char_separator<char> >::iterator beg2;
@@ -29,7 +26,7 @@ MinkowskiSumBlackmorePVC::MinkowskiSumBlackmorePVC(MultiRobotProblemDefinitionPt
     }
 }
 
-std::vector<ConflictPtr> MinkowskiSumBlackmorePVC::validatePlan(Plan p)
+std::vector<ConflictPtr> AdaptiveRiskBlackmorePVC::validatePlan(Plan p)
 {
     std::vector<ConflictPtr> confs{};
     const double step_duration = mrmp_pdef_->getSystemStepSize();
@@ -39,7 +36,7 @@ std::vector<ConflictPtr> MinkowskiSumBlackmorePVC::validatePlan(Plan p)
     for (auto itr = p.begin(); itr != p.end(); itr++) {
         itr->interpolate();
         if (maxStates < itr->getStateCount())
-            maxStates = itr->getStateCount();
+            maxStates = itr->getStateCount(); 
     }
 
     for (int k = 0; k < maxStates; k++) {
@@ -61,10 +58,11 @@ std::vector<ConflictPtr> MinkowskiSumBlackmorePVC::validatePlan(Plan p)
     return {};
 }
 
-bool MinkowskiSumBlackmorePVC::satisfiesConstraints(oc::PathControl path, std::vector<ConstraintPtr> constraints)
+bool AdaptiveRiskBlackmorePVC::satisfiesConstraints(oc::PathControl path, std::vector<ConstraintPtr> constraints)
 {
     /* Assume that the constrained robot is the "planning" robot. Check for satisfaction of all constraints */
     const int constrained_robot = constraints.front()->getConstrainedAgent();
+    const std::string r_a_name = mrmp_pdef_->getInstance()->getRobots()[constrained_robot]->getName();
     std::vector<ob::State*> states = path.getStates();
     const double step_size = path.getControlDuration(0);
     double current_time = 0.0;
@@ -75,6 +73,10 @@ bool MinkowskiSumBlackmorePVC::satisfiesConstraints(oc::PathControl path, std::v
             auto it = std::find_if(times.begin(), times.end(), 
                 [&current_time](const double& t) { return abs(t - current_time) < 1E-9;});
             if (it == times.end()) {
+                if (current_time >= times.front() && current_time <=  times.back()) {
+                    std::cout << "ERROR" << std::endl;
+                    exit(-1);
+                }
                 break;
             }
             // must check this constraint at this time
@@ -87,15 +89,20 @@ bool MinkowskiSumBlackmorePVC::satisfiesConstraints(oc::PathControl path, std::v
                 key_name = std::to_string(constraining_robot) + "," + std::to_string(constrained_robot);
 
             // get both beliefs
+            const std::string r_b_name = mrmp_pdef_->getInstance()->getRobots()[constraining_robot]->getName();
             int idx = it - times.begin();
             Belief constrained_robot_belief = getDistribution_(*itr);
             Belief constraining_robot_belief = getDistribution_((*c_itr)->as<BeliefConstraint>()->getStates()[idx]);
+            std::map<std::string, Belief> states_map{{r_a_name, constrained_robot_belief}, {r_b_name, constraining_robot_belief}};
+
+            // calculate the the eta_i's for agent *itr_a
+            std::unordered_map<std::string, double> eta_map = createEtaMap_(r_a_name, states_map);
 
             // check if constraint is violated
             Eigen::Vector2d mu_ab = constrained_robot_belief.first - constraining_robot_belief.first;
             Eigen::Matrix2d Sigma_ab = constrained_robot_belief.second + constraining_robot_belief.second;
 
-            if (!isSafe_(mu_ab, Sigma_ab, halfPlane_map_[key_name]))
+            if (!isSafe_(mu_ab, Sigma_ab, halfPlane_map_[key_name], eta_map[r_b_name]))
                 return false;
         }
         current_time += step_size;
@@ -103,7 +110,7 @@ bool MinkowskiSumBlackmorePVC::satisfiesConstraints(oc::PathControl path, std::v
     return true;
 }
 
-ConflictPtr MinkowskiSumBlackmorePVC::checkForConflicts_(std::map<std::string, Belief> states_map, const int step)
+ConflictPtr AdaptiveRiskBlackmorePVC::checkForConflicts_(std::map<std::string, Belief> states_map, const int step)
 {
     ConflictPtr c = nullptr;
     
@@ -119,6 +126,9 @@ ConflictPtr MinkowskiSumBlackmorePVC::checkForConflicts_(std::map<std::string, B
         beg_a++;
         const Eigen::Vector2d mu_a = (itr_a->second).first;
         const Eigen::Matrix2d Sigma_a = (itr_a->second).second;
+        // calculate the the eta_i's for agent *itr_a
+        std::unordered_map<std::string, double> eta_map = createEtaMap_(r_a_name, states_map);
+        // set for itr_b
         auto itr_b = itr_a;
         std::advance(itr_b, 1);
         for (; itr_b != states_map.end(); itr_b++) {
@@ -136,7 +146,7 @@ ConflictPtr MinkowskiSumBlackmorePVC::checkForConflicts_(std::map<std::string, B
             if (halfPlane_map_.find(key_name) == halfPlane_map_.end())
                 key_name = (*beg_b) + "," + (*beg_a);
 
-            if (!isSafe_(mu_ab, Sigma_ab, halfPlane_map_[key_name])) {
+            if (!isSafe_(mu_ab, Sigma_ab, halfPlane_map_[key_name], eta_map[r_b_name])) {
                 int a_idx = std::atoi((*beg_a).c_str());
                 int b_idx = std::atoi((*beg_b).c_str());
                 c = std::make_shared<Conflict>(a_idx, b_idx, step);
@@ -147,24 +157,36 @@ ConflictPtr MinkowskiSumBlackmorePVC::checkForConflicts_(std::map<std::string, B
     return c;
 }
 
-bool MinkowskiSumBlackmorePVC::isSafe_(const Eigen::Vector2d mu_ab, const Eigen::Matrix2d Sigma_ab, const std::pair<Eigen::MatrixXd, Eigen::MatrixXd> halfPlanes)
+std::unordered_map<std::string, double> AdaptiveRiskBlackmorePVC::createEtaMap_(const std::string r_a_name, std::map<std::string, Belief> states_map)
 {
-    Eigen::MatrixXd A = halfPlanes.first;
-    Eigen::MatrixXd B = halfPlanes.second;
-
-    auto const n_rows = A.rows();
-    for (int i = 0; i < n_rows; i++) {
-        const double tmp = (A.row(i) * Sigma_ab * A.row(i).transpose()).value();
-        const double Pv = sqrt(tmp);
-        const double vbar = sqrt(2) * Pv * bm::erf_inv(1 - (2 * p_coll_dist_));
-        if( (A(i, 0) * mu_ab[0] + A(i, 1) * mu_ab[1] - B(i, 0) >= vbar) ) {
-            return true;
-        };
+    /* Find d_i's from r_a_name mean to all other robot means and sum the d_i's */
+    const Belief r_a_belief = states_map[r_a_name];
+    std::unordered_map<std::string, double> di_map;
+    double sum = 0;
+    for (auto itr_b = states_map.begin(); itr_b != states_map.end(); itr_b++) {
+        if (itr_b->first == r_a_name)
+            continue;
+        
+        const Belief r_b_belief = itr_b->second;
+        const double mu_diff_x = r_a_belief.first(0, 0) - r_b_belief.first(0, 0);
+        const double mu_diff_y = r_a_belief.first(1, 0) - r_b_belief.first(1, 0);
+        const double di =  sqrt( mu_diff_x*mu_diff_x + mu_diff_y*mu_diff_y );
+        di_map[itr_b->first] = di;
+        sum += (1 / di);
     }
-    return false;
+
+    const double alpha = 1 / sum;
+
+    /* Calculate all the eta_i and return */
+    std::unordered_map<std::string, double> eta_map;
+    for (auto di_itr = di_map.begin(); di_itr != di_map.end(); di_itr++) {
+        const double eta_i = (alpha / di_itr->second) * p_coll_agnts_;
+        eta_map[di_itr->first] = eta_i; 
+    }
+    return eta_map;
 }
 
-std::pair<Eigen::MatrixXd, Eigen::MatrixXd> MinkowskiSumBlackmorePVC::getHalfPlanes_(Polygon combined_poly)
+std::pair<Eigen::MatrixXd, Eigen::MatrixXd> AdaptiveRiskBlackmorePVC::getHalfPlanes_(Polygon combined_poly)
 {
     /* Converts a Polygon to a set of halfplanes */
     auto exterior_points = bg::exterior_ring(combined_poly);
@@ -192,7 +214,24 @@ std::pair<Eigen::MatrixXd, Eigen::MatrixXd> MinkowskiSumBlackmorePVC::getHalfPla
     return std::make_pair(A,B);
 }
 
-Polygon MinkowskiSumBlackmorePVC::getMinkowskiSumOfRobots_(Robot* r1, Robot* r2)
+bool AdaptiveRiskBlackmorePVC::isSafe_(const Eigen::Vector2d mu_ab, const Eigen::Matrix2d Sigma_ab, const std::pair<Eigen::MatrixXd, Eigen::MatrixXd> halfPlanes, const double eta_i)
+{
+    Eigen::MatrixXd A = halfPlanes.first;
+    Eigen::MatrixXd B = halfPlanes.second;
+
+    auto const n_rows = A.rows();
+    for (int i = 0; i < n_rows; i++) {
+        const double tmp = (A.row(i) * Sigma_ab * A.row(i).transpose()).value();
+        const double Pv = sqrt(tmp);
+        const double vbar = sqrt(2) * Pv * bm::erf_inv(1 - (2 * eta_i));
+        if( (A(i, 0) * mu_ab[0] + A(i, 1) * mu_ab[1] - B(i, 0) >= vbar) ) {
+            return true;
+        };
+    }
+    return false;
+}
+
+Polygon AdaptiveRiskBlackmorePVC::getMinkowskiSumOfRobots_(Robot* r1, Robot* r2)
 {
     // // test: triangle and rectangle from web (centered at origin!)
     // // https://cp-algorithms.com/geometry/minkowski.html#algorithm
@@ -275,7 +314,7 @@ Polygon MinkowskiSumBlackmorePVC::getMinkowskiSumOfRobots_(Robot* r1, Robot* r2)
     return result_poly;
 }
 
-double MinkowskiSumBlackmorePVC::crossProduct_(const Point &a, const Point &b)
+double AdaptiveRiskBlackmorePVC::crossProduct_(const Point &a, const Point &b)
 {
     /* Performs A \times B */
     const double ax = bg::get<0>(a);
@@ -286,7 +325,7 @@ double MinkowskiSumBlackmorePVC::crossProduct_(const Point &a, const Point &b)
     return (ax * by) - (ay * bx);
 }
 
-Point MinkowskiSumBlackmorePVC::subtractPoints_(const Point &a, const Point &b)
+Point AdaptiveRiskBlackmorePVC::subtractPoints_(const Point &a, const Point &b)
 {
     /* Element-wise subtracts B from A ( i.e. A-B ) */
     const double ax = bg::get<0>(a);
@@ -298,7 +337,7 @@ Point MinkowskiSumBlackmorePVC::subtractPoints_(const Point &a, const Point &b)
     return difference;
 }
 
-Point MinkowskiSumBlackmorePVC::addPoints_(const Point &a, const Point &b)
+Point AdaptiveRiskBlackmorePVC::addPoints_(const Point &a, const Point &b)
 {
     /* Element-wise subtracts B from A ( i.e. A-B ) */
     const double ax = bg::get<0>(a);

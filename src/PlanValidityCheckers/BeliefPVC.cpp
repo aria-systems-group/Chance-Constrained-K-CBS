@@ -1,11 +1,10 @@
 #include "PlanValidityCheckers/BeliefPVC.h"
 
 
-BeliefPVC::BeliefPVC(MultiRobotProblemDefinitionPtr pdef, const std::string name, const double p_safe):
-    PlanValidityChecker(pdef, name), p_safe_(p_safe), p_coll_dist_(-1)
+BeliefPVC::BeliefPVC(MultiRobotProblemDefinitionPtr pdef, const std::string name, const double p_safe_agnts):
+    PlanValidityChecker(pdef, name), p_safe_agnts_(p_safe_agnts), p_coll_agnts_(-1)
 {
-    int norm = (pdef->getInstance()->getRobots().size() - 1);
-    p_coll_dist_ = (1-p_safe) / norm;
+    p_coll_agnts_ = 1 - p_safe_agnts;
 }
 
 ConstraintPtr BeliefPVC::createConstraint(Plan p, std::vector<ConflictPtr> conflicts, const int constrained_robot)
@@ -17,21 +16,17 @@ ConstraintPtr BeliefPVC::createConstraint(Plan p, std::vector<ConflictPtr> confl
 
     int constraining_robot = (constrained_robot == conflicts.front()->agent1Idx_) ? conflicts.front()->agent2Idx_ : conflicts.front()->agent1Idx_;
     assert(constrained_robot != constraining_robot);
-    // std::cout << "constrained: " << constrained_robot << " and constraining " << constraining_robot << std::endl;
     const double step_duration = mrmp_pdef_->getSystemStepSize();
     std::vector<double> times;
     std::vector<ob::State*> states;
     for (auto itr = conflicts.begin(); itr != conflicts.end(); itr++) {
         times.push_back(((*itr)->timeStep_ * step_duration));
-        // std::cout << (*itr)->timeStep_ << "," << p[constraining_robot].getStates().size() << std::endl;
         if ( (*itr)->timeStep_ <  p[constraining_robot].getStates().size()) {
-            // std::cout << "diff" << std::endl;
             ob::State* st = mrmp_pdef_->getRobotSpaceInformationPtr(constraining_robot)->allocState();
             mrmp_pdef_->getRobotSpaceInformationPtr(constraining_robot)->copyState(st, p[constraining_robot].getState((*itr)->timeStep_));
             states.push_back(st);
         }
         else {
-            // std::cout << "same" << std::endl;
             ob::State* st = mrmp_pdef_->getRobotSpaceInformationPtr(constraining_robot)->allocState();
             mrmp_pdef_->getRobotSpaceInformationPtr(constraining_robot)->copyState(st, p[constraining_robot].getStates().back());
             states.push_back(st);

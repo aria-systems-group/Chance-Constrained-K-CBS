@@ -2,8 +2,11 @@
 
 
 BoundingBoxBlackmorePVC::BoundingBoxBlackmorePVC(MultiRobotProblemDefinitionPtr pdef, const double p_safe):
-    BeliefPVC(pdef, "BoundingBoxBlackmorePVC", p_safe)
+    BeliefPVC(pdef, "BoundingBoxBlackmorePVC", p_safe), p_coll_dist_(-1)
 {
+    int norm = (pdef->getInstance()->getRobots().size() - 1);
+    p_coll_dist_ = p_coll_agnts_ / norm;
+    
     std::vector<Robot*> robots = mrmp_pdef_->getInstance()->getRobots();
     boost::tokenizer< boost::char_separator<char> >::iterator beg1;
     boost::tokenizer< boost::char_separator<char> >::iterator beg2;

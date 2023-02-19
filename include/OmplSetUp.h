@@ -9,6 +9,7 @@
 #include "Goals/BeliefSpaceGoals.h"
 #include "OptimizationObjectives/StateCostObjectives.h"
 #include "MultiRobotProblemDefinition.h"
+#include "Spaces/RealVectorBeliefSpace.h"
 #include <boost/program_options.hpp>
 
 namespace po = boost::program_options;
@@ -25,4 +26,7 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintRRT_MP_Problems(InstanceP
 std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(InstancePtr mrmp_instance);
 
 // the ompl set-up function for MR-RRT
-std::vector<MotionPlanningProblemPtr> set_up_MultiRobotRRT_MP_Problems(InstancePtr mrmp_instance);
+std::vector<MotionPlanningProblemPtr> set_up_MultiRobotRRT_MP_Problem(InstancePtr mrmp_instance);
+
+// rhw ompl awt-up function for CentralizedBSST
+std::vector<MotionPlanningProblemPtr> set_up_CentralizedBSST_Problem(InstancePtr mrmp_instance);

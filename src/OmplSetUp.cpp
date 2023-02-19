@@ -16,7 +16,10 @@ std::vector<MotionPlanningProblemPtr> set_up_all_MP_Problems(InstancePtr mrmp_in
         }
     }
     else if (mrmp_solver == "MR-RRT") {
-        return set_up_MultiRobotRRT_MP_Problems(mrmp_instance);
+        return set_up_MultiRobotRRT_MP_Problem(mrmp_instance);
+    }
+    else if (mrmp_solver == "CentralizedBSST") {
+        return set_up_CentralizedBSST_Problem(mrmp_instance);
     }
     else {
         OMPL_ERROR("%s: %s is not yet implemented for MRMP.", "OMPL Set-Up", mrmp_solver.c_str());
@@ -206,19 +209,14 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
             auto si(std::make_shared<oc::SpaceInformation>(space, cspace));
 
             // construct (and include) an instance of PCCBlackmore State Validity Checker
-            if (mrmp_instance->getPlannerName() == "K-CBS") {
-                if (mrmp_instance->getSVC() == "Blackmore") {
-                    si->setStateValidityChecker(std::make_shared<PCCBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
-                }
-                else if (mrmp_instance->getSVC() == "AdaptiveRiskBlackmore") {
-                    si->setStateValidityChecker(std::make_shared<AdaptiveRiskBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
-                }
-                else if (mrmp_instance->getSVC() == "ChiSquaredBoundary") {
-                    si->setStateValidityChecker(std::make_shared<ChiSquaredBoundarySVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
-                }
+            if (mrmp_instance->getSVC() == "Blackmore") {
+                si->setStateValidityChecker(std::make_shared<PCCBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
             }
-            else {
-                std::cout << "ERROR when allocating State-Validity-Checker" << std::endl;
+            else if (mrmp_instance->getSVC() == "AdaptiveRiskBlackmore") {
+                si->setStateValidityChecker(std::make_shared<AdaptiveRiskBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
+            }
+            else if (mrmp_instance->getSVC() == "ChiSquaredBoundary") {
+                si->setStateValidityChecker(std::make_shared<ChiSquaredBoundarySVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
             }
 
             // construct (and include) an instance of 2D-Uncertain-Linear State Propogator
@@ -266,7 +264,81 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
     return prob_defs;
 }
 
-std::vector<MotionPlanningProblemPtr> set_up_MultiRobotRRT_MP_Problems(InstancePtr mrmp_instance)
+std::vector<MotionPlanningProblemPtr> set_up_CentralizedBSST_Problem(InstancePtr mrmp_instance)
+{
+    const double goalTollorance = 1.0;
+    const double stepSize = 0.1;
+
+    if (mrmp_instance->getRobots().size() == 2) {
+        Robot* r1 = mrmp_instance->getRobots()[0];
+        Robot* r2 = mrmp_instance->getRobots()[1];
+        if (r1->getDynamicsModel() == "2D-Uncertain-Linear-Model" && r2->getDynamicsModel() == "2D-Uncertain-Linear-Model") {
+            // set-up 4D Belief Space
+            ob::StateSpacePtr space = ob::StateSpacePtr(new RealVectorBeliefSpace(4));
+            ob::RealVectorBounds bounds(4);
+            bounds.setLow(0, -1);
+            bounds.setHigh(0, mrmp_instance->getDimensions()[0]);
+            bounds.setLow(1, -1);
+            bounds.setHigh(1, mrmp_instance->getDimensions()[1]);
+            bounds.setLow(2, -1);
+            bounds.setHigh(2, mrmp_instance->getDimensions()[0]);
+            bounds.setLow(3, -1);
+            bounds.setHigh(3, mrmp_instance->getDimensions()[1]);
+            space->as<R2BeliefSpace>()->setBounds(bounds);
+
+            // set-up the real vector control space
+            auto cspace(std::make_shared<oc::RealVectorControlSpace>(space, 4));
+            ob::RealVectorBounds c_bounds(4);
+            c_bounds.setLow(-1.0);  // this was [-100.0, 100.0]!
+            c_bounds.setHigh(1.0);
+            cspace->setBounds(c_bounds);
+
+            // construct an instance of space information from this state/control space
+            auto si(std::make_shared<oc::SpaceInformation>(space, cspace));
+
+            // if (mrmp_instance->getSVC() == "Blackmore") {
+            //     si->setStateValidityChecker(std::make_shared<PCCBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
+            // }
+            // else if (mrmp_instance->getSVC() == "AdaptiveRiskBlackmore") {
+            //     si->setStateValidityChecker(std::make_shared<AdaptiveRiskBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
+            // }
+            // else if (mrmp_instance->getSVC() == "ChiSquaredBoundary") {
+            //     si->setStateValidityChecker(std::make_shared<ChiSquaredBoundarySVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
+            // }
+
+            ob::State *start = si->allocState();
+            start->as<RealVectorStateSpace::StateType>()->values[0] = r1->getStartLocation().x_;
+            start->as<RealVectorStateSpace::StateType>()->values[1] = r1->getStartLocation().y_;
+            start->as<RealVectorStateSpace::StateType>()->values[2] = r2->getStartLocation().x_;
+            start->as<RealVectorStateSpace::StateType>()->values[3] = r2->getStartLocation().y_;
+            Eigen::MatrixXd Sigma0 = 0.00001 * Eigen::MatrixXd::Identity(4, 4);
+            start->as<RealVectorBeliefSpace::StateType>()->sigma_ = Sigma0;
+
+            // create goal
+            // ob::GoalPtr goal(new ChanceConstrainedGoal(si, (*itr)->getGoalLocation(), goalTollorance, 0.95));
+
+            // create a problem instance
+            auto pdef(std::make_shared<ob::ProblemDefinition>(si));
+
+            // set the start and goal states
+            pdef->addStartState(start);
+            // pdef->setGoal(goal);
+
+            // set optimization objective
+            pdef->setOptimizationObjective(getEuclideanPathLengthObjective(si));
+
+            // create (and provide) the low-level motion planner object
+            ConstraintRespectingPlannerPtr planner(std::make_shared<oc::ConstraintRespectingBSST>(si));
+            planner->as<oc::ConstraintRespectingBSST>()->setProblemDefinition(pdef);
+            planner->as<oc::ConstraintRespectingBSST>()->setup();
+            std::cout << "I am here" << std::endl;
+            exit(-1);
+        }
+    }
+}
+
+
+std::vector<MotionPlanningProblemPtr> set_up_MultiRobotRRT_MP_Problem(InstancePtr mrmp_instance)
 {
         // for (auto itr = robots.begin(); itr != robots.end(); itr++) {
         

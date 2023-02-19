@@ -96,7 +96,6 @@ bool Instance::load_agents_()
         OMPL_ERROR("%s: The number of agents should be larger than 0", name_.c_str());
         exit(-1);
     }
-    std::cout << "here" << std::endl;
     boost::char_separator<char> sep("\t");
     for (int i = 0; i < num_agents_; i++)
     {

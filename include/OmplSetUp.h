@@ -2,6 +2,7 @@
 #include "StateValidityCheckers/RealVectorStateSpaceSVC.h"
 #include "StateValidityCheckers/PCCBlackmoreSVC.h"
 #include "StateValidityCheckers/AdaptiveRiskBlackmoreSVC.h"
+#include "StateValidityCheckers/ChiSquaredBoundarySVC.h"
 #include "StatePropogators/CarSP.h"
 #include "StatePropogators/UncertainLinearSP.h"
 #include "Goals/RealVectorStateSpaceGoals.h"

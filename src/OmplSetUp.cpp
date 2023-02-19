@@ -213,6 +213,9 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
                 else if (mrmp_instance->getSVC() == "AdaptiveRiskBlackmore") {
                     si->setStateValidityChecker(std::make_shared<AdaptiveRiskBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
                 }
+                else if (mrmp_instance->getSVC() == "ChiSquaredBoundary") {
+                    si->setStateValidityChecker(std::make_shared<ChiSquaredBoundarySVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
+                }
             }
             else {
                 std::cout << "ERROR when allocating State-Validity-Checker" << std::endl;

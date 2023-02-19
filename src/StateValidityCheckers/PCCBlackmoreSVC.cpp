@@ -127,9 +127,9 @@ Polygon PCCBlackmoreSVC::getMinkowskiSum_(const Robot* r, Obstacle* &obs)
     Polygon result_poly;
 
     for (auto itr = result.begin(); itr != result.end(); itr++) {
-		bg::append(result_poly.outer(), *itr);
-	}
-	bg::correct(result_poly);
+        bg::append(result_poly.outer(), *itr);
+    }
+    bg::correct(result_poly);
     return result_poly;
 }
 

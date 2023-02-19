@@ -269,6 +269,8 @@ std::vector<MotionPlanningProblemPtr> set_up_CentralizedBSST_Problem(InstancePtr
     const double goalTollorance = 1.0;
     const double stepSize = 0.1;
 
+    std::vector<MotionPlanningProblemPtr> prob_defs{};
+
     if (mrmp_instance->getRobots().size() == 2) {
         Robot* r1 = mrmp_instance->getRobots()[0];
         Robot* r2 = mrmp_instance->getRobots()[1];
@@ -296,6 +298,9 @@ std::vector<MotionPlanningProblemPtr> set_up_CentralizedBSST_Problem(InstancePtr
             // construct an instance of space information from this state/control space
             auto si(std::make_shared<oc::SpaceInformation>(space, cspace));
 
+            // construct (and include) an instance of 2D-Uncertain-Linear State Propogator
+            // si->setStatePropagator(oc::StatePropagatorPtr(new R2_UncertainLinearStatePropagator(si)));
+
             // if (mrmp_instance->getSVC() == "Blackmore") {
             //     si->setStateValidityChecker(std::make_shared<PCCBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
             // }
@@ -315,14 +320,20 @@ std::vector<MotionPlanningProblemPtr> set_up_CentralizedBSST_Problem(InstancePtr
             start->as<RealVectorBeliefSpace::StateType>()->sigma_ = Sigma0;
 
             // create goal
-            // ob::GoalPtr goal(new ChanceConstrainedGoal(si, (*itr)->getGoalLocation(), goalTollorance, 0.95));
+            ob::State *goal_st = si->allocState();
+            goal_st->as<RealVectorStateSpace::StateType>()->values[0] = r1->getGoalLocation().x_;
+            goal_st->as<RealVectorStateSpace::StateType>()->values[1] = r1->getGoalLocation().y_;
+            goal_st->as<RealVectorStateSpace::StateType>()->values[2] = r2->getGoalLocation().x_;
+            goal_st->as<RealVectorStateSpace::StateType>()->values[3] = r2->getGoalLocation().y_;
+
+            ob::GoalPtr goal(new CentralizedCCGoal(si, goal_st, goalTollorance, 0.95));
 
             // create a problem instance
             auto pdef(std::make_shared<ob::ProblemDefinition>(si));
 
             // set the start and goal states
             pdef->addStartState(start);
-            // pdef->setGoal(goal);
+            pdef->setGoal(goal);
 
             // set optimization objective
             pdef->setOptimizationObjective(getEuclideanPathLengthObjective(si));
@@ -331,10 +342,12 @@ std::vector<MotionPlanningProblemPtr> set_up_CentralizedBSST_Problem(InstancePtr
             ConstraintRespectingPlannerPtr planner(std::make_shared<oc::ConstraintRespectingBSST>(si));
             planner->as<oc::ConstraintRespectingBSST>()->setProblemDefinition(pdef);
             planner->as<oc::ConstraintRespectingBSST>()->setup();
-            std::cout << "I am here" << std::endl;
-            exit(-1);
+            // append to MRMP problem list
+            auto mp = std::make_shared<MotionPlanningProblem>(si, pdef, planner);
+            prob_defs.push_back(mp);
         }
     }
+    return prob_defs;
 }
 
 

@@ -36,7 +36,7 @@ bool ChanceConstrainedGoal::isSatisfied(const ob::State *st) const
 bool ChanceConstrainedGoal::isSatisfied(const ob::State *st, double *distance) const
 {
 	/* Determine if in goal region - update distance while there */
-	return isSafe_(st, distance);;
+	return isSafe_(st, distance);
 }
 
 void ChanceConstrainedGoal::setHalfPlanes_(Polygon combined_poly)
@@ -96,4 +96,22 @@ bool ChanceConstrainedGoal::isSafe_(const ob::State* st, double *distance) const
         };
 	}
     return true;
+}
+
+CentralizedCCGoal::CentralizedCCGoal(const oc::SpaceInformationPtr &si, const ob::State* goal, const double toll, const double p_safe):
+    ob::Goal(si), threshold_(toll), p_safe_(p_safe)
+{
+
+}
+
+bool CentralizedCCGoal::isSatisfied(const ob::State *st) const
+{
+    /* Determine if in goal region */
+    return false;
+}
+
+bool CentralizedCCGoal::isSatisfied(const ob::State *st, double *distance) const
+{
+    /* Determine if in goal region - update distance while there */
+    return false;
 }

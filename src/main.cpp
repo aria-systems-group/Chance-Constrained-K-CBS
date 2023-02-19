@@ -122,6 +122,9 @@ int main(int argc, char ** argv)
             OMPL_ERROR("%s: Implementation of K-CBS w/ %s is unavailable.", "main", low_level_planner.c_str());
         }
     }
+    else if (high_level_planner == "CentralizedBSST") {
+        std::cout << "Ready to plan with CentralizedBSST" << std::endl;
+    }
     else if (high_level_planner == "PBS") {
         if (low_level_planner == "RRT") {
             // solve standard MRMP w. PBS

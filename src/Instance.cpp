@@ -13,14 +13,6 @@ Instance::Instance(po::variables_map &vm, std::string name):
     pvc_(vm["pvc"].as<std::string>()),
     svc_(vm["svc"].as<std::string>())
 {
-    if (mrmp_planner_ == "K-CBS") {
-        // divide p_coll amongst PVC & SVC
-        const double p_coll = 1 - p_safe_;
-        const double p_coll_obs = p_coll / 2;
-        const double p_coll_agnts = p_coll / 2;
-        p_safe_agnts_ = 1 - p_coll_agnts;
-        p_safe_obs_ = 1 - p_coll_obs;
-    }
     bool succ = load_map_();
     if (!succ) {
         OMPL_ERROR("%s: Unable to load map.", name_.c_str());
@@ -30,6 +22,25 @@ Instance::Instance(po::variables_map &vm, std::string name):
     if (!succ) {
         OMPL_ERROR("%s: Unable to load scen file.", name_.c_str());
         exit(-1);
+    }
+    if (mrmp_planner_ == "K-CBS") {
+        // divide p_coll amongst PVC & SVC
+        double obs_area = 0;
+        for (auto o: obstacles_) {
+            obs_area += bg::area(o->getPolygon());
+        }
+        double agnt_area = 0;
+        for (auto r: robots_) {
+            agnt_area += bg::area(r->getShape());
+        }
+
+        const double total_area = obs_area + agnt_area;
+
+        const double p_coll = 1 - p_safe_;
+        const double p_coll_obs = (p_coll * obs_area) / total_area;
+        const double p_coll_agnts = (p_coll * agnt_area) / total_area;
+        p_safe_agnts_ = 1 - p_coll_agnts;
+        p_safe_obs_ = 1 - p_coll_obs;
     }
 }
 

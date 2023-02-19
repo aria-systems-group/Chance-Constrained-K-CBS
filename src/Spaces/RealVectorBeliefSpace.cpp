@@ -24,3 +24,17 @@ double RealVectorBeliefSpace::distance(const State* state1, const State *state2)
     Eigen::MatrixXd cov2 = state2->as<StateType>()->getCovariance();
     return mu_diff.squaredNorm() + (cov1 + cov2 - 2*(cov2.sqrt()*cov1*cov2.sqrt()).sqrt()).trace();
 }
+
+void RealVectorBeliefSpace::copyState(State *destination, const State *source) const
+{
+    RealVectorStateSpace::copyState(destination, source);
+    destination->as<StateType>()->sigma_ = source->as<StateType>()->sigma_;
+    destination->as<StateType>()->lambda_ = source->as<StateType>()->lambda_;
+}
+
+void RealVectorBeliefSpace::freeState(State *state) const
+{
+    state->as<StateType>()->sigma_.resize(0, 0);
+    state->as<StateType>()->lambda_.resize(0, 0);
+    RealVectorStateSpace::freeState(state);
+}

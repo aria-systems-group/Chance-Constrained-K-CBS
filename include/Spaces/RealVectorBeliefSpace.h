@@ -96,9 +96,9 @@ class RealVectorBeliefSpace : public ompl::base::RealVectorStateSpace
         // virtual State* allocState(void) const override;
         ompl::base::State* allocState(void) const override;
 
-        // virtual void copyState(State *destination,const State *source) const override;
+        void copyState(State *destination,const State *source) const override;
 
-        // virtual void freeState(State *state) const override;
+        void freeState(State *state) const override;
 
         //virtual void registerProjections(void);
         double distance(const State* state1, const State *state2) const override;

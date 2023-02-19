@@ -31,21 +31,12 @@ void parse_cmd_line(int &argc, char ** &argv, po::variables_map &vm, po::options
         ("time,t", po::value<double>()->default_value(600), "cutoff time (seconds)")
         ("output,o", po::value<std::string>()->default_value("results"), "output file name (no extension)")
         ("p_safe,p", po::value<double>()->default_value(0.95), "Probability of safe in decimal form (only used for non-deterministic planning sequences)")
-        
-
-
-
         ("pvc,c", po::value<std::string>()->default_value("ChiSquaredBoundary"), "The Collision-Checker to be used."
             "This is only used for non-deterministic planning instances."
             "(ChiSquaredBoundary, MinkowskiSumBlackmore, BoundingBoxBlackmore, AdaptiveRiskBlackmore)")
         ("svc,v", po::value<std::string>()->default_value("Blackmore"), "The Low-Level collision-checker to be used."
             "This is only used for non-deterministic planning instances."
-            "(Blackmore, AdaptiveRiskBlackmore)")
-
-
-
-
-
+            "(Blackmore, AdaptiveRiskBlackmore, ChiSquaredBoundary)")
         ("screen", po::value<int>()->default_value(0),
                 "screen option \n0 := none \n1 := K-CBS updates \n2 := Low-Level Planner updates \n3 := MRMP detailed updates");
     po::store(po::parse_command_line(argc, argv, desc), vm);

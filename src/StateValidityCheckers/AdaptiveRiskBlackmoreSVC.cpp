@@ -89,21 +89,6 @@ std::vector<double> AdaptiveRiskBlackmoreSVC::createEtaList_(const Eigen::Vector
     return eta_list;
 }
 
-bool AdaptiveRiskBlackmoreSVC::HyperplaneCCValidityChecker_(const Eigen::MatrixXd &A, const Eigen::MatrixXd &B, const double &x_pose, const double &y_pose, const Eigen::MatrixXd &PX, const double eta_i) const {
-    double PV, b_bar;
-    Eigen::MatrixXf Pv_2;
-
-    for (int i = 0; i < 4; i++) {
-        double tmp = (A.row(i) * PX * A.row(i).transpose()).value();
-        PV = sqrt(tmp);
-        b_bar = sqrt(2) * PV * erf_inv_result_;
-        if(x_pose * A(i, 0) + y_pose * A(i, 1) >= (B(i, 0) + b_bar)) {
-            return true;
-        }
-    }
-    return false;
-}
-
 std::pair<Eigen::MatrixXd, Eigen::MatrixXd> AdaptiveRiskBlackmoreSVC::getHalfPlanes_(Polygon combined_poly)
 {
     /* Converts a Polygon to a set of halfplanes */

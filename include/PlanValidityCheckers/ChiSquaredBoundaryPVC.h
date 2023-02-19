@@ -1,7 +1,6 @@
 #pragma once
 #include "PlanValidityCheckers/BeliefPVC.h"
 #include <boost/math/distributions/chi_squared.hpp>
-#include <boost/geometry/strategies/transform/matrix_transformers.hpp>
 #include <Eigen/Eigenvalues> 
 #include <unordered_map>
 
@@ -18,6 +17,10 @@ public:
     bool satisfiesConstraints(oc::PathControl path, std::vector<ConstraintPtr> constraints) override;
 
 private:
+    double chi_squared_quantile_(double v, double p)
+    {
+        return quantile(bm::chi_squared(v), p);
+    }
     ConflictPtr checkForConflicts_(std::map<std::string, Belief> states_map, const int step);
     bool isSafe_(const Belief belief_a, const double rad_a, const Belief belief_b, const double rad_b);
     std::unordered_map<std::string, double> boundingRadii_map;

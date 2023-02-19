@@ -298,19 +298,17 @@ std::vector<MotionPlanningProblemPtr> set_up_CentralizedBSST_Problem(InstancePtr
             // construct an instance of space information from this state/control space
             auto si(std::make_shared<oc::SpaceInformation>(space, cspace));
 
-            // construct (and include) an instance of 2D-Uncertain-Linear State Propogator
-            // si->setStatePropagator(oc::StatePropagatorPtr(new R2_UncertainLinearStatePropagator(si)));
+            // set State Propogator
+            si->setStatePropagator(oc::StatePropagatorPtr(new CentralizedUncertainLinearStatePropagator(si)));
 
-            // if (mrmp_instance->getSVC() == "Blackmore") {
-            //     si->setStateValidityChecker(std::make_shared<PCCBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
-            // }
-            // else if (mrmp_instance->getSVC() == "AdaptiveRiskBlackmore") {
-            //     si->setStateValidityChecker(std::make_shared<AdaptiveRiskBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
-            // }
-            // else if (mrmp_instance->getSVC() == "ChiSquaredBoundary") {
-            //     si->setStateValidityChecker(std::make_shared<ChiSquaredBoundarySVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
-            // }
+            // set State Validity Checker
+            si->setStateValidityChecker(std::make_shared<CentralizedChiSquaredBoundarySVC>(si, mrmp_instance, mrmp_instance->getPsafe()));
 
+            si->setPropagationStepSize(stepSize);
+            si->setMinMaxControlDuration(1, 10);
+            si->setup();
+
+            // create start state
             ob::State *start = si->allocState();
             start->as<RealVectorStateSpace::StateType>()->values[0] = r1->getStartLocation().x_;
             start->as<RealVectorStateSpace::StateType>()->values[1] = r1->getStartLocation().y_;
@@ -319,26 +317,27 @@ std::vector<MotionPlanningProblemPtr> set_up_CentralizedBSST_Problem(InstancePtr
             Eigen::MatrixXd Sigma0 = 0.00001 * Eigen::MatrixXd::Identity(4, 4);
             start->as<RealVectorBeliefSpace::StateType>()->sigma_ = Sigma0;
 
-            // create goal
+            // create goal state
             ob::State *goal_st = si->allocState();
             goal_st->as<RealVectorStateSpace::StateType>()->values[0] = r1->getGoalLocation().x_;
             goal_st->as<RealVectorStateSpace::StateType>()->values[1] = r1->getGoalLocation().y_;
             goal_st->as<RealVectorStateSpace::StateType>()->values[2] = r2->getGoalLocation().x_;
             goal_st->as<RealVectorStateSpace::StateType>()->values[3] = r2->getGoalLocation().y_;
 
+            // create goal object
             ob::GoalPtr goal(new CentralizedCCGoal(si, goal_st, goalTollorance, 0.95));
 
-            // create a problem instance
+            // create ProblemDefinition
             auto pdef(std::make_shared<ob::ProblemDefinition>(si));
 
-            // set the start and goal states
+            // set the start and goal
             pdef->addStartState(start);
             pdef->setGoal(goal);
 
             // set optimization objective
             pdef->setOptimizationObjective(getEuclideanPathLengthObjective(si));
 
-            // create (and provide) the low-level motion planner object
+            // create (and provide) the motion planner object
             ConstraintRespectingPlannerPtr planner(std::make_shared<oc::ConstraintRespectingBSST>(si));
             planner->as<oc::ConstraintRespectingBSST>()->setProblemDefinition(pdef);
             planner->as<oc::ConstraintRespectingBSST>()->setup();

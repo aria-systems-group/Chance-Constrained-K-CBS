@@ -35,7 +35,6 @@ void ompl::control::BSST::setup()
                                     {
                                         return distanceFunction(a, b);
                                     });
-
     if (pdef_)
     {
         if (pdef_->hasOptimizationObjective())
@@ -241,7 +240,7 @@ ompl::base::PlannerStatus ompl::control::BSST::solve(const base::PlannerTerminat
                 /* create a motion */
                 auto *motion = new Motion(siC_);
                 motion->accCost_ = cost;
-                motion->state_->as<R2BeliefSpace::StateType>()->setCost(cost.value());
+                motion->state_->as<RealVectorBeliefSpace::StateType>()->setCost(cost.value());
                 si_->copyState(motion->state_, rmotion->state_);
                 siC_->copyControl(motion->control_, rctrl);
                 motion->steps_ = cd;
@@ -251,25 +250,33 @@ ompl::base::PlannerStatus ompl::control::BSST::solve(const base::PlannerTerminat
 
                 nn_->add(motion);
 
-                if (DISTANCE_FUNC_ == 0){
-                    if (motion->state_->as<R2BeliefSpaceEuclidean::StateType>()->getCovariance()(0,0) > max_eigenvalue_)
-                    {
-                        max_eigenvalue_ = motion->state_->as<R2BeliefSpaceEuclidean::StateType>()->getCovariance()(0,0);
-                    }
-                    else if (motion->state_->as<R2BeliefSpaceEuclidean::StateType>()->getCovariance()(1,1) > max_eigenvalue_)
-                    {
-                        max_eigenvalue_ = motion->state_->as<R2BeliefSpaceEuclidean::StateType>()->getCovariance()(1,1);
-                    }
+                // if (DISTANCE_FUNC_ == 0){
+                //     if (motion->state_->as<RealVectorBeliefSpaceEuclidean::StateType>()->getCovariance()(0,0) > max_eigenvalue_)
+                //     {
+                //         max_eigenvalue_ = motion->state_->as<R2BeliefSpaceEuclidean::StateType>()->getCovariance()(0,0);
+                //     }
+                //     else if (motion->state_->as<R2BeliefSpaceEuclidean::StateType>()->getCovariance()(1,1) > max_eigenvalue_)
+                //     {
+                //         max_eigenvalue_ = motion->state_->as<R2BeliefSpaceEuclidean::StateType>()->getCovariance()(1,1);
+                //     }
+                // }
+                // else if (DISTANCE_FUNC_ == 1){
+                //     if (motion->state_->as<R2BeliefSpace::StateType>()->getCovariance()(0,0) > max_eigenvalue_)
+                //     {
+                //         max_eigenvalue_ = motion->state_->as<R2BeliefSpace::StateType>()->getCovariance()(0,0);
+                //     }
+                //     else if (motion->state_->as<R2BeliefSpace::StateType>()->getCovariance()(1,1) > max_eigenvalue_)
+                //     {
+                //         max_eigenvalue_ = motion->state_->as<R2BeliefSpace::StateType>()->getCovariance()(1,1);
+                //     }
+                // }
+                if (motion->state_->as<RealVectorBeliefSpace::StateType>()->getCovariance()(0,0) > max_eigenvalue_)
+                {
+                    max_eigenvalue_ = motion->state_->as<RealVectorBeliefSpace::StateType>()->getCovariance()(0,0);
                 }
-                else if (DISTANCE_FUNC_ == 1){
-                    if (motion->state_->as<R2BeliefSpace::StateType>()->getCovariance()(0,0) > max_eigenvalue_)
-                    {
-                        max_eigenvalue_ = motion->state_->as<R2BeliefSpace::StateType>()->getCovariance()(0,0);
-                    }
-                    else if (motion->state_->as<R2BeliefSpace::StateType>()->getCovariance()(1,1) > max_eigenvalue_)
-                    {
-                        max_eigenvalue_ = motion->state_->as<R2BeliefSpace::StateType>()->getCovariance()(1,1);
-                    }
+                else if (motion->state_->as<RealVectorBeliefSpace::StateType>()->getCovariance()(1,1) > max_eigenvalue_)
+                {
+                    max_eigenvalue_ = motion->state_->as<RealVectorBeliefSpace::StateType>()->getCovariance()(1,1);
                 }
 
                 double dist = 0.0;

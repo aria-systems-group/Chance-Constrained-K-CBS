@@ -123,7 +123,10 @@ int main(int argc, char ** argv)
         }
     }
     else if (high_level_planner == "CentralizedBSST") {
-        std::cout << "Ready to plan with CentralizedBSST" << std::endl;
+        ob::PlannerPtr p(std::make_shared<oc::BSST>(mrmp_pdef->getRobotSpaceInformationPtr(0)));
+        bool solved = mrmp_pdef->getRobotMotionPlanningProblemPtr(0)->getPlanner()->solve(vm["time"].as<double>());
+        // bool solved = p->solve(vm["time"].as<double>());
+
     }
     else if (high_level_planner == "PBS") {
         if (low_level_planner == "RRT") {

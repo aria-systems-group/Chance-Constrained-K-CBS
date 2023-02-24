@@ -11,6 +11,8 @@
 #include "Goals/BeliefSpaceGoals.h"
 #include "OptimizationObjectives/StateCostObjectives.h"
 #include "MultiRobotProblemDefinition.h"
+#include "Planners/CentralizedBSST.h"
+#include "Planners/BSST.h"
 #include "Spaces/RealVectorBeliefSpace.h"
 #include <boost/program_options.hpp>
 

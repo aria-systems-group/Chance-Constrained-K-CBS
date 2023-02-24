@@ -71,13 +71,13 @@ class RealVectorBeliefSpace : public ompl::base::RealVectorStateSpace
             //     return stateVec;
             // }
 
-            // void setCost(double cost){
-            //     cost_ = cost;
-            // }
+            void setCost(double cost){
+                cost_ = cost;
+            }
 
-            // double getCost(void) const{ 
-            //     return cost_;
-            // }
+            double getCost(void) const{ 
+                return cost_;
+            }
 
             /** \brief Checks if the input state has stabilized to this state (node reachability check) */
             // bool isReached(ompl::base::State *state, bool relaxedConstraint=false) const;
@@ -89,6 +89,8 @@ class RealVectorBeliefSpace : public ompl::base::RealVectorStateSpace
         // private:
             Eigen::MatrixXd sigma_;
             Eigen::MatrixXd lambda_;
+        private:
+            double cost_{std::numeric_limits<double>::max()};
         };
 
         virtual ~RealVectorBeliefSpace(void) {}
@@ -102,6 +104,8 @@ class RealVectorBeliefSpace : public ompl::base::RealVectorStateSpace
 
         //virtual void registerProjections(void);
         double distance(const State* state1, const State *state2) const override;
+
+        void printState(const State *state, std::ostream &out) const override;
 
         // gets the relative vector between "from" and "to"
         // equivalent to result = vectorA-vectorB

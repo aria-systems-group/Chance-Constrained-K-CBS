@@ -38,3 +38,10 @@ void RealVectorBeliefSpace::freeState(State *state) const
     state->as<StateType>()->lambda_.resize(0, 0);
     RealVectorStateSpace::freeState(state);
 }
+
+void RealVectorBeliefSpace::printState(const State *state, std::ostream &out) const
+{
+    RealVectorStateSpace::printState(state, out);
+    out << "Sigma: " << std::endl <<  state->as<StateType>()->sigma_ << std::endl;
+    out << "Lambda: " << std::endl <<  state->as<StateType>()->lambda_ << std::endl;
+}

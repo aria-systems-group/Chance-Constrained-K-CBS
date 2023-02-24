@@ -46,6 +46,8 @@ public:
 
 	const InstancePtr getInstance() const {return mrmp_instance_;};
 
+    void setMultiRobotInstance(InstancePtr &mrmp_instance) const;
+
 	const PlanValidityCheckerPtr getPlanValidator() const {return validator_;};
 
 	const oc::SpaceInformationPtr getRobotSpaceInformationPtr(const int idx);

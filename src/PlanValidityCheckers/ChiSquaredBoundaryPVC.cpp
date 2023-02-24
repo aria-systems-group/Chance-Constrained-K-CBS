@@ -86,6 +86,20 @@ bool ChiSquaredBoundaryPVC::satisfiesConstraints(oc::PathControl path, std::vect
     return true;
 }
 
+bool ChiSquaredBoundaryPVC::independentCheck(ob::State* state1, ob::State* state2)
+{
+    /* Only to be used for independent collision testing. Not called during MRMP planning (yet?) */
+    const double max_rad0 = boundingRadii_map["Robot 0"];
+    const double max_rad1 = boundingRadii_map["Robot 1"];
+
+    Belief r0_belief = getDistribution_(state1);
+    Belief r1_belief = getDistribution_(state2);
+
+    if (isSafe_(r0_belief, max_rad0, r1_belief, max_rad1))
+        return true;
+    return false;
+}
+
 ConflictPtr ChiSquaredBoundaryPVC::checkForConflicts_(std::map<std::string, Belief> states_map, const int step)
 {
     ConflictPtr c = nullptr;
@@ -126,10 +140,8 @@ bool ChiSquaredBoundaryPVC::isSafe_(const Belief belief_a, const double rad_a, c
 {
     /* Find maximum eigenvalues of the covariances */
     Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver_a(belief_a.second.rows());
-    solver_a.compute(belief_a.second);
 
     Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver_b(belief_b.second.rows());
-    solver_b.compute(belief_b.second);
 
     const double max_lambda_a = solver_a.eigenvalues().maxCoeff();
     const double max_lambda_b = solver_b.eigenvalues().maxCoeff();

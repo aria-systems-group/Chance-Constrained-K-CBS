@@ -8,6 +8,7 @@
 #include "PlanValidityCheckers/BoundingBoxBlackmorePVC.h"
 #include "Planners/KCBS.h"
 #include "utils/postProcess.h"
+#include "utils/beliefCollisionCheckingBenchmark.h"
 
 // OMPL_INFORM("OMPL version: %s", OMPL_VERSION);  // blue font
 // OMPL_WARN("OMPL version: %s", OMPL_VERSION);  // yellow font
@@ -25,6 +26,9 @@ void parse_cmd_line(int &argc, char ** &argv, po::variables_map &vm, po::options
         ("map,m", po::value<std::string>()->required(), "the *.map file")
         ("scen,s", po::value<std::string>()->required(), "the *.scen file")
         ("numAgents,k", po::value<int>()->required(), "number of agents inside instance")
+        ("independentBenchmark", po::value<bool>()->default_value(false), "Boolean flag for running independent collision checking benchmark. Must be accompanied by both inputFile flags")
+        ("inputFile1", po::value<std::string>()->default_value(""), "first input file for collision checking benchmarks")
+        ("inputFile2", po::value<std::string>()->default_value(""), "second input file for collision checking benchmarks")
         ("solver", po::value<std::string>()->default_value("K-CBS"), "the high-level MRMP solver (K-CBS, PBS, MR-RRT, CentralizedBSST)")
         ("lowlevel,l", po::value<std::string>()->default_value("RRT"), "The low-level motion planner for K-CBS (RRT, BSST)")
         ("bound,b", po::value<int>()->default_value(std::numeric_limits<int>::max()), "The merge bound of K-CBS.")
@@ -50,6 +54,12 @@ int main(int argc, char ** argv)
 
     if (vm.count("help")) {
         std::cout << desc << std::endl;
+        return 1;
+    }
+
+    if (vm["independentBenchmark"].as<bool>()) {
+        BeliefCollisionCheckerBenchmark tester(vm["inputFile1"].as<std::string>(), vm["inputFile2"].as<std::string>());
+        tester.runBenchmarks();
         return 1;
     }
 

@@ -7,13 +7,13 @@
 namespace fs = std::filesystem;
 namespace po = boost::program_options;
 
-
 // world class holds all relevent data in the world that is used by OMPL
 OMPL_CLASS_FORWARD(Instance);
 class Instance
 {
 public:
     Instance(Instance &other);
+    Instance(const int num_agents, const double p_safe);
     Instance(po::variables_map &vm, std::string name = "Instance");
     // methods for dimensions
     const double getPsafe() const {return p_safe_;};
@@ -27,6 +27,10 @@ public:
         "y: [0, %0.2f]", x_max_, y_max_);};
     std::vector<Obstacle*> getObstacles() const {return obstacles_;};
     std::vector<Robot*> getRobots() const {return robots_;};
+    void addRobot(Robot* r)
+    {
+        robots_.push_back(r);
+    }
     const std::string getPlannerName() const {return mrmp_planner_;};
     const std::string getLowLevelPlannerName() const {return low_level_planner_;};
     // printing methods for usability

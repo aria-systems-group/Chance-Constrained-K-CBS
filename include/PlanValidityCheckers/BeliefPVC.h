@@ -1,5 +1,5 @@
 #pragma once
-#include "Spaces/R2BeliefSpace.h"
+#include "Spaces/RealVectorBeliefSpace.h"
 #include "Constraints/BeliefConstraint.h"
 #include "PlanValidityCheckers/PlanValidityChecker.h"
 

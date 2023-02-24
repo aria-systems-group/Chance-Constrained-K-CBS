@@ -16,6 +16,8 @@ public:
 
     bool satisfiesConstraints(oc::PathControl path, std::vector<ConstraintPtr> constraints) override;
 
+    bool independentCheck(ob::State* state1, ob::State* state2);
+
 private:
     double chi_squared_quantile_(double v, double p)
     {

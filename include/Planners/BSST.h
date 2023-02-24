@@ -1,6 +1,5 @@
 #pragma once
-#include "Spaces/R2BeliefSpace.h"
-#include "Spaces/R2BeliefSpaceEuclidean.h"
+#include "Spaces/RealVectorBeliefSpace.h"
 #include <ompl/tools/config/SelfConfig.h>
 #include <ompl/base/goals/GoalSampleableRegion.h>
 #include <ompl/base/objectives/PathLengthOptimizationObjective.h>

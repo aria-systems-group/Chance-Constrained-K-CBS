@@ -1,7 +1,7 @@
 #include "MultiRobotProblemDefinition.h"
 
 
-MotionPlanningProblem::MotionPlanningProblem(const oc::SpaceInformationPtr si, const ob::ProblemDefinitionPtr pdef, const ConstraintRespectingPlannerPtr planner):
+MotionPlanningProblem::MotionPlanningProblem(const oc::SpaceInformationPtr si, const ob::ProblemDefinitionPtr pdef, const PlannerPtr planner):
     si_(si), pdef_(pdef), planner_(planner) {};
 
 oc::SpaceInformationPtr MotionPlanningProblem::getSpaceInformation()
@@ -14,15 +14,16 @@ ob::ProblemDefinitionPtr MotionPlanningProblem::getProblemDefinition()
     return pdef_;
 }
 
-ConstraintRespectingPlannerPtr MotionPlanningProblem::getPlanner()
+PlannerPtr MotionPlanningProblem::getPlanner()
 {
     return planner_;
 }
 
+
 MultiRobotProblemDefinition::MultiRobotProblemDefinition(std::vector<MotionPlanningProblemPtr> mrmp_problem):
 	ob::ProblemDefinition(mrmp_problem[0]->getSpaceInformation()), mrmp_problem_(mrmp_problem) {}
 
-void MultiRobotProblemDefinition::replacePlanner(ConstraintRespectingPlannerPtr old_planner, const int idx)
+void MultiRobotProblemDefinition::replacePlanner(PlannerPtr old_planner, const int idx)
 {
 	// create another planner instance based on pre-computed spaceInformation and problem definiton
 	// NOTE: this is problem specific
@@ -33,7 +34,7 @@ void MultiRobotProblemDefinition::replacePlanner(ConstraintRespectingPlannerPtr 
 	std::string dynamics_model = r->getDynamicsModel();
 	if (ll_solver == "BSST") {
 		// create (and provide) the low-level motion planner object
-        ConstraintRespectingPlannerPtr planner(std::make_shared<oc::ConstraintRespectingBSST>(si));
+        PlannerPtr planner(std::make_shared<oc::ConstraintRespectingBSST>(si));
         planner->as<oc::ConstraintRespectingBSST>()->setProblemDefinition(pdef);
         planner->as<oc::ConstraintRespectingBSST>()->setPlanValidator(validator_);
         planner->as<oc::ConstraintRespectingBSST>()->setup();
@@ -58,7 +59,7 @@ void MultiRobotProblemDefinition::setPlanValidator(PlanValidityCheckerPtr &valid
 {
 	validator_ = validator;
 	for (MotionPlanningProblemPtr &mp: mrmp_problem_) {
-		mp->getPlanner()->setPlanValidator(validator_);
+		mp->getPlanner()->as<ConstraintRespectingPlanner>()->setPlanValidator(validator_);
 	}
 }
 

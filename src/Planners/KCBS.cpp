@@ -81,14 +81,14 @@ void ompl::control::KCBS::freeMemory_()
 	OMPL_WARN("%s: freeMemory_ called but not yet implemented. Possible memory leak.", getName().c_str());
 }
 
-oc::PathControl* ompl::control::KCBS::calcNewPath_(ConstraintRespectingPlannerPtr planner, std::vector<ConstraintPtr> constraints, bool restart)
+oc::PathControl* ompl::control::KCBS::calcNewPath_(PlannerPtr planner, std::vector<ConstraintPtr> constraints, bool restart)
 {
 	/* Update the constraints for planner and attempt to resolve them in mp_comp_time_ seconds */
 	/* If replanning was successful, return new path. Otherwise, return nullptr */
    	oc::PathControl *traj = nullptr;
    	if (restart)
-   		planner->updateConstraints(constraints);
-   	ob::PlannerStatus solved = planner->solve(mp_comp_time_);
+   		planner->as<ConstraintRespectingPlanner>()->updateConstraints(constraints);
+   	ob::PlannerStatus solved = planner->as<ConstraintRespectingPlanner>()->solve(mp_comp_time_);
    	if (solved==ob::PlannerStatus::EXACT_SOLUTION) {
    	   	OMPL_INFORM("%s: Successfully Replanned.", getName().c_str());
    	   	/* create new solution with updated traj. for conflicting agent */
@@ -204,9 +204,9 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
    	/* create initial solution */
    	Plan root_plan;
    	for (auto itr = low_level_planners_.begin(); itr != low_level_planners_.end(); itr++) {
-   	   	ob::PlannerStatus solved = (*itr)->solve(mp_comp_time_);
+   	   	ob::PlannerStatus solved = (*itr)->as<ConstraintRespectingPlanner>()->solve(mp_comp_time_);
    	   	while (solved!=ob::PlannerStatus::EXACT_SOLUTION && !ptc){
-   	   	   	solved = (*itr)->solve(mp_comp_time_);
+   	   	   	solved = (*itr)->as<ConstraintRespectingPlanner>()->solve(mp_comp_time_);
    	   	   	if (solved == base::PlannerStatus::INVALID_START) {
    	   	   	   	return base::PlannerStatus::INVALID_START;
    	   	   	}
@@ -248,7 +248,7 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
            	// 	nCpy = nCpy->getParent();
         	// }
         	/* replan for conflicting agent w/ new constraint */
-        	ConstraintRespectingPlannerPtr p = curr->getPlanner();
+        	PlannerPtr p = curr->getPlanner();
         	oc::PathControl *new_path = calcNewPath_(p, {}, false);
 
         	if (new_path) {
@@ -418,7 +418,7 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
                     // std::cout << "done" << std::endl;
             	
             		/* Replan for conflicting agent w/ new constraint */
-            		ConstraintRespectingPlannerPtr p = mrmp_pdef_->getRobotMotionPlanningProblemPtr(new_constraint->getConstrainedAgent())->getPlanner();
+            		PlannerPtr p = mrmp_pdef_->getRobotMotionPlanningProblemPtr(new_constraint->getConstrainedAgent())->getPlanner();
             		oc::PathControl *new_path = calcNewPath_(p, agent_constraints);
 
             		if (new_path) {

@@ -1,4 +1,4 @@
-#include "OmplSetUp.h"
+#include "utils/OmplSetUp.h"
 #include "Mergers/DeterministicMerger.h"
 #include "Mergers/BeliefMerger.h"
 #include "PlanValidityCheckers/DeterministicPVC.h"
@@ -7,7 +7,7 @@
 #include "PlanValidityCheckers/ChiSquaredBoundaryPVC.h"
 #include "PlanValidityCheckers/BoundingBoxBlackmorePVC.h"
 #include "Planners/KCBS.h"
-#include "postProcess.h"
+#include "utils/postProcess.h"
 
 // OMPL_INFORM("OMPL version: %s", OMPL_VERSION);  // blue font
 // OMPL_WARN("OMPL version: %s", OMPL_VERSION);  // yellow font

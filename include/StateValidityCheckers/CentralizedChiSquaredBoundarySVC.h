@@ -1,5 +1,5 @@
 #pragma once
-#include "Instance.h"
+#include "utils/Instance.h"
 #include "Spaces/RealVectorBeliefSpace.h"
 #include <ompl/control/SpaceInformation.h>
 #include <boost/geometry.hpp>

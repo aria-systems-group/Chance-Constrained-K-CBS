@@ -1,7 +1,7 @@
 #pragma once
-#include "Conflict.h"
+#include "utils/Conflict.h"
 #include "Constraints/BeliefConstraint.h"
-#include "MultiRobotProblemDefinition.h"
+#include "utils/MultiRobotProblemDefinition.h"
 #include "Planners/ConstraintRespectingPlanner.h"
 #include <boost/serialization/export.hpp>
 #include <ompl/control/planners/PlannerIncludes.h>

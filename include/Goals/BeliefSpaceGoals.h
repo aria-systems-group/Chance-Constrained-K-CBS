@@ -1,5 +1,5 @@
 #pragma once
-#include "common.h"
+#include "utils/common.h"
 #include "Spaces/R2BeliefSpace.h"
 #include "Spaces/RealVectorBeliefSpace.h"
 #include <ompl/base/Goal.h>

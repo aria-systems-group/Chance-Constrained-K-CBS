@@ -35,8 +35,8 @@
 /* Author: Justin Kottinger */
 
 #pragma once
-#include "common.h"
-#include "Instance.h"
+#include "utils/common.h"
+#include "utils/Instance.h"
 #include "ompl/control/planners/PlannerIncludes.h"
 #include <ompl/base/goals/GoalSampleableRegion.h>
 #include <ompl/base/spaces/RealVectorStateSpace.h>

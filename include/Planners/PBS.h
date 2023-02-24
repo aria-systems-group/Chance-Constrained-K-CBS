@@ -35,10 +35,10 @@
 /* Author: Justin Kottinger */
 
 #pragma once
-#include "common.h"
-#include "Instance.h"
-#include "PrioritizedRRT.h"
-#include "MultiRobotProblemDefinition.h"
+#include "utils/common.h"
+#include "utils/Instance.h"
+#include "Planners/PrioritizedRRT.h"
+#include "utils/MultiRobotProblemDefinition.h"
 #include <ompl/control/planners/PlannerIncludes.h>
 
 

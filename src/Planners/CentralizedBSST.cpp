@@ -1,6 +1,7 @@
-#include "Planners/BSST.h"
+#include "Planners/CentralizedBSST.h"
 
-ompl::control::BSST::BSST(const SpaceInformationPtr &si) : base::Planner(si, "BSST")
+ompl::control::CentralizedBSST::CentralizedBSST(const SpaceInformationPtr &si, const int num_agents) : 
+    base::Planner(si, "CentralizedBSST"), num_agents_(num_agents), dim_(si->getStateSpace()->getDimension() / num_agents)
 {
 
     specs_.approximateSolutions = true;
@@ -9,18 +10,18 @@ ompl::control::BSST::BSST(const SpaceInformationPtr &si) : base::Planner(si, "BS
     prevSolutionControls_.clear();
     prevSolutionSteps_.clear();
 
-    Planner::declareParam<double>("goal_bias", this, &BSST::setGoalBias, &BSST::getGoalBias, "0.:.05:1.");
-    Planner::declareParam<double>("selection_radius", this, &BSST::setSelectionRadius, &BSST::getSelectionRadius, "0.:.1:"
+    Planner::declareParam<double>("goal_bias", this, &CentralizedBSST::setGoalBias, &CentralizedBSST::getGoalBias, "0.:.05:1.");
+    Planner::declareParam<double>("selection_radius", this, &CentralizedBSST::setSelectionRadius, &CentralizedBSST::getSelectionRadius, "0.:.1:"
                                                                                                                 "100");
-    Planner::declareParam<double>("pruning_radius", this, &BSST::setPruningRadius, &BSST::getPruningRadius, "0.:.1:100");
+    Planner::declareParam<double>("pruning_radius", this, &CentralizedBSST::setPruningRadius, &CentralizedBSST::getPruningRadius, "0.:.1:100");
 }
 
-ompl::control::BSST::~BSST()
+ompl::control::CentralizedBSST::~CentralizedBSST()
 {
     freeMemory();
 }
 
-void ompl::control::BSST::setup()
+void ompl::control::CentralizedBSST::setup()
 {
     base::Planner::setup();
     if (!nn_)
@@ -60,7 +61,7 @@ void ompl::control::BSST::setup()
     max_eigenvalue_ = 10.0;
 }
 
-void ompl::control::BSST::clear()
+void ompl::control::CentralizedBSST::clear()
 {
     Planner::clear();
     sampler_.reset();
@@ -74,7 +75,7 @@ void ompl::control::BSST::clear()
         prevSolutionCost_ = opt_->infiniteCost();
 }
 
-void ompl::control::BSST::freeMemory()
+void ompl::control::CentralizedBSST::freeMemory()
 {
     if (nn_)
     {
@@ -113,7 +114,47 @@ void ompl::control::BSST::freeMemory()
     prevSolutionSteps_.clear();
 }
 
-ompl::control::BSST::Motion *ompl::control::BSST::selectNode(ompl::control::BSST::Motion *sample)
+unsigned int ompl::control::CentralizedBSST::multiAgentControlSampler(Control *rcontrol, Control *previous, 
+    const base::State *source, base::State *dest)
+{
+    // // determine which agents are already in goal
+    // auto g = getProblemDefinition()->getGoal()->as<CentralizedCCGoal>();
+    // // std::vector<int> idxInGoal = g->isInGoal(source);
+
+    // // // propogate as normal
+    // // /* sample a random control that attempts to go towards the random state, and also sample a control duration */
+    // unsigned int cd = controlSampler_->sampleTo(rcontrol, previous, source, dest);
+    // // /* override destination for agents already in goal */
+    // // overrideStates(idxInGoal, source, dest, rcontrol); 
+    // return cd;
+    return 0;
+}
+
+void ompl::control::CentralizedBSST::overrideStates(const base::State *source, base::State *result, Control *control)
+{
+    auto g = getProblemDefinition()->getGoal()->as<CentralizedCCGoal>();
+    for (int a = 0; a < num_agents_; a++) {
+        bool a_at_goal = g->isSingleAgentSatisfied(source, a);
+        if (a_at_goal) {
+            // get all relevant information
+            auto start = source->as<RealVectorBeliefSpace::StateType>();
+            auto destination = result->as<RealVectorBeliefSpace::StateType>();
+            auto cntrl = control->as<RealVectorControlSpace::ControlType>();
+
+            // override the destination idx's to start values
+            destination->values[dim_ * a] = start->values[dim_ * a];
+            destination->values[dim_ * a + 1] = start->values[dim_ * a + 1];
+            destination->sigma_.block<2, 2>(dim_ * a, dim_ * a) = start->sigma_.block<2, 2>(dim_ * a, dim_ * a);
+            destination->lambda_.block<2, 2>(dim_ * a, dim_ * a) = start->lambda_.block<2, 2>(dim_ * a, dim_ * a);
+
+            // zero out agent a's controls
+            cntrl->values[dim_ * a] = 0;
+            cntrl->values[dim_ * a + 1] = 0;
+        }
+    }
+}
+
+ompl::control::CentralizedBSST::Motion *ompl::control::CentralizedBSST::selectNode(ompl::control::CentralizedBSST::Motion *sample)
 {
     std::vector<Motion *> ret;
     Motion *selected = nullptr;
@@ -145,7 +186,7 @@ ompl::control::BSST::Motion *ompl::control::BSST::selectNode(ompl::control::BSST
     return selected;
 }
 
-ompl::control::BSST::Witness *ompl::control::BSST::findClosestWitness(ompl::control::BSST::Motion *node)
+ompl::control::CentralizedBSST::Witness *ompl::control::CentralizedBSST::findClosestWitness(ompl::control::CentralizedBSST::Motion *node)
 {
     if (witnesses_->size() > 0)
     {
@@ -169,7 +210,7 @@ ompl::control::BSST::Witness *ompl::control::BSST::findClosestWitness(ompl::cont
     }
 }
 
-ompl::base::PlannerStatus ompl::control::BSST::solve(const base::PlannerTerminationCondition &ptc)
+ompl::base::PlannerStatus ompl::control::CentralizedBSST::solve(const base::PlannerTerminationCondition &ptc)
 {
     checkValidity();
     base::Goal *goal = pdef_->getGoal().get();
@@ -230,6 +271,9 @@ ompl::base::PlannerStatus ompl::control::BSST::solve(const base::PlannerTerminat
 
         if (propCd == cd)
         {
+            /* check if need to override state */
+            overrideStates(nmotion->state_, rstate, rctrl);
+
             base::Cost incCost = opt_->motionCost(nmotion->state_, rstate);
             base::Cost cost = opt_->combineCosts(nmotion->accCost_, incCost);
             Witness *closestWitness = findClosestWitness(rmotion);
@@ -395,7 +439,7 @@ ompl::base::PlannerStatus ompl::control::BSST::solve(const base::PlannerTerminat
     return {solved, approximate};
 }
 
-void ompl::control::BSST::getPlannerData(base::PlannerData &data) const
+void ompl::control::CentralizedBSST::getPlannerData(base::PlannerData &data) const
 {
     Planner::getPlannerData(data);
 
@@ -439,7 +483,7 @@ void ompl::control::BSST::getPlannerData(base::PlannerData &data) const
     }
 }
 
-void ompl::control::BSST::getPlannerDataAndCosts(base::PlannerData &data, std::vector<double> &costs) const
+void ompl::control::CentralizedBSST::getPlannerDataAndCosts(base::PlannerData &data, std::vector<double> &costs) const
 {
     Planner::getPlannerData(data);
 

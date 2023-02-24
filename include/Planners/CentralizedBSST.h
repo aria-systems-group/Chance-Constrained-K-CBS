@@ -1,10 +1,12 @@
 #pragma once
+#include "Goals/BeliefSpaceGoals.h"
 #include "Spaces/RealVectorBeliefSpace.h"
 #include <ompl/tools/config/SelfConfig.h>
 #include <ompl/base/goals/GoalSampleableRegion.h>
+#include <ompl/control/planners/PlannerIncludes.h>
+#include <ompl/control/spaces/RealVectorControlSpace.h>
 #include <ompl/base/objectives/PathLengthOptimizationObjective.h>
 #include <ompl/base/objectives/MaximizeMinClearanceObjective.h>
-#include <ompl/control/planners/PlannerIncludes.h>
 
 namespace oc = ompl::control;
 
@@ -13,13 +15,13 @@ namespace ompl
 {
     namespace control
     {
-        class BSST : public base::Planner
+        class CentralizedBSST : public base::Planner
         {
         public:
             /** \brief Constructor */
-            BSST(const SpaceInformationPtr &si);
+            CentralizedBSST(const SpaceInformationPtr &si, const int num_agents);
 
-            ~BSST() override;
+            ~CentralizedBSST() override;
 
             void setup() override;
 
@@ -193,6 +195,13 @@ namespace ompl
                 Motion *rep_{nullptr};
             };
 
+            /* the extend function for multi-agent systems */
+            unsigned int multiAgentControlSampler(Control *rcontrol, Control *previous, 
+                const base::State *source, base::State *dest);
+
+            /* reset states that are already at goal */
+            void overrideStates(const base::State *source, base::State *result, Control *control);
+
             /** \brief Finds the best node in the tree withing the selection radius around a random sample.*/
             Motion *selectNode(Motion *sample);
 
@@ -252,6 +261,9 @@ namespace ompl
             base::OptimizationObjectivePtr opt_;
 
             double max_eigenvalue_;
+
+            const int num_agents_;
+            const int dim_;
         };
     }
 }

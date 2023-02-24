@@ -1,4 +1,4 @@
-#include "OmplSetUp.h"
+#include "utils/OmplSetUp.h"
 
 // this function sets-up an ompl planning problem for an arbtrary number of agents
 // returns planners to be used
@@ -16,7 +16,10 @@ std::vector<MotionPlanningProblemPtr> set_up_all_MP_Problems(InstancePtr mrmp_in
         }
     }
     else if (mrmp_solver == "MR-RRT") {
-        return set_up_MultiRobotRRT_MP_Problems(mrmp_instance);
+        return set_up_MultiRobotRRT_MP_Problem(mrmp_instance);
+    }
+    else if (mrmp_solver == "CentralizedBSST") {
+        return set_up_CentralizedBSST_Problem(mrmp_instance);
     }
     else {
         OMPL_ERROR("%s: %s is not yet implemented for MRMP.", "OMPL Set-Up", mrmp_solver.c_str());
@@ -178,8 +181,8 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintRRT_MP_Problems(InstanceP
 
 std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(InstancePtr mrmp_instance)
 {
-    const double goalTollorance = 1.0;
-    const double stepSize = 0.1;
+    const double goalTollorance = 2.0;
+    const double stepSize = 0.2;
     
     std::vector<MotionPlanningProblemPtr> prob_defs{};
 
@@ -206,26 +209,22 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
             auto si(std::make_shared<oc::SpaceInformation>(space, cspace));
 
             // construct (and include) an instance of PCCBlackmore State Validity Checker
-            if (mrmp_instance->getPlannerName() == "K-CBS") {
-                if (mrmp_instance->getSVC() == "Blackmore") {
-                    si->setStateValidityChecker(std::make_shared<PCCBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
-                }
-                else if (mrmp_instance->getSVC() == "AdaptiveRiskBlackmore") {
-                    si->setStateValidityChecker(std::make_shared<AdaptiveRiskBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
-                }
-                else if (mrmp_instance->getSVC() == "ChiSquaredBoundary") {
-                    si->setStateValidityChecker(std::make_shared<ChiSquaredBoundarySVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
-                }
+            if (mrmp_instance->getSVC() == "Blackmore") {
+                si->setStateValidityChecker(std::make_shared<PCCBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
             }
-            else {
-                std::cout << "ERROR when allocating State-Validity-Checker" << std::endl;
+            else if (mrmp_instance->getSVC() == "AdaptiveRiskBlackmore") {
+                si->setStateValidityChecker(std::make_shared<AdaptiveRiskBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
             }
-
-            // construct (and include) an instance of 2D-Uncertain-Linear State Propogator
-            si->setStatePropagator(oc::StatePropagatorPtr(new R2_UncertainLinearStatePropagator(si)));
+            else if (mrmp_instance->getSVC() == "ChiSquaredBoundary") {
+                si->setStateValidityChecker(std::make_shared<ChiSquaredBoundarySVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
+            }
 
             si->setPropagationStepSize(stepSize);
             si->setMinMaxControlDuration(1, 10);
+            
+            // construct (and include) an instance of 2D-Uncertain-Linear State Propogator
+            si->setStatePropagator(oc::StatePropagatorPtr(new R2_UncertainLinearStatePropagator(si)));
+
             si->setup();
 
             ob::State *start = si->allocState();
@@ -266,7 +265,194 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
     return prob_defs;
 }
 
-std::vector<MotionPlanningProblemPtr> set_up_MultiRobotRRT_MP_Problems(InstancePtr mrmp_instance)
+std::vector<MotionPlanningProblemPtr> set_up_CentralizedBSST_Problem(InstancePtr mrmp_instance)
+{
+    const double goalTollorance = 2.0;
+    const double stepSize = 0.5;
+
+    std::vector<MotionPlanningProblemPtr> prob_defs{};
+
+    if (mrmp_instance->getRobots().size() == 2) {
+        Robot* r1 = mrmp_instance->getRobots()[0];
+        Robot* r2 = mrmp_instance->getRobots()[1];
+        if (r1->getDynamicsModel() == "2D-Uncertain-Linear-Model" && r2->getDynamicsModel() == "2D-Uncertain-Linear-Model") {
+            // set-up 4D Belief Space
+            ob::StateSpacePtr space = ob::StateSpacePtr(new RealVectorBeliefSpace(4));
+            ob::RealVectorBounds bounds(4);
+            bounds.setLow(0, -1);
+            bounds.setHigh(0, mrmp_instance->getDimensions()[0]);
+            bounds.setLow(1, -1);
+            bounds.setHigh(1, mrmp_instance->getDimensions()[1]);
+            bounds.setLow(2, -1);
+            bounds.setHigh(2, mrmp_instance->getDimensions()[0]);
+            bounds.setLow(3, -1);
+            bounds.setHigh(3, mrmp_instance->getDimensions()[1]);
+            space->as<R2BeliefSpace>()->setBounds(bounds);
+
+            // set-up the real vector control space
+            auto cspace(std::make_shared<oc::RealVectorControlSpace>(space, 4));
+            ob::RealVectorBounds c_bounds(4);
+            c_bounds.setLow(-1.0);  // this was [-100.0, 100.0]!
+            c_bounds.setHigh(1.0);
+            cspace->setBounds(c_bounds);
+
+            // construct an instance of space information from this state/control space
+            auto si(std::make_shared<oc::SpaceInformation>(space, cspace));
+
+            si->setPropagationStepSize(stepSize);
+            si->setMinMaxControlDuration(1, 10);
+
+            // set State Propogator
+            si->setStatePropagator(oc::StatePropagatorPtr(new CentralizedUncertainLinearStatePropagator(si)));
+
+            // set State Validity Checker
+            si->setStateValidityChecker(std::make_shared<CentralizedChiSquaredBoundarySVC>(si, mrmp_instance, mrmp_instance->getPsafe()));
+
+            si->setup();
+
+            // create start state
+            ob::State *start = si->allocState();
+            start->as<RealVectorStateSpace::StateType>()->values[0] = r1->getStartLocation().x_;
+            start->as<RealVectorStateSpace::StateType>()->values[1] = r1->getStartLocation().y_;
+            start->as<RealVectorStateSpace::StateType>()->values[2] = r2->getStartLocation().x_;
+            start->as<RealVectorStateSpace::StateType>()->values[3] = r2->getStartLocation().y_;
+            Eigen::MatrixXd Sigma0 = 0.00001 * Eigen::MatrixXd::Identity(4, 4);
+            start->as<RealVectorBeliefSpace::StateType>()->sigma_ = Sigma0;
+
+            // create goal state
+            ob::State *goal_st = si->allocState();
+            goal_st->as<RealVectorStateSpace::StateType>()->values[0] = r1->getGoalLocation().x_;
+            goal_st->as<RealVectorStateSpace::StateType>()->values[1] = r1->getGoalLocation().y_;
+            goal_st->as<RealVectorStateSpace::StateType>()->values[2] = r2->getGoalLocation().x_;
+            goal_st->as<RealVectorStateSpace::StateType>()->values[3] = r2->getGoalLocation().y_;
+
+            // create goal object
+            ob::GoalPtr goal(new CentralizedCCGoal(si, goal_st, goalTollorance, 0.5));
+
+            // create ProblemDefinition
+            auto pdef(std::make_shared<ob::ProblemDefinition>(si));
+
+            // set the start and goal
+            pdef->addStartState(start);
+            pdef->setGoal(goal);
+
+            // set optimization objective
+            pdef->setOptimizationObjective(getEuclideanPathLengthObjective(si));
+
+            // create (and provide) the motion planner object
+            PlannerPtr planner(std::make_shared<oc::CentralizedBSST>(si, 2));
+            planner->as<oc::CentralizedBSST>()->setProblemDefinition(pdef);
+            planner->as<oc::CentralizedBSST>()->setup();
+            // append to MRMP problem list
+            auto mp = std::make_shared<MotionPlanningProblem>(si, pdef, planner);
+            prob_defs.push_back(mp);
+        }
+        else {
+            OMPL_ERROR("Provided Dynamics combination not yet implemented for centralized planning!");
+            exit(-1);
+        }
+    }
+    else if (mrmp_instance->getRobots().size() == 3) {
+        Robot* r1 = mrmp_instance->getRobots()[0];
+        Robot* r2 = mrmp_instance->getRobots()[1];
+        Robot* r3 = mrmp_instance->getRobots()[2];
+        if (r1->getDynamicsModel() == "2D-Uncertain-Linear-Model" && 
+                r2->getDynamicsModel() == "2D-Uncertain-Linear-Model" && 
+                r3->getDynamicsModel() == "2D-Uncertain-Linear-Model") {
+            // set-up 6D Belief Space
+            ob::StateSpacePtr space = ob::StateSpacePtr(new RealVectorBeliefSpace(6));
+            ob::RealVectorBounds bounds(6);
+            bounds.setLow(0, -1);
+            bounds.setHigh(0, mrmp_instance->getDimensions()[0]);
+            bounds.setLow(1, -1);
+            bounds.setHigh(1, mrmp_instance->getDimensions()[1]);
+            bounds.setLow(2, -1);
+            bounds.setHigh(2, mrmp_instance->getDimensions()[0]);
+            bounds.setLow(3, -1);
+            bounds.setHigh(3, mrmp_instance->getDimensions()[1]);
+            bounds.setLow(4, -1);
+            bounds.setHigh(4, mrmp_instance->getDimensions()[0]);
+            bounds.setLow(5, -1);
+            bounds.setHigh(5, mrmp_instance->getDimensions()[1]);
+
+            space->as<R2BeliefSpace>()->setBounds(bounds);
+
+            // set-up the real vector control space
+            auto cspace(std::make_shared<oc::RealVectorControlSpace>(space, 6));
+            ob::RealVectorBounds c_bounds(6);
+            c_bounds.setLow(-1.0);  // this was [-100.0, 100.0]!
+            c_bounds.setHigh(1.0);
+            cspace->setBounds(c_bounds);
+
+            // construct an instance of space information from this state/control space
+            auto si(std::make_shared<oc::SpaceInformation>(space, cspace));
+
+            si->setPropagationStepSize(stepSize);
+            si->setMinMaxControlDuration(1, 10);
+
+            // set State Propogator
+            si->setStatePropagator(oc::StatePropagatorPtr(new CentralizedUncertainLinearStatePropagator(si)));
+
+            // set State Validity Checker
+            si->setStateValidityChecker(std::make_shared<CentralizedChiSquaredBoundarySVC>(si, mrmp_instance, mrmp_instance->getPsafe()));
+
+            si->setup();
+
+            // create start state
+            ob::State *start = si->allocState();
+            start->as<RealVectorStateSpace::StateType>()->values[0] = r1->getStartLocation().x_;
+            start->as<RealVectorStateSpace::StateType>()->values[1] = r1->getStartLocation().y_;
+            start->as<RealVectorStateSpace::StateType>()->values[2] = r2->getStartLocation().x_;
+            start->as<RealVectorStateSpace::StateType>()->values[3] = r2->getStartLocation().y_;
+            start->as<RealVectorStateSpace::StateType>()->values[4] = r3->getStartLocation().x_;
+            start->as<RealVectorStateSpace::StateType>()->values[5] = r3->getStartLocation().y_;
+            Eigen::MatrixXd Sigma0 = 0.00001 * Eigen::MatrixXd::Identity(6, 6);
+            start->as<RealVectorBeliefSpace::StateType>()->sigma_ = Sigma0;
+
+            // create goal state
+            ob::State *goal_st = si->allocState();
+            goal_st->as<RealVectorStateSpace::StateType>()->values[0] = r1->getGoalLocation().x_;
+            goal_st->as<RealVectorStateSpace::StateType>()->values[1] = r1->getGoalLocation().y_;
+            goal_st->as<RealVectorStateSpace::StateType>()->values[2] = r2->getGoalLocation().x_;
+            goal_st->as<RealVectorStateSpace::StateType>()->values[3] = r2->getGoalLocation().y_;
+            goal_st->as<RealVectorStateSpace::StateType>()->values[4] = r3->getGoalLocation().x_;
+            goal_st->as<RealVectorStateSpace::StateType>()->values[5] = r3->getGoalLocation().y_;
+
+            // create goal object
+            ob::GoalPtr goal(new CentralizedCCGoal(si, goal_st, goalTollorance, 0.95));
+
+            // create ProblemDefinition
+            auto pdef(std::make_shared<ob::ProblemDefinition>(si));
+
+            // set the start and goal
+            pdef->addStartState(start);
+            pdef->setGoal(goal);
+
+            // set optimization objective
+            pdef->setOptimizationObjective(getEuclideanPathLengthObjective(si));
+
+            // create (and provide) the motion planner object
+            PlannerPtr planner(std::make_shared<oc::CentralizedBSST>(si, 3));
+            planner->as<oc::CentralizedBSST>()->setProblemDefinition(pdef);
+            planner->as<oc::CentralizedBSST>()->setup();
+            // append to MRMP problem list
+            auto mp = std::make_shared<MotionPlanningProblem>(si, pdef, planner);
+            prob_defs.push_back(mp);
+        }
+        else {
+            OMPL_ERROR("Provided Dynamics combination not yet implemented for centralized planning!");
+            exit(-1);
+        }
+    }
+    else {
+        OMPL_ERROR("Unable to solve centralized instances with >3 robots!");
+        exit(-1);
+    }
+    return prob_defs;
+}
+
+
+std::vector<MotionPlanningProblemPtr> set_up_MultiRobotRRT_MP_Problem(InstancePtr mrmp_instance)
 {
         // for (auto itr = robots.begin(); itr != robots.end(); itr++) {
         

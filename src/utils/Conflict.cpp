@@ -1,4 +1,4 @@
-#include "Conflict.h"
+#include "utils/Conflict.h"
 #include <ompl/base/State.h>
 
 Conflict::Conflict(int agent1Idx, int agent2Idx, int timeStep):

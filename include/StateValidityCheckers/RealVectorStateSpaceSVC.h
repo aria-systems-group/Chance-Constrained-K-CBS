@@ -1,5 +1,5 @@
 #pragma once
-#include "Instance.h"
+#include "utils/Instance.h"
 #include <ompl/base/spaces/SO2StateSpace.h>
 #include <ompl/base/spaces/RealVectorStateSpace.h>
 #include <ompl/control/SpaceInformation.h>

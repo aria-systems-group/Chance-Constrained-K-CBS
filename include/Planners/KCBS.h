@@ -1,7 +1,7 @@
 #pragma once
-#include "Conflict.h"
+#include "utils/Conflict.h"
 #include "Constraints/BeliefConstraint.h"
-#include "MultiRobotProblemDefinition.h"
+#include "utils/MultiRobotProblemDefinition.h"
 #include "Planners/ConstraintRespectingPlanner.h"
 #include <boost/serialization/export.hpp>
 #include <ompl/control/planners/PlannerIncludes.h>
@@ -142,11 +142,11 @@ namespace ompl
                 // get the constraint within a node
                 ConstraintPtr getConstraint() const {return constraint_;};
 
-                void savePlanner(ConstraintRespectingPlannerPtr planner) {
+                void savePlanner(PlannerPtr planner) {
                 	planner_ = planner;
                 }
 
-                ConstraintRespectingPlannerPtr getPlanner() const {return planner_;};
+                PlannerPtr getPlanner() const {return planner_;};
 
                 // void fillMotions(std::vector<ConstraintRRT::Motion*> newMotions)
                 // {
@@ -171,7 +171,7 @@ namespace ompl
                 /* the constraint that the node was created to resolve */
                 ConstraintPtr constraint_{nullptr};
 
-                ConstraintRespectingPlannerPtr planner_{nullptr};
+                PlannerPtr planner_{nullptr};
 
                 /* list of motions--only filled if node fails to create plan_ */
                 // std::vector<ob::Planner::Motion*> motions_;
@@ -181,7 +181,7 @@ namespace ompl
 
             void setUp_();
 
-            oc::PathControl* calcNewPath_(ConstraintRespectingPlannerPtr planner, std::vector<ConstraintPtr> constraints, bool restart = true);
+            oc::PathControl* calcNewPath_(PlannerPtr planner, std::vector<ConstraintPtr> constraints, bool restart = true);
 
             bool shouldMerge_(
                 std::vector< std::pair< std::pair<int, int>, int> > &conf_cntr, 
@@ -206,7 +206,7 @@ namespace ompl
             // this is the Multi-agent motion planning problem definition
             const MultiRobotProblemDefinitionPtr mrmp_pdef_;
             
-            std::vector<ConstraintRespectingPlannerPtr> low_level_planners_;
+            std::vector<PlannerPtr> low_level_planners_;
 
             /** \brief The most recent goal motion.  Used for PlannerData computation */
             // conflictNode *lastGoalNode_{nullptr};

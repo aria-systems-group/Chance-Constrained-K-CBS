@@ -19,7 +19,7 @@ include_directories(
 
 )
 
-file(GLOB SOURCES "src/*.cpp" "src/Spaces/*.cpp" 
+file(GLOB SOURCES "src/*.cpp" "src/Spaces/*.cpp" "src/utils/*.cpp"
     "src/StateValidityCheckers/*.cpp" "src/StatePropogators/*.cpp" 
     "src/Planners/*.cpp" "src/Goals/*.cpp" "src/OptimizationObjectives/*.cpp"
     "src/Mergers/*.cpp" "src/PlanValidityCheckers/*.cpp" "src/Constraints/*.cpp"

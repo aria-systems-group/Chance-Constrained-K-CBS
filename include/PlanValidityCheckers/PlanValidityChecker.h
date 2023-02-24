@@ -1,6 +1,6 @@
 #pragma once
-#include "Conflict.h"
-#include "MultiRobotProblemDefinition.h"
+#include "utils/Conflict.h"
+#include "utils/MultiRobotProblemDefinition.h"
 #include "Constraints/Constraint.h"
 #include <ompl/control/PathControl.h>
 

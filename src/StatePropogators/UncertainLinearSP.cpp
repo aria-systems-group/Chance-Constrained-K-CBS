@@ -37,7 +37,7 @@ R2_UncertainLinearStatePropagator::R2_UncertainLinearStatePropagator(const oc::S
     double processNoise = 0.1;
     Q = pow(processNoise, 2) * Eigen::MatrixXd::Identity(dimensions_, dimensions_);
     double measurementNoise = 0.1;
-    R = measurementNoise*measurementNoise * Eigen::MatrixXd::Identity(dimensions_, dimensions_);
+    R = pow(measurementNoise, 2) * Eigen::MatrixXd::Identity(dimensions_, dimensions_);
 }
 
 void saturate(double &value, const double &min_value, const double &max_value) {

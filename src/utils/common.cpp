@@ -1,4 +1,4 @@
-#include "common.h"
+#include "utils/common.h"
 
 Location::Location(double x, double y): x_(x), y_(y){};
 

@@ -1,4 +1,4 @@
-#include "OmplSetUp.h"
+#include "utils/OmplSetUp.h"
 #include "Mergers/DeterministicMerger.h"
 #include "Mergers/BeliefMerger.h"
 #include "PlanValidityCheckers/DeterministicPVC.h"
@@ -7,7 +7,7 @@
 #include "PlanValidityCheckers/ChiSquaredBoundaryPVC.h"
 #include "PlanValidityCheckers/BoundingBoxBlackmorePVC.h"
 #include "Planners/KCBS.h"
-#include "postProcess.h"
+#include "utils/postProcess.h"
 
 // OMPL_INFORM("OMPL version: %s", OMPL_VERSION);  // blue font
 // OMPL_WARN("OMPL version: %s", OMPL_VERSION);  // yellow font
@@ -25,7 +25,7 @@ void parse_cmd_line(int &argc, char ** &argv, po::variables_map &vm, po::options
         ("map,m", po::value<std::string>()->required(), "the *.map file")
         ("scen,s", po::value<std::string>()->required(), "the *.scen file")
         ("numAgents,k", po::value<int>()->required(), "number of agents inside instance")
-        ("solver", po::value<std::string>()->default_value("K-CBS"), "the high-level MRMP solver (K-CBS, PBS, MR-RRT)")
+        ("solver", po::value<std::string>()->default_value("K-CBS"), "the high-level MRMP solver (K-CBS, PBS, MR-RRT, CentralizedBSST)")
         ("lowlevel,l", po::value<std::string>()->default_value("RRT"), "The low-level motion planner for K-CBS (RRT, BSST)")
         ("bound,b", po::value<int>()->default_value(std::numeric_limits<int>::max()), "The merge bound of K-CBS.")
         ("time,t", po::value<double>()->default_value(600), "cutoff time (seconds)")
@@ -121,6 +121,12 @@ int main(int argc, char ** argv)
         else {
             OMPL_ERROR("%s: Implementation of K-CBS w/ %s is unavailable.", "main", low_level_planner.c_str());
         }
+    }
+    else if (high_level_planner == "CentralizedBSST") {
+        ob::PlannerPtr p(std::make_shared<oc::BSST>(mrmp_pdef->getRobotSpaceInformationPtr(0)));
+        bool solved = mrmp_pdef->getRobotMotionPlanningProblemPtr(0)->getPlanner()->solve(vm["time"].as<double>());
+        // bool solved = p->solve(vm["time"].as<double>());
+
     }
     else if (high_level_planner == "PBS") {
         if (low_level_planner == "RRT") {

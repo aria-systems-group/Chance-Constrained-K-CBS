@@ -1,5 +1,5 @@
 #pragma once
-#include "Instance.h"
+#include "utils/Instance.h"
 #include "Mergers/Merger.h"
 #include "PlanValidityCheckers/PlanValidityChecker.h"
 #include "Planners/ConstraintRespectingBSST.h"
@@ -14,12 +14,12 @@ OMPL_CLASS_FORWARD(MotionPlanningProblem);
 class MotionPlanningProblem
 {
 public:
-    MotionPlanningProblem(const oc::SpaceInformationPtr si, const ob::ProblemDefinitionPtr pdef, const ConstraintRespectingPlannerPtr planner);
+    MotionPlanningProblem(const oc::SpaceInformationPtr si, const ob::ProblemDefinitionPtr pdef, const PlannerPtr planner);
 
     oc::SpaceInformationPtr getSpaceInformation();
     ob::ProblemDefinitionPtr getProblemDefinition();
-    ConstraintRespectingPlannerPtr getPlanner();
-    void replacePlanner(ConstraintRespectingPlannerPtr new_p)
+    PlannerPtr getPlanner();
+    void replacePlanner(PlannerPtr new_p)
     {
     	planner_ = new_p;
     }
@@ -27,7 +27,7 @@ public:
 private:
     oc::SpaceInformationPtr si_;
     ob::ProblemDefinitionPtr pdef_;
-    ConstraintRespectingPlannerPtr planner_;
+    PlannerPtr planner_;
 };
 
 OMPL_CLASS_FORWARD(MultiRobotProblemDefinition);
@@ -56,7 +56,7 @@ public:
 
 	const MotionPlanningProblemPtr getRobotMotionPlanningProblemPtr(const int idx);
 
-	 void replacePlanner(ConstraintRespectingPlannerPtr old_planner, const int idx);
+	 void replacePlanner(PlannerPtr old_planner, const int idx);
 
 	double getSystemStepSize()
 	{

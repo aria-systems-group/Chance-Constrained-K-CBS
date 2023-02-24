@@ -10,7 +10,7 @@
 #include "Goals/RealVectorStateSpaceGoals.h"
 #include "Goals/BeliefSpaceGoals.h"
 #include "OptimizationObjectives/StateCostObjectives.h"
-#include "MultiRobotProblemDefinition.h"
+#include "utils/MultiRobotProblemDefinition.h"
 #include "Planners/CentralizedBSST.h"
 #include "Planners/BSST.h"
 #include "Spaces/RealVectorBeliefSpace.h"

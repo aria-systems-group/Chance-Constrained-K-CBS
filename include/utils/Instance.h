@@ -1,5 +1,5 @@
 #pragma once
-#include "common.h"
+#include "utils/common.h"
 #include <filesystem>
 #include <ompl/tools/config/SelfConfig.h>
 #include <boost/program_options.hpp>

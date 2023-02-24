@@ -44,6 +44,21 @@ Instance::Instance(po::variables_map &vm, std::string name):
     }
 }
 
+Instance::Instance(const int num_agents, const double p_safe):
+    name_("N/A"), 
+    mrmp_planner_("N/A"),
+    low_level_planner_("N/A"),
+    x_max_(-1), y_max_(-1), 
+    num_agents_(num_agents),
+    map_fpath_("N/A"),
+    scen_fpath_("N/A"),
+    p_safe_(p_safe),
+    pvc_("N/A"),
+    svc_("N/A")
+{
+
+}
+
 Instance::Instance(Instance &other): 
     name_(other.name_), 
     mrmp_planner_(other.mrmp_planner_),

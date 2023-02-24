@@ -103,6 +103,25 @@ bool MinkowskiSumBlackmorePVC::satisfiesConstraints(oc::PathControl path, std::v
     return true;
 }
 
+bool MinkowskiSumBlackmorePVC::independentCheck(ob::State* state1, ob::State* state2)
+{
+    /* Only to be used for independent collision testing. Not called during MRMP planning (yet?) */
+
+    std::string key_name = "0,1";
+    if (halfPlane_map_.find(key_name) == halfPlane_map_.end())
+        key_name = "1,0";
+
+    Belief r0_belief = getDistribution_(state1);
+    Belief r1_belief = getDistribution_(state2);
+
+    Eigen::Vector2d mu_ab = r0_belief.first - r1_belief.first;
+    Eigen::Matrix2d Sigma_ab = r0_belief.second + r1_belief.second;
+
+    if (isSafe_(mu_ab, Sigma_ab, halfPlane_map_[key_name]))
+        return true;
+    return false;
+}
+
 ConflictPtr MinkowskiSumBlackmorePVC::checkForConflicts_(std::map<std::string, Belief> states_map, const int step)
 {
     ConflictPtr c = nullptr;

@@ -409,28 +409,5 @@ void exportBeliefPlan(const std::vector<oc::PathControl*> plan, const std::strin
             }
             MyFile << std::endl;
         }
-        // // go back to file and add cost to end of each line
-        // std::ifstream in(filePath);
-        // auto filePath2 = fs::current_path() / sol_dir / 
-        //     fs::path("agent" + std::to_string(i) + "_explanation.txt"); // appendTimeToFileName(fileName); // e.g. MyPrettyFile_2018-06-09_01-42-00.txt
-		// std::ofstream out(filePath2);
-		// std::string line;
-
-		// int idx = 0;
-		// while (getline(in, line))
-		// {
-		//     if (!line.empty())
-		//     {
-		//         out << line;
-		
-		//         // process line as needed...
-		
-		//         out << " " << costs[idx];
-		//     }
-		//     out << "\n";
-		//     idx++;
-		// }
-        // in.close();
-        // out.close();
     }
 }

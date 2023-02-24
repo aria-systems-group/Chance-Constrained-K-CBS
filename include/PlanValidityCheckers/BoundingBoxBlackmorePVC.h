@@ -15,6 +15,8 @@ public:
     std::vector<ConflictPtr> validatePlan(Plan p) override;
 
     bool satisfiesConstraints(oc::PathControl path, std::vector<ConstraintPtr> constraints) override;
+
+    bool independentCheck(ob::State* state1, ob::State* state2);
     
 private:
     ConflictPtr checkForConflicts_(std::map<std::string, Belief> states_map, const int step);

@@ -1,6 +1,7 @@
 #pragma once
 #include "common.h"
 #include "Spaces/R2BeliefSpace.h"
+#include "Spaces/RealVectorBeliefSpace.h"
 #include <ompl/base/Goal.h>
 #include <ompl/control/SpaceInformation.h>
 #include <boost/math/special_functions/erf.hpp>
@@ -40,14 +41,20 @@ public:
   
     bool isSatisfied(const ob::State *st, double *distance) const override;
 
+    bool isSingleAgentSatisfied(const ob::State *st, const int idx) const;
+
 private:
+    bool isSafe_(const Eigen::Vector2d mu, const Eigen::Matrix2d sigma, const Eigen::Vector2d goal, std::pair<Eigen::MatrixXd, Eigen::MatrixXd> hp, double *distance) const;
     // std::pair<Eigen::Vector2d, Eigen::Matrix2d> getDistFromState_(const ob::State* st) const;
-    // void setHalfPlanes_(Polygon combined_poly);
+    std::pair<Eigen::MatrixXd, Eigen::MatrixXd> createHalfPlanes_(Polygon combined_poly);
+
     // bool isSafe_(const ob::State* st, double *distance = nullptr) const;
 
     // Eigen::MatrixXd A_;
     // Eigen::MatrixXd B_;
-    // Eigen::VectorXd goal_;
+    std::unordered_map<int, std::pair<Eigen::MatrixXd, Eigen::MatrixXd>> half_plane_map_;
+    Eigen::VectorXd goal_;
+    const int num_agents_;
     const double p_safe_;
     const double threshold_;
 };

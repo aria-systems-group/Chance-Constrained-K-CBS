@@ -139,12 +139,16 @@ ConflictPtr ChiSquaredBoundaryPVC::checkForConflicts_(std::map<std::string, Beli
 bool ChiSquaredBoundaryPVC::isSafe_(const Belief belief_a, const double rad_a, const Belief belief_b, const double rad_b)
 {
     /* Find maximum eigenvalues of the covariances */
-    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver_a(belief_a.second.rows());
+    // Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver_a(belief_a.second.rows());
+    Eigen::EigenSolver<Eigen::Matrix2d> eigensolver_a;
+    eigensolver_a.compute(belief_a.second);
 
-    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver_b(belief_b.second.rows());
+    // Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver_b(belief_b.second.rows());
+    Eigen::EigenSolver<Eigen::Matrix2d> eigensolver_b;
+    eigensolver_b.compute(belief_b.second);
 
-    const double max_lambda_a = solver_a.eigenvalues().maxCoeff();
-    const double max_lambda_b = solver_b.eigenvalues().maxCoeff();
+    const double max_lambda_a = eigensolver_a.eigenvalues().real().maxCoeff();
+    const double max_lambda_b = eigensolver_b.eigenvalues().real().maxCoeff();
 
     /* Calculate the "upper-bounded" distance between the distributions and the safety boundary */
     auto mu_a = belief_a.first;

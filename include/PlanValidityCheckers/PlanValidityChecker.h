@@ -21,7 +21,9 @@ public:
 
 	virtual bool satisfiesConstraints(oc::PathControl path, std::vector<ConstraintPtr> constraints) = 0;
 
+    std::string getName() const {return name_;};
+
 protected:
 	MultiRobotProblemDefinitionPtr mrmp_pdef_;
-	const std::string name_;
+	std::string name_;
 };

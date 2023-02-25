@@ -6,6 +6,7 @@
 #include "PlanValidityCheckers/AdaptiveRiskBlackmorePVC.h"
 #include "PlanValidityCheckers/ChiSquaredBoundaryPVC.h"
 #include "PlanValidityCheckers/BoundingBoxBlackmorePVC.h"
+#include "PlanValidityCheckers/CDFGridPVC.h"
 #include <chrono>
 #include <filesystem>
 #include <unordered_map>
@@ -24,6 +25,8 @@ public:
     void runBenchmarks();
 
 private:
+    void exportResults_(std::string filename, std::vector<std::pair<double, bool>> results);
+
     std::string beliefList1_;
     std::string beliefList2_;
 
@@ -31,6 +34,6 @@ private:
     MultiRobotProblemDefinitionPtr mrmp_pdef_{nullptr};
     InstancePtr instance_{nullptr};
 
-    std::unordered_map<int, ob::State*> agent1_belief_map_;
-    std::unordered_map<int, ob::State*> agent2_belief_map_;
+    std::vector<ob::State*> agent1_belief_map_;
+    std::vector<ob::State*> agent2_belief_map_;
 };

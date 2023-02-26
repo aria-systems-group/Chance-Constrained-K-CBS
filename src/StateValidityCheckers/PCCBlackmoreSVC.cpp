@@ -34,14 +34,18 @@ bool PCCBlackmoreSVC::isValid(const ob::State *state) const {
 		return false;
 	}
 
-	double x = state->as<R2BeliefSpace::StateType>()->getX();
-    double y = state->as<R2BeliefSpace::StateType>()->getY();
-    auto PX = state->as<R2BeliefSpace::StateType>()->getCovariance();
+    auto vals = state->as<RealVectorBeliefSpace::StateType>()->values;
+    Eigen::VectorXd mu;
+    for (int d = 0; si_->getStateSpace()->getDimension(); d++) {
+        mu << vals[d];
+    }
+    Eigen::MatrixXd Sigma = state->as<RealVectorBeliefSpace::StateType>()->getCovariance();
+
 	//=========================================================================
 	// Probabilistic collision checker
 	//=========================================================================
 	for (int o = 0; o < n_obstacles_; o++) {
-		if (not HyperplaneCCValidityChecker_(A_list_.at(o), B_list_.at(o), x, y, PX)) {
+		if (not HyperplaneCCValidityChecker_(A_list_.at(o), B_list_.at(o), mu[0], mu[1], Sigma)) {
 			return false;
 		}
 	}

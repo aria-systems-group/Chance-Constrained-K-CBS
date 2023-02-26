@@ -1,10 +1,9 @@
 #include "StatePropogators/UncertainLinearSP.h"
 
 
-R2_UncertainLinearStatePropagator::R2_UncertainLinearStatePropagator(const oc::SpaceInformationPtr &si) : oc::StatePropagator(si)
+R2_UncertainLinearStatePropagator::R2_UncertainLinearStatePropagator(const oc::SpaceInformationPtr &si) : oc::StatePropagator(si),
+    duration_(si->getPropagationStepSize())
 {
-    duration_ = si->getPropagationStepSize();
-
     //=========================================================================
     // Open loop system definition
     //=========================================================================
@@ -29,15 +28,15 @@ R2_UncertainLinearStatePropagator::R2_UncertainLinearStatePropagator(const oc::S
     // Discrete close loop system definition
     //=========================================================================
     A_cl_d_.resize(2, 2);
-    A_cl_d_ = Eigen::MatrixXd::Identity(2, 2) + A_cl_ * duration_;
+    A_cl_d_ = I_ + A_cl_ * duration_;
 
     B_cl_d_.resize(2, 2);
-    B_cl_d_ = A_cl_d_.inverse() * (A_cl_d_ - Eigen::MatrixXd::Identity(2, 2)) * B_cl_;
+    B_cl_d_ = A_cl_d_.inverse() * (A_cl_d_ - I_) * B_cl_;
 
     double processNoise = 0.1;
-    Q = pow(processNoise, 2) * Eigen::MatrixXd::Identity(dimensions_, dimensions_);
+    Q_ = pow(processNoise, 2) * I_;
     double measurementNoise = 0.1;
-    R = pow(measurementNoise, 2) * Eigen::MatrixXd::Identity(dimensions_, dimensions_);
+    R_ = pow(measurementNoise, 2) * I_;
 }
 
 void saturate(double &value, const double &min_value, const double &max_value) {
@@ -53,43 +52,57 @@ double wrap(double angle) {
 
 void R2_UncertainLinearStatePropagator::propagate(const ob::State *state, const oc::Control* control, const double duration, ob::State *result) const
 {
-    // use the motionmodel to apply the controls
-    // motionModel_->Evolve(state, control, motionModel_->getZeroNoise(), to);
+    const double* all_st_values = state->as<RealVectorBeliefSpace::StateType>()->values;
+    const double* all_cntrl_values = control->as<oc::RealVectorControlSpace::ControlType>()->values;
+    const Eigen::MatrixXd all_sigmas = state->as<RealVectorBeliefSpace::StateType>()->sigma_;
+    const Eigen::MatrixXd all_lambdas = state->as<RealVectorBeliefSpace::StateType>()->lambda_;
+
+    // propogate the individual agent
+    Eigen::Vector2d nxt_mu_a = Eigen::Vector2d::Zero();
+    Eigen::Matrix2d nxt_sigma_a = Eigen::Matrix2d::Zero();
+    Eigen::Matrix2d nxt_lambda_a = Eigen::Matrix2d::Zero();
+
+    // extract agent-specific state information
+    Eigen::Vector2d mu_a{all_st_values[0], all_st_values[1]};
+    Eigen::Vector2d cntrl_a{all_cntrl_values[0], all_cntrl_values[1]};
+    Eigen::Matrix2d sigma_a = all_sigmas.block<2, 2>(0, 0);
+    Eigen::Matrix2d lambda_a = all_lambdas.block<2, 2>(0, 0);
+
     //=========================================================================
     // Get CX vector (RRT near vertex)
     //=========================================================================
-    start_css = state->as<R2BeliefSpace::StateType >();
-    x_pose = start_css->getX();
-    y_pose = start_css->getY();
+    const double x_pose = mu_a[0];
+    const double y_pose = mu_a[1];
     //=========================================================================
     // Get CX vector (RRT random vertex)
     //=========================================================================
-    x_pose_reference = control->as<oc::RealVectorControlSpace::ControlType>()->values[0];
-    y_pose_reference = control->as<oc::RealVectorControlSpace::ControlType>()->values[1];
+    const double x_pose_reference = cntrl_a[0];
+    const double y_pose_reference = cntrl_a[1];
     //=========================================================================
     // Compute control inputs (dot(dot(x)) dot(dot(y)) dot(dot(z))) with PD controller
     //=========================================================================
-    double u_0 = B_ol_(0, 0) * (x_pose_reference - x_pose); //double u_0 = B_cl_d_(0, 0) * (x_pose_reference - x_pose);
-    double u_1 = B_ol_(0, 0) * (y_pose_reference - y_pose); //double u_1 = B_cl_d_(1, 1) * (y_pose_reference - y_pose);
+    // const double u_0 = B_ol_(0, 0) * (x_pose_reference - x_pose); //double u_0 = B_cl_d_(0, 0) * (x_pose_reference - x_pose);
+    // const double u_1 = B_ol_(0, 0) * (y_pose_reference - y_pose); //double u_1 = B_cl_d_(1, 1) * (y_pose_reference - y_pose);
 
-    result->as<R2BeliefSpace::StateType>()->setX(x_pose + duration * x_pose_reference);
-    result->as<R2BeliefSpace::StateType>()->setY(y_pose + duration * y_pose_reference);
+    nxt_mu_a[0] = x_pose + duration_ * x_pose_reference;
+    nxt_mu_a[1] = y_pose + duration_ * y_pose_reference;
 
     //=========================================================================
     // Propagate covariance in the equivalent closed loop system
     //=========================================================================
-    Eigen::Matrix2d sigma_from = state->as<R2BeliefSpace::StateType>()->getSigma();
-    Eigen::Matrix2d lambda_from = state->as<R2BeliefSpace::StateType>()->getLambda();
-    Eigen::Matrix2d sigma_pred = F*sigma_from*F + Q;
+    const Eigen::Matrix2d sigma_pred = F_ * sigma_a * F_ + Q_;
 
-    Mat lambda_pred, K;
-    Mat S = (H * sigma_pred * H.transpose())+ R;
-    K = (sigma_pred * H.transpose()) * S.inverse();
-    lambda_pred = A_cl_*lambda_from*A_cl_;
-    Mat sigma_to = (I - (K*H)) * sigma_pred;
-    Mat lambda_to = lambda_pred + K*H*sigma_pred;
-    result->as<R2BeliefSpace::StateType>()->setSigma(sigma_to);
-    result->as<R2BeliefSpace::StateType>()->setLambda(lambda_to);
+    const Eigen::Matrix2d S = (H_ * sigma_pred * H_.transpose()) + R_;
+    const Eigen::Matrix2d K = (sigma_pred * H_.transpose()) * S.inverse();
+    const Eigen::Matrix2d lambda_pred = A_cl_ * lambda_a * A_cl_;
+    nxt_sigma_a = (I_ - (K * H_)) * sigma_pred;
+    nxt_lambda_a = lambda_pred + K * H_ * sigma_pred;
+
+    // update the resulting states
+    result->as<RealVectorBeliefSpace::StateType>()->values[0] = nxt_mu_a[0];
+    result->as<RealVectorBeliefSpace::StateType>()->values[1] = nxt_mu_a[1];
+    result->as<RealVectorBeliefSpace::StateType>()->sigma_.block<2, 2>(0, 0) = nxt_sigma_a;
+    result->as<RealVectorBeliefSpace::StateType>()->lambda_.block<2, 2>(0, 0) = nxt_lambda_a;
 }
 
 bool R2_UncertainLinearStatePropagator::canPropagateBackward(void) const

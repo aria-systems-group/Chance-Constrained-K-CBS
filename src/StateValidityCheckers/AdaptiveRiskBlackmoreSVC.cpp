@@ -33,9 +33,12 @@ bool AdaptiveRiskBlackmoreSVC::isValid(const ob::State *state) const
 
     // double x = state->as<R2BeliefSpace::StateType>()->getX();
     // double y = state->as<R2BeliefSpace::StateType>()->getY();
-
-    const Eigen::Vector2d mu = state->as<R2BeliefSpace::StateType>()->getXY();
-    const Eigen::Matrix2d Sigma = state->as<R2BeliefSpace::StateType>()->getCovariance();
+    auto vals = state->as<RealVectorBeliefSpace::StateType>()->values;
+    Eigen::VectorXd mu;
+    for (int d = 0; si_->getStateSpace()->getDimension(); d++) {
+        mu << vals[d];
+    }
+    const Eigen::MatrixXd Sigma = state->as<RealVectorBeliefSpace::StateType>()->getCovariance();
     //=========================================================================
     // Probabilistic collision checker
     //=========================================================================

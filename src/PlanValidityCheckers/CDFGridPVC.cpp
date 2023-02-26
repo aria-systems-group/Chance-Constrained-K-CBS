@@ -6,16 +6,7 @@ CDFGridPVC::CDFGridPVC(MultiRobotProblemDefinitionPtr pdef, const double p_safe,
 {
     std::string name = "CDFGridPVC(" + std::to_string(nSteps) + ")";
     this->name_ = name;
-    // std::vector<Robot*> robots = mrmp_pdef_->getInstance()->getRobots();
-    // boost::tokenizer< boost::char_separator<char> >::iterator beg1;
-    // boost::tokenizer< boost::char_separator<char> >::iterator beg2;
-    // boost::char_separator<char> sep(" ");
-    // for (auto itr1 = robots.begin(); itr1 != robots.end(); itr1++) {
-    //     std::string r1_name = (*itr1)->getName();
-    //     boost::tokenizer< boost::char_separator<char> > tok1(r1_name, sep);
-    //     double max_rad = (*itr1)->getBoundingRadius();
-    //     boundingRadii_map_.insert({r1_name, max_rad});
-    // }
+
     std::vector<Robot*> robots = mrmp_pdef_->getInstance()->getRobots();
     boost::tokenizer< boost::char_separator<char> >::iterator beg1;
     boost::tokenizer< boost::char_separator<char> >::iterator beg2;
@@ -43,12 +34,111 @@ CDFGridPVC::CDFGridPVC(MultiRobotProblemDefinitionPtr pdef, const double p_safe,
 
  std::vector<ConflictPtr> CDFGridPVC::validatePlan(Plan p)
  {
+    std::vector<ConflictPtr> confs{};
+    const double step_duration = mrmp_pdef_->getSystemStepSize();
+
+    // interpolate all trajectories to the same discretization and get max size
+    int maxStates = 0;
+    for (auto itr = p.begin(); itr != p.end(); itr++) {
+        itr->interpolate();
+        if (maxStates < itr->getStateCount())
+            maxStates = itr->getStateCount();
+    }
+
+    for (int k = 0; k < maxStates; k++) {
+        std::map<std::string, Belief> activeRobots = getActiveRobots_(p, k);
+        ConflictPtr c = checkForConflicts_(activeRobots, k);
+        if (c) {
+            // found initial conflict at step k
+            // must continue to propogate forward until conflict is finished
+            int step = k;
+            while (c != nullptr && step < maxStates) {
+                confs.push_back(c);
+                step++;
+                activeRobots = getActiveRobots_(p, step, c->agent1Idx_, c->agent2Idx_);
+                c = checkForConflicts_(activeRobots, step);
+            }
+            return confs;
+        }
+    }
     return {};
  }
 
 bool CDFGridPVC::satisfiesConstraints(oc::PathControl path, std::vector<ConstraintPtr> constraints)
 {
-    return false;
+    /* Assume that the constrained robot is the "planning" robot. Check for satisfaction of all constraints */
+    const int constrained_robot = constraints.front()->getConstrainedAgent();
+    std::vector<ob::State*> states = path.getStates();
+    const double step_size = path.getControlDuration(0);
+    double current_time = 0.0;
+    for (auto itr = states.begin(); itr != states.end(); itr++) {
+        // for every state along path, check if the time coincides with any constraints
+        for (auto c_itr = constraints.begin(); c_itr != constraints.end(); c_itr++) {
+            const std::vector<double> times = (*c_itr)->getTimes();
+            auto it = std::find_if(times.begin(), times.end(), 
+                [&current_time](const double& t) { return abs(t - current_time) < 1E-9;});
+            if (it == times.end()) {
+                break;
+            }
+            // must check this constraint at this time
+            const int constraining_robot = (*c_itr)->getConstrainingAgent();
+            assert(constrained_robot != constraining_robot);
+            
+            // get the correct half-plane for comparing constrained_robot with constraining_robot
+            std::string key_name = std::to_string(constrained_robot) + "," + std::to_string(constraining_robot);
+            if (halfPlane_map_.find(key_name) == halfPlane_map_.end())
+                key_name = std::to_string(constraining_robot) + "," + std::to_string(constrained_robot);
+
+            // get both beliefs
+            int idx = it - times.begin();
+            Belief constrained_robot_belief = getDistribution_(*itr);
+            Belief constraining_robot_belief = getDistribution_((*c_itr)->as<BeliefConstraint>()->getStates()[idx]);
+
+            if (!isSafe_(constrained_robot_belief, constraining_robot_belief, halfPlane_map_[key_name], polygon_map_[key_name]))
+                return false;
+        }
+        current_time += step_size;
+    }
+    return true;
+}
+
+ConflictPtr CDFGridPVC::checkForConflicts_(std::map<std::string, Belief> states_map, const int step)
+{
+    ConflictPtr c = nullptr;
+    
+    boost::tokenizer< boost::char_separator<char> >::iterator beg_a;
+    boost::tokenizer< boost::char_separator<char> >::iterator beg_b;
+    boost::char_separator<char> sep(" ");
+
+    for (auto itr_a = states_map.begin(); itr_a != states_map.end(); itr_a++) {
+        // Belief for ai
+        const std::string r_a_name = itr_a->first;
+        boost::tokenizer< boost::char_separator<char> > tok_a(r_a_name, sep);
+        beg_a = tok_a.begin();
+        beg_a++;
+
+        auto itr_b = itr_a;
+        std::advance(itr_b, 1);
+        for (; itr_b != states_map.end(); itr_b++) {
+            // Belief for aj
+            const std::string r_b_name = itr_b->first;
+            boost::tokenizer< boost::char_separator<char> > tok_b(r_b_name, sep);
+            beg_b = tok_b.begin();
+            beg_b++;
+            std::string key_name = (*beg_a) + "," + (*beg_b);
+
+            if (halfPlane_map_.find(key_name) == halfPlane_map_.end())
+                key_name = (*beg_b) + "," + (*beg_a);
+
+            if (!isSafe_(itr_a->second, itr_b->second, halfPlane_map_[key_name], polygon_map_[key_name])) {
+                int a_idx = std::atoi((*beg_a).c_str());
+                int b_idx = std::atoi((*beg_b).c_str());
+                c = std::make_shared<Conflict>(a_idx, b_idx, step);
+                return c;
+            }
+        }
+    }
+    return c;
 }
 
 bool CDFGridPVC::independentCheck(ob::State* state1, ob::State* state2)
@@ -165,7 +255,6 @@ bool CDFGridPVC::isSafe_(const Belief belief_a, const Belief belief_b, std::pair
                     break;
                 }
             }
-
         }
     }
     if (prob < p_coll_agnts_)

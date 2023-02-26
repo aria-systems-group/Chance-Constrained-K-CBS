@@ -1,6 +1,6 @@
 #pragma once
 #include "utils/Instance.h"
-#include "Spaces/R2BeliefSpace.h"
+#include "Spaces/RealVectorBeliefSpace.h"
 #include <ompl/control/SpaceInformation.h>
 #include <boost/geometry.hpp>
 #include <boost/geometry/strategies/buffer.hpp>

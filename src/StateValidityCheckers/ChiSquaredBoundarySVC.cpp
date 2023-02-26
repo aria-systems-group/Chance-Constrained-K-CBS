@@ -23,14 +23,19 @@ bool ChiSquaredBoundarySVC::isValid(const ob::State *state) const
     }
 
     /* get Belief from state */
-    Eigen::VectorXd mu = state->as<R2BeliefSpace::StateType>()->getXY();
-    Eigen::MatrixXd Sigma = state->as<R2BeliefSpace::StateType>()->getCovariance();
+    double* vals = state->as<RealVectorBeliefSpace::StateType>()->values;
+    Eigen::VectorXd mu(si_->getStateSpace()->getDimension());
+    for (int d = 0; d < si_->getStateSpace()->getDimension(); d++) {
+        mu[d] = vals[d];
+    }
+
+    Eigen::MatrixXd Sigma = state->as<RealVectorBeliefSpace::StateType>()->getCovariance();
 
     /* Find maximum eigenvalues of the covariances */
-    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver_a(Sigma.rows());
-    solver_a.compute(Sigma);
+    Eigen::EigenSolver<Eigen::MatrixXd> eigensolver_a;
+    eigensolver_a.compute(Sigma);
 
-    const double max_lambda = solver_a.eigenvalues().maxCoeff();;
+    const double max_lambda = eigensolver_a.eigenvalues().real().maxCoeff();
     const double boundary = (max_lambda * sc_ + max_rad_);
 
     bg::strategy::buffer::distance_symmetric<double> distance_strategy(boundary);

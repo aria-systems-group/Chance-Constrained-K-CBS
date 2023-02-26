@@ -37,7 +37,7 @@ void parse_cmd_line(int &argc, char ** &argv, po::variables_map &vm, po::options
         ("p_safe,p", po::value<double>()->default_value(0.95), "Probability of safe in decimal form (only used for non-deterministic planning sequences)")
         ("pvc,c", po::value<std::string>()->default_value("ChiSquaredBoundary"), "The Collision-Checker to be used."
             "This is only used for non-deterministic planning instances."
-            "(ChiSquaredBoundary, MinkowskiSumBlackmore, BoundingBoxBlackmore, AdaptiveRiskBlackmore)")
+            "(ChiSquaredBoundary, MinkowskiSumBlackmore, BoundingBoxBlackmore, AdaptiveRiskBlackmore, CDFGrid-x")
         ("svc,v", po::value<std::string>()->default_value("Blackmore"), "The Low-Level collision-checker to be used."
             "This is only used for non-deterministic planning instances."
             "(Blackmore, AdaptiveRiskBlackmore, ChiSquaredBoundary)")
@@ -108,6 +108,15 @@ int main(int argc, char ** argv)
             }
             else if (instance->getPVC() == "AdaptiveRiskBlackmore") {
                 planValidator = std::make_shared<AdaptiveRiskBlackmorePVC>(mrmp_pdef, instance->getPsafeAgents());
+            }
+            else if (instance->getPVC().find("CDFGrid") != std::string::npos) {
+                boost::char_separator<char> sep("-");
+                boost::tokenizer< boost::char_separator<char> > tok(instance->getPVC(), sep);
+                boost::tokenizer< boost::char_separator<char> >::iterator beg = tok.begin();
+                beg++;
+                const int disks = atoi((*beg).c_str());
+                OMPL_INFORM("The plan validity checker is CDFGrid with discretization of %d", disks);
+                planValidator = std::make_shared<CDFGridPVC>(mrmp_pdef, instance->getPsafeAgents(), disks);
             }
             else {
                 OMPL_ERROR("Plan Validity Checker ``%s`` is not available.", instance->getPVC().c_str());

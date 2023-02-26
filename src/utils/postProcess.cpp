@@ -397,7 +397,7 @@ void exportBeliefPlan(const std::vector<oc::PathControl*> plan, const std::strin
         std::ofstream MyFile(covFilePath);
         std::vector<ob::State*> states = plan[i]->getStates();
         for (auto itr = states.begin(); itr != states.end(); itr++) {
-            Eigen::Matrix2d Sigma = (*itr)->as<R2BeliefSpace::StateType>()->getCovariance();
+            Eigen::MatrixXd Sigma = (*itr)->as<RealVectorBeliefSpace::StateType>()->getCovariance();
             int r = Sigma.rows();
             int c = Sigma.cols();
             for (int i = 0; i < r; ++i)

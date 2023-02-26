@@ -1,5 +1,5 @@
 #pragma once
-#include "Spaces/R2BeliefSpace.h"
+#include "Spaces/RealVectorBeliefSpace.h"
 #include <fstream>
 #include <filesystem>
 #include <ompl/control/PathControl.h>

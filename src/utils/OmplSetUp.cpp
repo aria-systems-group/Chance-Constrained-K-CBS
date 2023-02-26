@@ -190,13 +190,13 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
     for (auto itr = robots.begin(); itr != robots.end(); itr++) {
         if ((*itr)->getDynamicsModel() == "2D-Uncertain-Linear-Model") {
             // set-up 2D Belief Space
-            ob::StateSpacePtr space = ob::StateSpacePtr(new R2BeliefSpace(1.0));
+            ob::StateSpacePtr space = ob::StateSpacePtr(new RealVectorBeliefSpace(2));
             ob::RealVectorBounds bounds_se2(2);
             bounds_se2.setLow(0, -1);
             bounds_se2.setHigh(0, mrmp_instance->getDimensions()[0]);
             bounds_se2.setLow(1, -1);
             bounds_se2.setHigh(1, mrmp_instance->getDimensions()[1]);
-            space->as<R2BeliefSpace>()->setBounds(bounds_se2);
+            space->as<RealVectorBeliefSpace>()->setBounds(bounds_se2);
 
             // set-up the real vector control space
             auto cspace(std::make_shared<oc::RealVectorControlSpace>(space, 2));
@@ -228,10 +228,10 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
             si->setup();
 
             ob::State *start = si->allocState();
-            Eigen::Matrix2d Sigma0;
-            Sigma0 << 0.00001, 0.0, 0.0, 0.00001;
-            start->as<R2BeliefSpace::StateType>()->setXY((*itr)->getStartLocation().x_, (*itr)->getStartLocation().y_);
-            start->as<R2BeliefSpace::StateType>()->setSigma(Sigma0);
+            Eigen::MatrixXd Sigma0 = 0.00001 * Eigen::MatrixXd::Identity(2, 2);
+            start->as<RealVectorBeliefSpace::StateType>()->values[0] = (*itr)->getStartLocation().x_;
+            start->as<RealVectorBeliefSpace::StateType>()->values[1] = (*itr)->getStartLocation().y_;
+            start->as<RealVectorBeliefSpace::StateType>()->sigma_ = Sigma0;
 
             // // create goal
             ob::GoalPtr goal(new ChanceConstrainedGoal(si, (*itr)->getGoalLocation(), goalTollorance, 0.95));
@@ -247,7 +247,8 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
             pdef->setOptimizationObjective(getEuclideanPathLengthObjective(si));
 
             // // create (and provide) the low-level motion planner object
-            ConstraintRespectingPlannerPtr planner(std::make_shared<oc::ConstraintRespectingBSST>(si));
+            PlannerPtr planner(std::make_shared<oc::ConstraintRespectingBSST>(si));
+            // ConstraintRespectingPlannerPtr planner(std::make_shared<oc::ConstraintRespectingBSST>(si));
             planner->as<oc::ConstraintRespectingBSST>()->setProblemDefinition(pdef);
             planner->as<oc::ConstraintRespectingBSST>()->setup();
 
@@ -287,7 +288,7 @@ std::vector<MotionPlanningProblemPtr> set_up_CentralizedBSST_Problem(InstancePtr
             bounds.setHigh(2, mrmp_instance->getDimensions()[0]);
             bounds.setLow(3, -1);
             bounds.setHigh(3, mrmp_instance->getDimensions()[1]);
-            space->as<R2BeliefSpace>()->setBounds(bounds);
+            space->as<RealVectorBeliefSpace>()->setBounds(bounds);
 
             // set-up the real vector control space
             auto cspace(std::make_shared<oc::RealVectorControlSpace>(space, 4));
@@ -375,7 +376,7 @@ std::vector<MotionPlanningProblemPtr> set_up_CentralizedBSST_Problem(InstancePtr
             bounds.setLow(5, -1);
             bounds.setHigh(5, mrmp_instance->getDimensions()[1]);
 
-            space->as<R2BeliefSpace>()->setBounds(bounds);
+            space->as<RealVectorBeliefSpace>()->setBounds(bounds);
 
             // set-up the real vector control space
             auto cspace(std::make_shared<oc::RealVectorControlSpace>(space, 6));

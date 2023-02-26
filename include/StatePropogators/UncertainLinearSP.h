@@ -1,5 +1,5 @@
 #pragma once
-#include "Spaces/R2BeliefSpace.h"
+#include "Spaces/RealVectorBeliefSpace.h"
 #include <ompl/base/spaces/SE2StateSpace.h>
 #include <ompl/control/SpaceInformation.h>
 #include <ompl/control/spaces/RealVectorControlSpace.h>
@@ -33,42 +33,23 @@ private:
 
     Eigen::Matrix2d A_ol_, B_ol_, A_cl_, B_cl_, A_cl_d_, B_cl_d_;
 
-    double duration_;
+    const double duration_;
 
-    mutable double x_pose, x_pose_reference, y_pose, y_pose_reference;
+    // mutable double x_pose, x_pose_reference, y_pose, y_pose_reference;
 
-    mutable const R2BeliefSpace::StateType *start_css;
+    // mutable const R2BeliefSpace::StateType *start_css;
 
     
-    mutable oc::RealVectorControlSpace::ControlType *control_css;
+    // mutable oc::RealVectorControlSpace::ControlType *control_css;
 
-    const Eigen::Vector2d start_css_rvs_pose;
-    const Eigen::Matrix2d start_css_rvs_cov;
+    // const Eigen::Vector2d start_css_rvs_pose;
+    // const Eigen::Matrix2d start_css_rvs_cov;
 
-    Eigen::Matrix2d I = Eigen::MatrixXd::Identity(2, 2);
-    Eigen::Matrix2d H = Eigen::MatrixXd::Identity(2, 2);
-    Eigen::Matrix2d F = Eigen::MatrixXd::Identity(2, 2);
-
-    Eigen::Matrix2d sigma_pred, lambda_pred, K, Q, R, Ak;
-
+    // single agent matrix definitions
+    Eigen::Matrix2d I_ = Eigen::Matrix2d::Identity();
+    Eigen::Matrix2d H_ = Eigen::Matrix2d::Identity();
+    Eigen::Matrix2d F_ = Eigen::Matrix2d::Identity();
+    Eigen::Matrix2d Q_ = Eigen::Matrix2d::Identity();
+    Eigen::Matrix2d R_ = Eigen::Matrix2d::Identity();
     double K_ = 0.3;
-
-    mutable const R2BeliefSpace::StateType *result_css;
-    ob::RealVectorStateSpace::StateType *result_css_rvs_pose;
-    Eigen::Matrix2d result_css_rvs_cov;
-
-protected:
-
-    int dimensions_ = 2;
-
-
-    // Belief::Belief beliefModel_;
-
-    // MotionModelMethod::MotionModelPointer motionModel_;
-
-    // firm::SpaceInformation::SpaceInformationPtr siF_;
-    /**
-    You can add a simulated environment here where the controls can get applied, useful for
-    showing the graphics, very similar to the concept of ActuationSystem in PMPL.
-    */
 };

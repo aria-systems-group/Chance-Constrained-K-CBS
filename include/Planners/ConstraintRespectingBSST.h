@@ -1,6 +1,7 @@
 #pragma once
-#include "Spaces/R2BeliefSpace.h"
-#include "Spaces/R2BeliefSpaceEuclidean.h"
+#include "Spaces/RealVectorBeliefSpace.h"
+// #include "Spaces/R2BeliefSpace.h"
+// #include "Spaces/R2BeliefSpaceEuclidean.h"
 #include "Planners/ConstraintRespectingPlanner.h"
 #include "PlanValidityCheckers/PlanValidityChecker.h"
 #include <utils/ConstraintRespectingGetDefaultNN.h>

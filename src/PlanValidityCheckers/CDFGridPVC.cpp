@@ -78,7 +78,7 @@ bool CDFGridPVC::satisfiesConstraints(oc::PathControl path, std::vector<Constrai
             auto it = std::find_if(times.begin(), times.end(), 
                 [&current_time](const double& t) { return abs(t - current_time) < 1E-9;});
             if (it == times.end()) {
-                break;
+                continue;
             }
             // must check this constraint at this time
             const int constraining_robot = (*c_itr)->getConstrainingAgent();

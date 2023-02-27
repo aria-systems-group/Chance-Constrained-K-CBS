@@ -80,11 +80,7 @@ bool BoundingBoxBlackmorePVC::satisfiesConstraints(oc::PathControl path, std::ve
             auto it = std::find_if(times.begin(), times.end(), 
                 [&current_time](const double& t) { return abs(t - current_time) < 1E-9;});
             if (it == times.end()) {
-                if (current_time >= times.front() && current_time <=  times.back()) {
-                    std::cout << "ERROR" << std::endl;
-                    exit(-1);
-                }
-                break;
+                continue;
             }
             // must check this constraint at this time
             const int constraining_robot = (*c_itr)->getConstrainingAgent();

@@ -9,6 +9,7 @@
 #include "Planners/KCBS.h"
 #include "utils/postProcess.h"
 #include "utils/beliefCollisionCheckingBenchmark.h"
+#include "utils/Benchmark.h"
 
 // OMPL_INFORM("OMPL version: %s", OMPL_VERSION);  // blue font
 // OMPL_WARN("OMPL version: %s", OMPL_VERSION);  // yellow font
@@ -26,6 +27,7 @@ void parse_cmd_line(int &argc, char ** &argv, po::variables_map &vm, po::options
         ("map,m", po::value<std::string>()->required(), "the *.map file")
         ("scen,s", po::value<std::string>()->required(), "the *.scen file")
         ("numAgents,k", po::value<int>()->required(), "number of agents inside instance")
+        ("benchmark", po::value<bool>()->default_value(false), "Boolean flag for benchmarking.")
         ("independentBenchmark", po::value<bool>()->default_value(false), "Boolean flag for running independent collision checking benchmark. Must be accompanied by both inputFile flags")
         ("inputFile1", po::value<std::string>()->default_value(""), "first input file for collision checking benchmarks")
         ("inputFile2", po::value<std::string>()->default_value(""), "second input file for collision checking benchmarks")
@@ -33,14 +35,14 @@ void parse_cmd_line(int &argc, char ** &argv, po::variables_map &vm, po::options
         ("lowlevel,l", po::value<std::string>()->default_value("RRT"), "The low-level motion planner for K-CBS (RRT, BSST)")
         ("bound,b", po::value<int>()->default_value(std::numeric_limits<int>::max()), "The merge bound of K-CBS.")
         ("time,t", po::value<double>()->default_value(600), "cutoff time (seconds)")
-        ("output,o", po::value<std::string>()->default_value("results"), "output file name (no extension)")
+        ("output,o", po::value<std::string>()->default_value("results"), "output file name (e.g. results.csv)")
         ("p_safe,p", po::value<double>()->default_value(0.95), "Probability of safe in decimal form (only used for non-deterministic planning sequences)")
         ("pvc,c", po::value<std::string>()->default_value("ChiSquaredBoundary"), "The Collision-Checker to be used."
             "This is only used for non-deterministic planning instances."
-            "(ChiSquaredBoundary, MinkowskiSumBlackmore, BoundingBoxBlackmore, AdaptiveRiskBlackmore, CDFGrid-x")
+            "(ChiSquared, Blackmore, AdaptiveBlackmore, CDFGrid-x")
         ("svc,v", po::value<std::string>()->default_value("Blackmore"), "The Low-Level collision-checker to be used."
             "This is only used for non-deterministic planning instances."
-            "(Blackmore, AdaptiveRiskBlackmore, ChiSquaredBoundary)")
+            "(Blackmore, AdaptiveBlackmore, ChiSquared)")
         ("screen", po::value<int>()->default_value(0),
                 "screen option \n0 := none \n1 := K-CBS updates \n2 := Low-Level Planner updates \n3 := MRMP detailed updates");
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -56,10 +58,21 @@ int main(int argc, char ** argv)
         std::cout << desc << std::endl;
         return 1;
     }
-
-    if (vm["independentBenchmark"].as<bool>()) {
+    else if (vm["independentBenchmark"].as<bool>()) {
         BeliefCollisionCheckerBenchmark tester(vm["inputFile1"].as<std::string>(), vm["inputFile2"].as<std::string>());
         tester.runBenchmarks();
+        return 1;
+    }
+    else if (vm["benchmark"].as<bool>()) {
+        InstancePtr instance = std::make_shared<Instance>(vm);
+        run_kcbs_benchmark(instance, vm["bound"].as<int>(), vm["time"].as<double>(), vm["output"].as<std::string>());
+        // std::string planner_name = vm["solver"].as<std::string>();
+        // if (planner_name == "K-CBS") {
+            
+        // }
+        // else if (planner_name == "CentralizedBSST") {
+        //     std::cout << vm["svc"].as<std::string>() <<std::endl;
+        // }
         return 1;
     }
 
@@ -97,16 +110,16 @@ int main(int argc, char ** argv)
             mrmp_pdef->setMerger(merger);
             // set-up (and include) a PlanValidityChecker for agent-to-agent collision checking
             PlanValidityCheckerPtr planValidator = nullptr;
-            if (instance->getPVC() == "ChiSquaredBoundary") {
+            if (instance->getPVC() == "ChiSquared") {
                 planValidator = std::make_shared<ChiSquaredBoundaryPVC>(mrmp_pdef, instance->getPsafeAgents());
             }
-            else if (instance->getPVC() == "MinkowskiSumBlackmore") {
+            else if (instance->getPVC() == "Blackmore") {
                 planValidator = std::make_shared<MinkowskiSumBlackmorePVC>(mrmp_pdef, instance->getPsafeAgents());
             }
-            else if (instance->getPVC() == "BoundingBoxBlackmore") {
-                planValidator = std::make_shared<BoundingBoxBlackmorePVC>(mrmp_pdef, instance->getPsafeAgents());
-            }
-            else if (instance->getPVC() == "AdaptiveRiskBlackmore") {
+            // else if (instance->getPVC() == "BoundingBoxBlackmore") {
+            //     planValidator = std::make_shared<BoundingBoxBlackmorePVC>(mrmp_pdef, instance->getPsafeAgents());
+            // }
+            else if (instance->getPVC() == "AdaptiveBlackmore") {
                 planValidator = std::make_shared<AdaptiveRiskBlackmorePVC>(mrmp_pdef, instance->getPsafeAgents());
             }
             else if (instance->getPVC().find("CDFGrid") != std::string::npos) {

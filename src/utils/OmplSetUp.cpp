@@ -171,11 +171,11 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintRRT_MP_Problems(InstanceP
         }
         else {
             OMPL_ERROR("%s: Dynamics model named %s is not yet implemented!", 
-                "OMPL ConstraintRRT Set-Up", (*itr)->getDynamicsModel().c_str());
+                "OMPL Set-Up", (*itr)->getDynamicsModel().c_str());
             return {};
         }
     }
-    OMPL_INFORM("%s: Initialized %lu robots.", "OMPL ConstraintRRT Set-Up", prob_defs.size());
+    OMPL_INFORM("%s: Initialized %lu robots.", "OMPL Set-Up", prob_defs.size());
     return prob_defs;
 }
 
@@ -212,10 +212,10 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
             if (mrmp_instance->getSVC() == "Blackmore") {
                 si->setStateValidityChecker(std::make_shared<PCCBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
             }
-            else if (mrmp_instance->getSVC() == "AdaptiveRiskBlackmore") {
+            else if (mrmp_instance->getSVC() == "AdaptiveBlackmore") {
                 si->setStateValidityChecker(std::make_shared<AdaptiveRiskBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
             }
-            else if (mrmp_instance->getSVC() == "ChiSquaredBoundary") {
+            else if (mrmp_instance->getSVC() == "ChiSquared") {
                 si->setStateValidityChecker(std::make_shared<ChiSquaredBoundarySVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
             }
 
@@ -258,11 +258,11 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
         }
         else {
             OMPL_ERROR("%s: Dynamics model named %s is not yet implemented!", 
-                "OMPL ConstraintBSST Set-Up", (*itr)->getDynamicsModel().c_str());
+                "OMPL Set-Up", (*itr)->getDynamicsModel().c_str());
             return {};
         }
     }
-    OMPL_INFORM("%s: Initialized %lu robots.", "OMPL ConstraintBSST Set-Up", prob_defs.size());
+    OMPL_INFORM("%s: Initialized %lu robots.", "OMPL Set-Up", prob_defs.size());
     return prob_defs;
 }
 

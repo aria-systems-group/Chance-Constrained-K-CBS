@@ -68,6 +68,12 @@ namespace ompl
 
             void setLowLevelPlanningTime(const double t) {mp_comp_time_ = t;};
 
+            // void resetComputationTime() {computation_time_ = 0;};
+
+            double getComputationTime() const {return computation_time_;};
+
+            double getSolutionSOC() const {return soc_;};
+
             // void performBypassing() {bypass_ = true;};
 
             // std::vector<std::pair<int, int>> getMergers() const {return merger_count_;};
@@ -211,6 +217,10 @@ namespace ompl
             /** \brief The most recent goal motion.  Used for PlannerData computation */
             // conflictNode *lastGoalNode_{nullptr};
 
+            double computation_time_;
+
+            double soc_;
+
             bool ready_;
 
             double mp_comp_time_{1};  // seconds
@@ -222,8 +232,6 @@ namespace ompl
             bool bypass_{false};
 
             std::vector<std::pair<int, int>> merger_count_{};
-
-            double solveTime_{0.0};
 
             std::vector< std::pair< std::pair<int, int>, int>> conf_counter_;
         };

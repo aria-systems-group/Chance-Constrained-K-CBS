@@ -4,7 +4,7 @@
 // constructor
 ompl::control::KCBS::KCBS(const MultiRobotProblemDefinitionPtr mrmp_pdef) : 
 	base::Planner(mrmp_pdef->getRobotSpaceInformationPtr(0), "K-CBS"), 
-	mrmp_pdef_(mrmp_pdef), ready_(false)
+	mrmp_pdef_(mrmp_pdef), ready_(false), computation_time_(0), soc_(0)
 {
 	setUp_();
 	// These params are for benchmarking -- ignore for now
@@ -441,7 +441,7 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
    	/* End of main loop. If possible, add solutions to every MotionPlanningProblem */
    	auto stop = std::chrono::high_resolution_clock::now();
    	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-   	solveTime_ = (duration.count() / 1000000.0);
+   	computation_time_ = (duration.count() / 1000000.0);
    	bool solved = false;
    	if (solution == nullptr) {
    	 	if (ptc == true)
@@ -450,12 +450,13 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
    	}
    	else {
    	 	solved = true;
-   	 	OMPL_INFORM("%s: Found Solution in %0.3f seconds!", getName().c_str(), solveTime_);
+   	 	OMPL_INFORM("%s: Found Solution in %0.3f seconds!", getName().c_str(), computation_time_);
    	 	auto sol_plan = solution->getPlan();
    	 	for (int i = 0; i < sol_plan.size(); i++)
    	 	{
    	 	   auto path(std::make_shared<PathControl>(sol_plan[i]));
    	 	   mrmp_pdef_->getRobotProblemDefinitionPtr(i)->addSolutionPath(path, false, -1.0, getName().c_str());
+           soc_ += path->length();
    	 	}
    	 	OMPL_INFORM("%s: Planning Complete.", getName().c_str());
    	 	return {solved, false};

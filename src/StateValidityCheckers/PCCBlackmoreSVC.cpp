@@ -35,9 +35,9 @@ bool PCCBlackmoreSVC::isValid(const ob::State *state) const {
 	}
 
     auto vals = state->as<RealVectorBeliefSpace::StateType>()->values;
-    Eigen::VectorXd mu;
-    for (int d = 0; si_->getStateSpace()->getDimension(); d++) {
-        mu << vals[d];
+    Eigen::VectorXd mu(si_->getStateSpace()->getDimension());
+    for (int d = 0; d < si_->getStateSpace()->getDimension(); d++) {
+        mu[d] = vals[d];
     }
     Eigen::MatrixXd Sigma = state->as<RealVectorBeliefSpace::StateType>()->getCovariance();
 

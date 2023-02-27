@@ -34,9 +34,9 @@ bool AdaptiveRiskBlackmoreSVC::isValid(const ob::State *state) const
     // double x = state->as<R2BeliefSpace::StateType>()->getX();
     // double y = state->as<R2BeliefSpace::StateType>()->getY();
     auto vals = state->as<RealVectorBeliefSpace::StateType>()->values;
-    Eigen::VectorXd mu;
-    for (int d = 0; si_->getStateSpace()->getDimension(); d++) {
-        mu << vals[d];
+    Eigen::VectorXd mu(si_->getStateSpace()->getDimension());
+    for (int d = 0; d < si_->getStateSpace()->getDimension(); d++) {
+        mu[d] = vals[d];
     }
     const Eigen::MatrixXd Sigma = state->as<RealVectorBeliefSpace::StateType>()->getCovariance();
     //=========================================================================
@@ -44,7 +44,6 @@ bool AdaptiveRiskBlackmoreSVC::isValid(const ob::State *state) const
     //=========================================================================
     // calculate the the eta_i's for agent *itr_a
     std::vector<double> eta_list = createEtaList_(mu);
-
     for (int o = 0; o < obs_list_.size(); o++) {
         if (!isSafe_(mu, Sigma, A_list_.at(o), B_list_.at(o), eta_list[0])) {
             return false;

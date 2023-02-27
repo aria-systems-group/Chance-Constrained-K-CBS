@@ -1,372 +1,90 @@
 #include "utils/Benchmark.h"
 
-dataStruct benchmark(const std::string problem, const double planningTime, 
-    const int benchType, const int mergParam, const std::string bypass)
+
+void run_kcbs_benchmark(InstancePtr mrmp_instance, const double merge_bound, const double comp_time, std::string filename)
 {
-    dataStruct data = {};
-    // /* from problem file, create worlds and ompl problem instances */
-    // World *decentralized_w = yaml2world(problem);
-    // std::string centralized_problem = problem;
-    // centralized_problem.resize(centralized_problem.size() - 4);
-    // centralized_problem = centralized_problem + "_centralized.yml";
-    // if (benchType == 3)
-    // {
-    //     if (std::filesystem::exists(centralized_problem))
-    //     {
-    //         World *centralized_w = yaml2world(centralized_problem);
+    // set-up low-level planners
+    std::vector<MotionPlanningProblemPtr> mp_problems = set_up_all_MP_Problems(mrmp_instance);
+    // set-up MRMP Problem Definition
+    MultiRobotProblemDefinitionPtr mrmp_pdef = std::make_shared<MultiRobotProblemDefinition>(mp_problems);
+    mrmp_pdef->setMultiRobotInstance(mrmp_instance);
+    const std::string low_level_planner = mrmp_instance->getLowLevelPlannerName();
 
-    //         /* initialize problems */
-    //         const std::vector<std::pair<std::shared_ptr<oc::SpaceInformation>, 
-    //             std::shared_ptr<ob::ProblemDefinition>>> decentralized_ompl_problem = multiAgentSetUp(decentralized_w);
+    // set-up K-CBS based on planning type and current settings
+    if (low_level_planner == "RRT") {
+        // set-up (and include) a Merger in case merge bound is hit
+        MergerPtr merger = std::make_shared<DeterministicMerger>(mrmp_pdef);
+        mrmp_pdef->setMerger(merger);
+        // set-up (and include) a PlanValidityChecker for agent-to-agent collision checking
+        PlanValidityCheckerPtr planValidator = std::make_shared<DeterministicPlanValidityChecker>(mrmp_pdef);
+        mrmp_pdef->setPlanValidator(planValidator);
+    }
+    else if (low_level_planner == "BSST") {
+        // set-up (and include) a Merger in case merge bound is hit
+        MergerPtr merger = std::make_shared<BeliefMerger>(mrmp_pdef);
+        mrmp_pdef->setMerger(merger);
+        // set-up (and include) a PlanValidityChecker for agent-to-agent collision checking
+        PlanValidityCheckerPtr planValidator = nullptr;
+        if (mrmp_instance->getPVC() == "ChiSquared") {
+            planValidator = std::make_shared<ChiSquaredBoundaryPVC>(mrmp_pdef, mrmp_instance->getPsafeAgents());
+        }
+        else if (mrmp_instance->getPVC() == "Blackmore") {
+            planValidator = std::make_shared<MinkowskiSumBlackmorePVC>(mrmp_pdef, mrmp_instance->getPsafeAgents());
+        }
+        else if (mrmp_instance->getPVC() == "AdaptiveBlackmore") {
+            planValidator = std::make_shared<AdaptiveRiskBlackmorePVC>(mrmp_pdef, mrmp_instance->getPsafeAgents());
+        }
+        else if (mrmp_instance->getPVC().find("CDFGrid") != std::string::npos) {
+            boost::char_separator<char> sep("-");
+            boost::tokenizer< boost::char_separator<char> > tok(mrmp_instance->getPVC(), sep);
+            boost::tokenizer< boost::char_separator<char> >::iterator beg = tok.begin();
+            beg++;
+            const int disks = atoi((*beg).c_str());
+            OMPL_INFORM("The plan validity checker is CDFGrid with discretization of %d", disks);
+            planValidator = std::make_shared<CDFGridPVC>(mrmp_pdef, mrmp_instance->getPsafeAgents(), disks);
+        }
+        else {
+            OMPL_ERROR("Plan Validity Checker ``%s`` is not available.", mrmp_instance->getPVC().c_str());
+        }
+        mrmp_pdef->setPlanValidator(planValidator);
+    }
 
-    //         const std::pair<std::shared_ptr<oc::SpaceInformation>, 
-    //             std::shared_ptr<ob::ProblemDefinition>> centralized_ompl_problem = multiAgentSetUp(centralized_w)[0];
+    std::vector<std::tuple<bool, double, double>> results; // solved, computation time, path length
 
-    //         /* initialize planners */
-    //         // MA-RRT
-    //         oc::MA_RRT *ma_rrt = new oc::MA_RRT(centralized_ompl_problem.first);
-    //         ma_rrt->setProblemDefinition(centralized_ompl_problem.second);
-    //         ma_rrt->setup();
-    //         ob::PlannerPtr ma_rrt_planner(ma_rrt);
+    for (int i = 0; i < 3; i++) {
+        // create K-CBS instance
+        ob::PlannerPtr p(std::make_shared<oc::KCBS>(mrmp_pdef));
+        p->as<oc::KCBS>()->setMergeBound(merge_bound);
+        // plan with K-CBS
+        bool solved = p->solve(comp_time);
+        // fill results
+        std::tuple<bool, double, double> r{solved, p->as<oc::KCBS>()->getComputationTime(), p->as<oc::KCBS>()->getSolutionSOC()};
+        results.push_back(r);
+        // update results file with n
+        write_csv(filename, r);
+        // clear memory
+        p.reset();
+    }
 
-    //         // PBS
-    //         oc::PBS *pbs = new oc::PBS(decentralized_ompl_problem); // PBS
-    //         pbs->setWorld(decentralized_w);
-    //         ob::PlannerPtr pbs_planner(pbs);
-
-    //         // K-CBS
-    //         oc::KD_CBS *k_cbs = new oc::KD_CBS(decentralized_ompl_problem); // K_CBS
-    //         k_cbs->setWorld(decentralized_w);
-    //         k_cbs->setMergeBound(mergParam);
-    //         if (bypass == "True")
-    //             k_cbs->performBypassing();
-    //         ob::PlannerPtr k_cbs_planner(k_cbs);
-
-    //         /* initialize data columns */
-    //         std::vector<std::string> planner_col{ma_rrt_planner->getName(), pbs_planner->getName(), k_cbs_planner->getName()};
-    //         std::vector<std::string> isSolved_col{};
-    //         std::vector<std::string> compTime_col{};
-    //         std::vector<std::string> mergers{};
-
-
-    //         OMPL_INFORM("******** Beginning Benchmark ******** \n");
-    //         /* test MA_RRT */
-    //         // plan
-    //         bool ma_rrt_solved = ma_rrt_planner->solve(planningTime);
-    //         // record success
-    //         if (ma_rrt_solved)
-    //             isSolved_col.push_back("1");
-    //         else
-    //             isSolved_col.push_back("0");
-    //         // record computation time
-    //         compTime_col.push_back(std::to_string(ma_rrt_planner->as<oc::MA_RRT>()->getSolveTime()));
-
-    //         // record merger
-    //         mergers.push_back("");
-
-    //         /* test PBS */
-    //         // plan
-    //         bool pbs_solved = pbs_planner->solve(planningTime);
-    //         // record success
-    //         if (pbs_solved)
-    //             isSolved_col.push_back("1");
-    //         else
-    //             isSolved_col.push_back("0");
-    //         // record computation time
-    //         compTime_col.push_back(std::to_string(pbs_planner->as<oc::PBS>()->getSolveTime()));
-
-    //         // record merger
-    //         mergers.push_back("");
-
-    //         /* test K-CBS */
-    //         // plan
-    //         bool k_cbs_solved = k_cbs_planner->solve(planningTime);
-    //         // record success
-    //         if (k_cbs_solved)
-    //             isSolved_col.push_back("1");
-    //         else
-    //             isSolved_col.push_back("0");
-            
-    //         // record computation time
-    //         compTime_col.push_back(std::to_string(k_cbs_planner->as<oc::KD_CBS>()->getSolveTime()));
-
-    //         // record merger list
-    //         std::vector<std::pair<int, int>> merger_list = k_cbs_planner->as<oc::KD_CBS>()->getMergers();
-    //         std::string list = "";
-    //         for (auto merge: merger_list)
-    //         {
-    //             list = list + "(" + std::to_string(merge.first) + " " + std::to_string(merge.second) + ") ";
-    //         }
-    //         mergers.push_back(list);
-
-    //         // col 1: planner names
-    //         std::pair< std::string, std::vector<std::string> > planners{"Algorithm", planner_col};
-    //         // col 2: success
-    //         std::pair< std::string, std::vector<std::string> > solved{"Success (Boolean)", isSolved_col};
-    //         // col 3: computation time
-    //         std::pair< std::string, std::vector<std::string> > times{"Computation Time (s)", compTime_col};
-    //         // col 4: mergers
-    //         std::pair< std::string, std::vector<std::string> > merging{"Mergers", mergers};
-
-    //         // put it all together
-    //         dataStruct data{planners, solved, times, merging};
-    //         OMPL_INFORM("******** Benchmark Complete ******** \n");
-    //         return data;
-    //     }
-    //     else
-    //     {
-    //         OMPL_WARN("No Centrlalized Version of Problem Exists. Ignoring MA-RRT Benchmark.");
-
-    //         /* initialize problems */
-    //         const std::vector<std::pair<std::shared_ptr<oc::SpaceInformation>, 
-    //             std::shared_ptr<ob::ProblemDefinition>>> decentralized_ompl_problem = multiAgentSetUp(decentralized_w);
-
-    //         /* initialize planners */
-    //         // PBS
-    //         oc::PBS *pbs = new oc::PBS(decentralized_ompl_problem); // PBS
-    //         pbs->setWorld(decentralized_w);
-    //         ob::PlannerPtr pbs_planner(pbs);
-
-    //         // K-CBS
-    //         oc::KD_CBS *k_cbs = new oc::KD_CBS(decentralized_ompl_problem); // K_CBS
-    //         k_cbs->setWorld(decentralized_w);
-    //         k_cbs->setMergeBound(mergParam);
-    //         if (bypass == "True")
-    //             k_cbs->performBypassing();
-    //         ob::PlannerPtr k_cbs_planner(k_cbs);
-
-    //         /* initialize data columns */
-    //         std::vector<std::string> planner_col{pbs_planner->getName(), k_cbs_planner->getName()};
-    //         std::vector<std::string> isSolved_col{};
-    //         std::vector<std::string> compTime_col{};
-    //         std::vector<std::string> mergers{};
-
-    //         OMPL_INFORM("******** Beginning Benchmark ******** \n");
-    //         /* test PBS */
-    //         // plan
-    //         bool pbs_solved = pbs_planner->solve(planningTime);
-    //         // record success
-    //         if (pbs_solved)
-    //             isSolved_col.push_back("1");
-    //         else
-    //             isSolved_col.push_back("0");
-    //         // record computation time
-    //         compTime_col.push_back(std::to_string(pbs_planner->as<oc::PBS>()->getSolveTime()));
-    //         // record merger
-    //         mergers.push_back("");
-
-    //         /* test K-CBS */
-    //         // plan
-    //         bool k_cbs_solved = k_cbs_planner->solve(planningTime);
-    //         // record success
-    //         if (k_cbs_solved)
-    //             isSolved_col.push_back("1");
-    //         else
-    //             isSolved_col.push_back("0");
-    //         // record computation time
-    //         compTime_col.push_back(std::to_string(k_cbs_planner->as<oc::KD_CBS>()->getSolveTime()));
-
-
-    //         // record merger list
-    //         std::vector<std::pair<int, int>> merger_list = k_cbs_planner->as<oc::KD_CBS>()->getMergers();
-    //         std::string list = "";
-    //         for (auto merge: merger_list)
-    //         {
-    //             list = list + "(" + std::to_string(merge.first) + " " + std::to_string(merge.second) + ") ";
-    //         }
-    //         mergers.push_back(list);
-
-    //         // col 1: planner names
-    //         std::pair< std::string, std::vector<std::string> > planners{"Algorithm", planner_col};
-    //         // col 2: success
-    //         std::pair< std::string, std::vector<std::string> > solved{"Success (Boolean)", isSolved_col};
-    //         // col 3: computation time
-    //         std::pair< std::string, std::vector<std::string> > times{"Computation Time (s)", compTime_col};
-    //         // col 4: mergers
-    //         std::pair< std::string, std::vector<std::string> > merging{"Mergers", mergers};
-
-    //         // put it all together
-    //         dataStruct data{planners, solved, times, merging};
-    //         OMPL_INFORM("******** Benchmark Complete ******** \n");
-    //         return data;
-    //     }
-    // }
-    // else if (benchType == 2)
-    // {
-    //     /* initialize problems */
-    //     const std::vector<std::pair<std::shared_ptr<oc::SpaceInformation>, 
-    //         std::shared_ptr<ob::ProblemDefinition>>> decentralized_ompl_problem = multiAgentSetUp(decentralized_w);
-
-    //     /* initialize planners */
-    //     // PBS
-    //     oc::PBS *pbs = new oc::PBS(decentralized_ompl_problem); // PBS
-    //     pbs->setWorld(decentralized_w);
-    //     ob::PlannerPtr pbs_planner(pbs);
-
-    //     // K-CBS
-    //     oc::KD_CBS *k_cbs = new oc::KD_CBS(decentralized_ompl_problem); // K_CBS
-    //     k_cbs->setWorld(decentralized_w);
-    //     k_cbs->setMergeBound(mergParam);
-    //     if (bypass == "True")
-    //         k_cbs->performBypassing();
-    //     ob::PlannerPtr k_cbs_planner(k_cbs);
-
-    //     /* initialize data columns */
-    //     std::vector<std::string> planner_col{pbs_planner->getName(), k_cbs_planner->getName()};
-    //     std::vector<std::string> isSolved_col{};
-    //     std::vector<std::string> compTime_col{};
-    //     std::vector<std::string> mergers{};
-
-    //     OMPL_INFORM("******** Beginning Benchmark ******** \n");
-    //     /* test PBS */
-    //     // plan
-    //     bool pbs_solved = pbs_planner->solve(planningTime);
-    //     // record success
-    //     if (pbs_solved)
-    //         isSolved_col.push_back("1");
-    //     else
-    //         isSolved_col.push_back("0");
-    //     // record computation time
-    //     compTime_col.push_back(std::to_string(pbs_planner->as<oc::PBS>()->getSolveTime()));
-    //     // record merger
-    //     mergers.push_back("");
-
-    //     /* test K-CBS */
-    //     // plan
-    //     bool k_cbs_solved = k_cbs_planner->solve(planningTime);
-    //     // record success
-    //     if (k_cbs_solved)
-    //         isSolved_col.push_back("1");
-    //     else
-    //         isSolved_col.push_back("0");
-    //     // record computation time
-    //     compTime_col.push_back(std::to_string(k_cbs_planner->as<oc::KD_CBS>()->getSolveTime()));
-
-    //     // record merger list
-    //     std::vector<std::pair<int, int>> merger_list = k_cbs_planner->as<oc::KD_CBS>()->getMergers();
-    //     std::string list = "";
-    //     for (auto merge: merger_list)
-    //     {
-    //         list = list + "(" + std::to_string(merge.first) + " " + std::to_string(merge.second) + ") ";
-    //     }
-    //     mergers.push_back(list);
-
-    //     // col 1: planner names
-    //     std::pair< std::string, std::vector<std::string> > planners{"Algorithm", planner_col};
-    //     // col 2: success
-    //     std::pair< std::string, std::vector<std::string> > solved{"Success (Boolean)", isSolved_col};
-    //     // col 3: computation time
-    //     std::pair< std::string, std::vector<std::string> > times{"Computation Time (s)", compTime_col};
-    //     // col 4: mergers
-    //     std::pair< std::string, std::vector<std::string> > merging{"Mergers", mergers};
-
-    //     // put it all together
-    //     dataStruct data{planners, solved, times, merging};
-    //     OMPL_INFORM("******** Benchmark Complete ******** \n");
-    //     return data;
-    // }
-    // else if (benchType == 1)
-    // {
-    //     /* initialize problems */
-    //     const std::vector<std::pair<std::shared_ptr<oc::SpaceInformation>, 
-    //         std::shared_ptr<ob::ProblemDefinition>>> decentralized_ompl_problem = multiAgentSetUp(decentralized_w);
-
-    //     /* initialize planners */
-
-    //     // K-CBS
-    //     oc::KD_CBS *k_cbs = new oc::KD_CBS(decentralized_ompl_problem); // K_CBS
-    //     k_cbs->setWorld(decentralized_w);
-    //     k_cbs->setMergeBound(mergParam);
-    //     if (bypass == "True")
-    //         k_cbs->performBypassing();
-    //     ob::PlannerPtr k_cbs_planner(k_cbs);
-
-    //     /* initialize data columns */
-    //     std::vector<std::string> planner_col{k_cbs_planner->getName()};
-    //     std::vector<std::string> isSolved_col{};
-    //     std::vector<std::string> compTime_col{};
-    //     std::vector<std::string> mergers{};
-
-    //     OMPL_INFORM("******** Beginning Benchmark ******** \n");
-    //     /* test K-CBS */
-    //     // plan
-    //     bool k_cbs_solved = k_cbs_planner->solve(planningTime);
-    //     // record success
-    //     if (k_cbs_solved)
-    //         isSolved_col.push_back("1");
-    //     else
-    //         isSolved_col.push_back("0");
-    //     // record computation time
-    //     compTime_col.push_back(std::to_string(k_cbs_planner->as<oc::KD_CBS>()->getSolveTime()));
-
-    //     // record merger list
-    //     std::vector<std::pair<int, int>> merger_list = k_cbs_planner->as<oc::KD_CBS>()->getMergers();
-    //     std::string list = "";
-    //     for (auto merge: merger_list)
-    //     {
-    //         list = list + "(" + std::to_string(merge.first) + " " + std::to_string(merge.second) + ") ";
-    //     }
-    //     mergers.push_back(list);
-
-    //     // col 1: planner names
-    //     std::pair< std::string, std::vector<std::string> > planners{"Algorithm", planner_col};
-    //     // col 2: success
-    //     std::pair< std::string, std::vector<std::string> > solved{"Success (Boolean)", isSolved_col};
-    //     // col 3: computation time
-    //     std::pair< std::string, std::vector<std::string> > times{"Computation Time (s)", compTime_col};
-    //     // col 4: mergers
-    //     std::pair< std::string, std::vector<std::string> > merging{"Mergers", mergers};
-
-    //     // put it all together
-    //     dataStruct data{planners, solved, times, merging};
-    //     OMPL_INFORM("******** Benchmark Complete ******** \n");
-    //     return data;
-    // }
-    // else
-    // {
-    //     OMPL_ERROR("Invalid benchmark type provided!");
-    //     exit(1);
-    // }
-    OMPL_ERROR("Benchmarking has not been updated since code refactor.");
-    return data;
+    for (auto itr = results.begin(); itr != results.end(); itr++) {
+        std::cout << std::get<0>(*itr) << "," << std::get<1>(*itr) << "," << std::get<2>(*itr) << std::endl;
+    }
 }
 
-
 // https://www.gormanalysis.com/blog/reading-and-writing-csv-files-with-cpp/
-void write_csv(const char* logName, dataStruct dataset)
+void write_csv(std::string filename, std::tuple<bool, double, double> results)
 {
     // Make a CSV file with one or more columns of integer values
-    // Each column of data is represented by the pair <column name, column data>
-    //   as std::pair<std::string, std::vector<int>>
-    // The dataset is represented as a vector of these columns
-    // Note that all columns should be the same size
-
-    OMPL_INFORM("Writing Results to %s \n", logName);
-
-    // Create an output filestream object
-    std::ofstream myFile(logName);
-    
-    // Send column names to the stream
-    for(int j = 0; j < dataset.size(); ++j)
+    std::ifstream infile(filename);
+    bool exist = infile.good();
+    infile.close();
+    if (!exist)
     {
-        myFile << dataset.at(j).first;
-        if(j != dataset.size() - 1) myFile << ","; // No comma at end of line
+        std::ofstream addHeads(filename);
+        addHeads << "Success (Boolean),Computation Time (s), Sum of Controls (double)" << std::endl;
+        addHeads.close();
     }
-    myFile << "\n";
-
-	if (!dataset.empty())
-	{ 
-    	// Send data to the stream
-    	for(int i = 0; i < dataset.at(0).second.size(); ++i)
-    	{
-    	    for(int j = 0; j < dataset.size(); ++j)
-    	    {
-    	        myFile << dataset.at(j).second.at(i);
-    	        if(j != dataset.size() - 1) myFile << ","; // No comma at end of line
-    	    }
-    	    myFile << "\n";
-    	}
-	}
-    // Close the file
-    myFile.close();
+    std::ofstream stats(filename, std::ios::app);
+    stats << std::get<0>(results) << "," << std::get<1>(results) << "," << std::get<2>(results);
+    stats << std::endl;
 }

@@ -51,7 +51,7 @@ void run_kcbs_benchmark(InstancePtr mrmp_instance, const double merge_bound, con
 
     std::vector<std::tuple<bool, double, double>> results; // solved, computation time, path length
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 50; i++) {
         // create K-CBS instance
         ob::PlannerPtr p(std::make_shared<oc::KCBS>(mrmp_pdef));
         p->as<oc::KCBS>()->setMergeBound(merge_bound);

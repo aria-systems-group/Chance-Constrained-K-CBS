@@ -1,6 +1,9 @@
 #pragma once
 #include "Spaces/RealVectorBeliefSpace.h"
 // #include "Spaces/R2BeliefSpace.h"
+// #include <ompl/base/spaces/SO2StateSpace.h>
+#include <ompl/control/ControlSpace.h>
+#include <ompl/control/spaces/RealVectorControlSpace.h>
 // #include "Spaces/R2BeliefSpaceEuclidean.h"
 #include "Planners/ConstraintRespectingPlanner.h"
 #include "PlanValidityCheckers/PlanValidityChecker.h"

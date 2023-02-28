@@ -1,5 +1,6 @@
 #pragma once
 #include "Spaces/RealVectorBeliefSpace.h"
+// #include "Spaces/R2BeliefSpace.h"
 #include <ompl/base/objectives/PathLengthOptimizationObjective.h>
 #include <ompl/base/objectives/StateCostIntegralObjective.h>
 
@@ -16,11 +17,16 @@ class EuclideanPathLengthObjective : public ob::PathLengthOptimizationObjective
  
         ob::Cost motionCost(const State *s1, const State *s2) const override
         {
-            double* mu_1 = s1->as<RealVectorBeliefSpace::StateType>()->values;
-            double* mu_2 = s2->as<RealVectorBeliefSpace::StateType>()->values;
-
-            Eigen::VectorXd diff(si_->getStateSpace()->getDimension());
-            for (int d = 0; d < si_->getStateSpace()->getDimension(); d++) {
+            Eigen::Vector2d mu_1;
+            Eigen::Vector2d mu_2;
+            double* vals1 = s1->as<RealVectorBeliefSpace::StateType>()->values;
+            double* vals2 = s2->as<RealVectorBeliefSpace::StateType>()->values;
+            for (int d = 0; d < 2; d++) {
+                mu_1[d] = vals1[d];
+                mu_2[d] = vals2[d];
+            }
+            Eigen::Vector2d diff;
+            for (int d = 0; d < 2; d++) {
                 diff[d] = mu_1[d] - mu_2[d];
             }
             return Cost(diff.norm());

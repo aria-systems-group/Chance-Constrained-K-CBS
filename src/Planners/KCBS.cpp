@@ -21,10 +21,9 @@ ompl::control::KCBS::KCBS(const MultiRobotProblemDefinitionPtr mrmp_pdef) :
 void ompl::control::KCBS::setUp_()
 {
 	const std::vector<MotionPlanningProblemPtr> mrmp_info = mrmp_pdef_->getAllProblemInformation();
-
-   	/* verify assumption that step size is the same for each planner */
-   	prop_step_size_ = mrmp_pdef_->getSystemStepSize();
-   	for (auto itr = mrmp_info.begin() + 1; itr != mrmp_info.end(); itr++) {
+    prop_step_size_ = mrmp_pdef_->getSystemStepSize();
+    for (auto itr = mrmp_info.begin() + 1; itr != mrmp_info.end(); itr++) {
+   	    /* verify assumption that step size is the same for each planner */
    	   	const oc::SpaceInformationPtr siPtr = (*itr)->getSpaceInformation();
    	   	const double dt = siPtr->getPropagationStepSize();
    	   	if (dt != prop_step_size_) {
@@ -83,6 +82,11 @@ void ompl::control::KCBS::freeMemory_()
 
 oc::PathControl* ompl::control::KCBS::calcNewPath_(PlannerPtr planner, std::vector<ConstraintPtr> constraints, bool restart)
 {
+    // clear old solution
+    planner->getProblemDefinition()->clearSolutionPaths();
+    // for (int i = 0; i < mrmp_pdef_->getAllProblemInformation().size(); i++) {
+    //     mrmp_pdef_->getRobotProblemDefinitionPtr(i)->clearSolutionPaths();
+    // }
 	/* Update the constraints for planner and attempt to resolve them in mp_comp_time_ seconds */
 	/* If replanning was successful, return new path. Otherwise, return nullptr */
    	oc::PathControl *traj = nullptr;
@@ -193,6 +197,10 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
    	   	return base::PlannerStatus::INVALID_START;
    	}
 
+    for (int i = 0; i < mrmp_pdef_->getAllProblemInformation().size(); i++) {
+        mrmp_pdef_->getRobotProblemDefinitionPtr(i)->clearSolutionPaths();
+    }
+
    	/* initialize priority queue and constants */ 
    	std::priority_queue<KCBSNode, std::vector<KCBSNode>, Compare> pq;
    	std::vector<MotionPlanningProblemPtr> all_mp_pdefs = mrmp_pdef_->getAllProblemInformation();
@@ -213,8 +221,8 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
    	   	}
    	   	/* store initial trajectory */
    	   	if (solved) {
-   	   	   	oc::PathControl* traj = (*itr)->getProblemDefinition()->getSolutionPath()->as<oc::PathControl>();
-   	   	   	root_plan.push_back(*traj);
+            oc::PathControl* traj = (*itr)->getProblemDefinition()->getSolutionPath()->as<oc::PathControl>();
+            root_plan.push_back(*traj);  
    	   	}
    	   	(*itr)->clear();
    	}
@@ -380,7 +388,22 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
         	 	/* extract conflict information */
         	 	ConstraintPtr agent1IdxConstraint = mrmp_pdef_->getPlanValidator()->createConstraint(curr->getPlan(), confs, confs.front()->agent1Idx_);
         	 	ConstraintPtr agent2IdxConstraint = mrmp_pdef_->getPlanValidator()->createConstraint(curr->getPlan(), confs, confs.front()->agent2Idx_);
-        	 	std::vector<ConstraintPtr> new_constraints{agent1IdxConstraint, agent2IdxConstraint};
+        	 	
+                // std::cout << "Creating constraints for agent " << agent1IdxConstraint->getConstrainedAgent() << std::endl;
+                // std::cout << "Time range: [" << agent1IdxConstraint->getTimes().front() << "," << agent1IdxConstraint->getTimes().back() << "]" << std::endl;
+                // std::cout << "state range: " << std::endl;
+                // for (auto st: agent1IdxConstraint->as<BeliefConstraint>()->getStates()) {
+                //     std::cout << st->as<RealVectorBeliefSpace::StateType>()->values[0] << "," << st->as<RealVectorBeliefSpace::StateType>()->values[1] << std::endl;
+                // }
+
+                // std::cout << "Creating constraints for agent " << agent2IdxConstraint->getConstrainedAgent() << std::endl;
+                // std::cout << "Time range: [" << agent2IdxConstraint->getTimes().front() << "," << agent2IdxConstraint->getTimes().back() << "]" << std::endl;
+                // std::cout << "state range: " << std::endl;
+                // for (auto st: agent2IdxConstraint->as<BeliefConstraint>()->getStates()) {
+                //     std::cout << st->as<RealVectorBeliefSpace::StateType>()->values[0] << "," << st->as<RealVectorBeliefSpace::StateType>()->values[1] << std::endl;
+                // }
+
+                std::vector<ConstraintPtr> new_constraints{agent1IdxConstraint, agent2IdxConstraint};
 
                 // for (int i = 0; i < 2; i++) {
                 //     std::cout << "Printing New Constraints " << std::endl;
@@ -409,6 +432,13 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
             		      agent_constraints.emplace_back(nCpy->getConstraint());
             		   nCpy = nCpy->getParent();
             		}
+
+                    // for (auto c: agent_constraints) {
+                    //     std::cout << "Constraint" << std::endl;
+                    //     for (auto t: c->getTimes()) {
+                    //         std::cout << t << std::endl;
+                    //     }
+                    // }
 
                     // std::cout << "here" << std::endl;
                     // for (auto c: agent_constraints)
@@ -452,12 +482,13 @@ ob::PlannerStatus ompl::control::KCBS::solve(const base::PlannerTerminationCondi
    	 	solved = true;
    	 	OMPL_INFORM("%s: Found Solution in %0.3f seconds!", getName().c_str(), computation_time_);
    	 	auto sol_plan = solution->getPlan();
-   	 	for (int i = 0; i < sol_plan.size(); i++)
-   	 	{
-   	 	   auto path(std::make_shared<PathControl>(sol_plan[i]));
-   	 	   mrmp_pdef_->getRobotProblemDefinitionPtr(i)->addSolutionPath(path, false, -1.0, getName().c_str());
-           soc_ += path->length();
-   	 	}
+        for (int i = 0; i < sol_plan.size(); i++)
+        {
+            auto path(std::make_shared<PathControl>(sol_plan[i]));
+            mrmp_pdef_->getRobotProblemDefinitionPtr(i)->clearSolutionPaths();
+            mrmp_pdef_->getRobotProblemDefinitionPtr(i)->addSolutionPath(path, false, -1.0, getName().c_str());
+            soc_ += path->length();
+        }
    	 	OMPL_INFORM("%s: Planning Complete.", getName().c_str());
    	 	return {solved, false};
    	}

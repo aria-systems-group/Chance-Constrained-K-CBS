@@ -6,6 +6,7 @@
 #include "StateValidityCheckers/CentralizedChiSquaredBoundarySVC.h"
 #include "StatePropogators/CarSP.h"
 #include "StatePropogators/UncertainLinearSP.h"
+#include "StatePropogators/UncertainUnicycleSP.h"
 #include "StatePropogators/CentralizedUncertainLinearSP.h"
 #include "Goals/RealVectorStateSpaceGoals.h"
 #include "Goals/BeliefSpaceGoals.h"
@@ -14,6 +15,7 @@
 #include "Planners/CentralizedBSST.h"
 #include "Planners/BSST.h"
 #include "Spaces/RealVectorBeliefSpace.h"
+// #include "Spaces/R2BeliefSpace.h"
 #include <boost/program_options.hpp>
 
 namespace po = boost::program_options;

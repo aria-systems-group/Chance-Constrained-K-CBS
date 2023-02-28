@@ -42,7 +42,10 @@ void R2BeliefSpace::copyState(State *destination, const State *source) const
 
 void R2BeliefSpace::freeState(State *state) const
 {
+    // state->as<StateType>()->getSigma().resize(0, 0);
+    // state->as<StateType>()->getLambda().resize(0, 0);
     RealVectorStateSpace::freeState(state);
+    state = nullptr;
 }
 
 double R2BeliefSpace::distance(const State* state1, const State *state2) const //wasserstein distance
@@ -53,7 +56,7 @@ double R2BeliefSpace::distance(const State* state1, const State *state2) const /
     double dy = state1->as<StateType>()->getY() - state2->as<StateType>()->getY();
     Eigen::Matrix2d cov1 = state1->as<StateType>()->getCovariance();
     Eigen::Matrix2d cov2 = state2->as<StateType>()->getCovariance();
-    return pow(dx*dx+dy*dy, 0.5) + (cov1 + cov2 - 2*(cov2.sqrt()*cov1*cov2.sqrt()).sqrt()).trace();
+    return (dx * dx + dy * dy) + (cov1 + cov2 - 2*(cov2.sqrt()*cov1*cov2.sqrt()).sqrt()).trace();
 }
 
 void R2BeliefSpace::printBeliefState(const State *state)

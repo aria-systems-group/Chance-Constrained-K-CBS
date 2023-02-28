@@ -161,6 +161,32 @@ void BeliefCollisionCheckerBenchmark::runBenchmarks()
     exportResults_("minkowski_sum_results.csv", sumBlackmore_results);
 
     /* Create results data structure */
+    std::vector<std::pair<double, bool>> Blackmore2_results;
+    num_fail = 0;
+    total_time = 0;
+
+    /* Create state validity checker object */
+    auto Blackmore2PlanValidator = std::make_shared<Blackmore2PVC>(mrmp_pdef_, instance_->getPsafe());
+    
+    /* Iterate through all the states, test for collisions, and save results */
+    for (int idx = 0; idx != num_examples; idx++) {
+        auto start_time = std::chrono::system_clock::now();
+        result = Blackmore2PlanValidator->independentCheck(agent1_belief_map_[idx], agent2_belief_map_[idx]);
+        if (!result)
+            num_fail++;
+        std::chrono::duration<double> elapsed_time = std::chrono::system_clock::now() - start_time;
+        double execution_time = elapsed_time.count();
+        total_time += execution_time;
+        std::pair<double, bool> p(execution_time, result);
+        Blackmore2_results.push_back(p);
+    }
+
+    stat = (double)num_fail / num_examples;
+    OMPL_INFORM("%s: rejected %0.1f percent of belief pairs in a total of %0.3f seconds", Blackmore2PlanValidator->getName().c_str(), (stat * 100.0), total_time);
+
+    exportResults_("blackmore_2_results.csv", Blackmore2_results);
+
+    /* Create results data structure */
     std::vector<std::pair<double, bool>> boundingBox_results;
     num_fail = 0;
     total_time = 0;

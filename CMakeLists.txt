@@ -14,9 +14,8 @@ find_package(ompl REQUIRED)
 include_directories(
     include 
     ${EIGEN3_INCLUDE_DIRS} 
-    ${BOOST_INCLUDE_DIRS} 
-    ${ompl_INCLUDE_DIRS}
-
+    ${BOOST_INCLUDE_DIRS}
+    ${OMPL_INCLUDE_DIRS}
 )
 
 file(GLOB SOURCES "src/*.cpp" "src/Spaces/*.cpp" "src/utils/*.cpp"
@@ -35,3 +34,7 @@ target_link_libraries (K-CBS
     ${EIGEN3_LIBRARIES}
     ${OMPL_LIBRARIES}
 )
+
+# ignore BOOST deprecated headers
+add_definitions("-DBOOST_ALLOW_DEPRECATED_HEADERS")
+add_definitions("-DBOOST_BIND_GLOBAL_PLACEHOLDERS")

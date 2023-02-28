@@ -1,6 +1,7 @@
 #pragma once
 #include "utils/Instance.h"
 #include "Spaces/RealVectorBeliefSpace.h"
+// #include "Spaces/R2BeliefSpace.h"
 #include <ompl/control/SpaceInformation.h>
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/math/special_functions/next.hpp>
@@ -33,7 +34,7 @@ class PCCBlackmoreSVC : public ob::StateValidityChecker {
 		inline double computeInverseErrorFunction_(const double &argument) {
 			return boost::math::erf_inv(argument);
 		}
-		bool HyperplaneCCValidityChecker_(const Eigen::MatrixXd &A, const Eigen::MatrixXd &B, const double &x_pose, const double &y_pose, const Eigen::MatrixXd &PX) const;
+		bool HyperplaneCCValidityChecker_(const Eigen::MatrixXd &A, const Eigen::MatrixXd &B, const double &x_pose, const double &y_pose, const Eigen::Matrix2d &PX) const;
 		std::pair<Eigen::MatrixXd, Eigen::MatrixXd> getHalfPlanes_(Polygon combined_poly);
 		Polygon getMinkowskiSum_(const Robot* r, Obstacle* &obs);
 		Point addPoints_(const Point &a, const Point &b);

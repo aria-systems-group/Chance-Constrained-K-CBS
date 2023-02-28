@@ -80,6 +80,7 @@ bool CDFGridPVC::satisfiesConstraints(oc::PathControl path, std::vector<Constrai
             if (it == times.end()) {
                 continue;
             }
+            // std::cout << "checking constraint at time: " << (*it) << std::endl;
             // must check this constraint at this time
             const int constraining_robot = (*c_itr)->getConstrainingAgent();
             assert(constrained_robot != constraining_robot);
@@ -134,6 +135,11 @@ ConflictPtr CDFGridPVC::checkForConflicts_(std::map<std::string, Belief> states_
                 int a_idx = std::atoi((*beg_a).c_str());
                 int b_idx = std::atoi((*beg_b).c_str());
                 c = std::make_shared<Conflict>(a_idx, b_idx, step);
+                // std::cout << "found conflict between " << a_idx << "," << b_idx << std::endl;
+                // std::cout << (*itr_a).second.first << std::endl;
+                // std::cout << (*itr_a).second.second << std::endl;
+                // std::cout << (*itr_b).second.first << std::endl;
+                // std::cout << (*itr_b).second.second << std::endl;
                 return c;
             }
         }

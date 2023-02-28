@@ -7,6 +7,7 @@
 #include "PlanValidityCheckers/ChiSquaredBoundaryPVC.h"
 #include "PlanValidityCheckers/BoundingBoxBlackmorePVC.h"
 #include "PlanValidityCheckers/CDFGridPVC.h"
+#include "PlanValidityCheckers/Blackmore2PVC.h"
 #include <chrono>
 #include <filesystem>
 #include <unordered_map>

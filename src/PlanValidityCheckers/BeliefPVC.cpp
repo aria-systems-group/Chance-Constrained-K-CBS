@@ -25,11 +25,14 @@ ConstraintPtr BeliefPVC::createConstraint(Plan p, std::vector<ConflictPtr> confl
             ob::State* st = mrmp_pdef_->getRobotSpaceInformationPtr(constraining_robot)->allocState();
             mrmp_pdef_->getRobotSpaceInformationPtr(constraining_robot)->copyState(st, p[constraining_robot].getState((*itr)->timeStep_));
             states.push_back(st);
+            // mrmp_pdef_->getRobotSpaceInformationPtr(constraining_robot)->printState(st);
+
         }
         else {
             ob::State* st = mrmp_pdef_->getRobotSpaceInformationPtr(constraining_robot)->allocState();
             mrmp_pdef_->getRobotSpaceInformationPtr(constraining_robot)->copyState(st, p[constraining_robot].getStates().back());
             states.push_back(st);
+            // mrmp_pdef_->getRobotSpaceInformationPtr(constraining_robot)->printState(st);
         }
     }
     ConstraintPtr c = std::make_shared<BeliefConstraint>(constrained_robot, constraining_robot, times, states);
@@ -84,7 +87,7 @@ Belief BeliefPVC::getDistribution_(const ob::State* st)
     Eigen::VectorXd mu(2);
     mu[0] = all_vals[0];
     mu[1] = all_vals[1];
-    Eigen::MatrixXd Sigma = st->as<RealVectorBeliefSpace::StateType>()->getCovariance();
+    Eigen::Matrix2d Sigma = st->as<RealVectorBeliefSpace::StateType>()->getCovariance().block<2, 2>(0, 0);
     Belief b(mu, Sigma);
     return b;
 }

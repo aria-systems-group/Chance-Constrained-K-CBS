@@ -14,12 +14,8 @@ typedef Eigen::Matrix<double, 2, 2, Eigen::DontAlign> Mat;
 class R2_UncertainLinearStatePropagator : public oc::StatePropagator
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    /** \brief Construct representation of a unicycle state propagator.
-    */
+    /* \brief Construct representation of a unicycle state propagator. */
     R2_UncertainLinearStatePropagator(const oc::SpaceInformationPtr &si);
-
-    virtual ~R2_UncertainLinearStatePropagator(void){}
 
     /** \brief Will always return false, as the simulation can only proceed forward in time */
     virtual bool canPropagateBackward(void) const;

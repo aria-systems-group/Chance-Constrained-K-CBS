@@ -64,6 +64,10 @@ void run_kcbs_benchmark(InstancePtr mrmp_instance, const double merge_bound, con
         write_csv(filename, r);
         // clear memory
         p.reset();
+        auto all_pdefs = mrmp_pdef->getAllProblemInformation();
+        for (auto pdef_itr = all_pdefs.begin(); pdef_itr != all_pdefs.end(); pdef_itr++) {
+            (*pdef_itr)->getProblemDefinition()->clearSolutionPaths();// << std::endl; //->clearSolutionPaths()
+        }
     }
 
     for (auto itr = results.begin(); itr != results.end(); itr++) {
@@ -71,7 +75,6 @@ void run_kcbs_benchmark(InstancePtr mrmp_instance, const double merge_bound, con
     }
 }
 
-// https://www.gormanalysis.com/blog/reading-and-writing-csv-files-with-cpp/
 void write_csv(std::string filename, std::tuple<bool, double, double> results)
 {
     // Make a CSV file with one or more columns of integer values

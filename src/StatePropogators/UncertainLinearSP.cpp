@@ -39,16 +39,16 @@ R2_UncertainLinearStatePropagator::R2_UncertainLinearStatePropagator(const oc::S
     R_ = pow(measurementNoise, 2) * I_;
 }
 
-void saturate(double &value, const double &min_value, const double &max_value) {
-    if(value < min_value) value = min_value;
-    if(value > max_value) value = max_value;
-}
+// void saturate(double &value, const double &min_value, const double &max_value) {
+//     if(value < min_value) value = min_value;
+//     if(value > max_value) value = max_value;
+// }
 
-double wrap(double angle) {
-    angle = fmod(angle, 2 * M_PI);
-    if (angle > M_PI) angle -= 2 * M_PI;
-    return angle;
-}
+// double wrap(double angle) {
+//     angle = fmod(angle, 2 * M_PI);
+//     if (angle > M_PI) angle -= 2 * M_PI;
+//     return angle;
+// }
 
 void R2_UncertainLinearStatePropagator::propagate(const ob::State *state, const oc::Control* control, const double duration, ob::State *result) const
 {

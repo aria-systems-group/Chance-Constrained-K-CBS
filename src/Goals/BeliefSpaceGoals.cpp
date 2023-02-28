@@ -65,11 +65,13 @@ void ChanceConstrainedGoal::setHalfPlanes_(Polygon combined_poly)
 
 std::pair<Eigen::Vector2d, Eigen::Matrix2d> ChanceConstrainedGoal::getDistFromState_(const ob::State* st) const
 {
-	double* all_vals = st->as<RealVectorBeliefSpace::StateType>()->values;
-    Eigen::VectorXd mu(2);
-    mu[0] = all_vals[0];
-    mu[1] = all_vals[1];
-    Eigen::MatrixXd Sigma = st->as<RealVectorBeliefSpace::StateType>()->getCovariance();
+    Eigen::Vector2d mu;
+    Eigen::Matrix2d Sigma;
+    double* vals = st->as<RealVectorBeliefSpace::StateType>()->values;
+    Sigma = st->as<RealVectorBeliefSpace::StateType>()->getCovariance().block<2, 2>(0, 0);
+    for (int d = 0; d < 2; d++) {
+        mu[d] = vals[d];
+    }
     std::pair<Eigen::Vector2d, Eigen::Matrix2d> b(mu, Sigma);
     return b;
 }

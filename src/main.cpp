@@ -34,7 +34,7 @@ void parse_cmd_line(int &argc, char ** &argv, po::variables_map &vm, po::options
         ("solver", po::value<std::string>()->default_value("K-CBS"), "the high-level MRMP solver (K-CBS, PBS, MR-RRT, CentralizedBSST)")
         ("lowlevel,l", po::value<std::string>()->default_value("RRT"), "The low-level motion planner for K-CBS (RRT, BSST)")
         ("bound,b", po::value<int>()->default_value(std::numeric_limits<int>::max()), "The merge bound of K-CBS.")
-        ("time,t", po::value<double>()->default_value(600), "cutoff time (seconds)")
+        ("time,t", po::value<double>()->default_value(300), "cutoff time (seconds)")
         ("output,o", po::value<std::string>()->default_value("results"), "output file name (e.g. results.csv)")
         ("p_safe,p", po::value<double>()->default_value(0.95), "Probability of safe in decimal form (only used for non-deterministic planning sequences)")
         ("pvc,c", po::value<std::string>()->default_value("ChiSquaredBoundary"), "The Collision-Checker to be used."
@@ -66,13 +66,6 @@ int main(int argc, char ** argv)
     else if (vm["benchmark"].as<bool>()) {
         InstancePtr instance = std::make_shared<Instance>(vm);
         run_kcbs_benchmark(instance, vm["bound"].as<int>(), vm["time"].as<double>(), vm["output"].as<std::string>());
-        // std::string planner_name = vm["solver"].as<std::string>();
-        // if (planner_name == "K-CBS") {
-            
-        // }
-        // else if (planner_name == "CentralizedBSST") {
-        //     std::cout << vm["svc"].as<std::string>() <<std::endl;
-        // }
         return 1;
     }
 

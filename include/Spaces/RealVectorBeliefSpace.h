@@ -2,6 +2,7 @@
 #include <ompl/base/spaces/RealVectorStateSpace.h>
 #include <boost/math/constants/constants.hpp>
 #include <unsupported/Eigen/MatrixFunctions>
+#include <Eigen/Eigenvalues> 
 
 using namespace ompl::base;
 

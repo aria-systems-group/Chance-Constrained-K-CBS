@@ -1,6 +1,7 @@
 #pragma once
 #include "utils/common.h"
 #include "Spaces/RealVectorBeliefSpace.h"
+// #include "Spaces/R2BeliefSpace.h"
 #include <ompl/base/Goal.h>
 #include <ompl/control/SpaceInformation.h>
 #include <boost/math/special_functions/erf.hpp>

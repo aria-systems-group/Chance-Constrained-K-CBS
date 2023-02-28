@@ -83,10 +83,12 @@ void ompl::control::ConstraintRespectingBSST::freeMemory()
         nn_->list(motions);
         for (auto &motion : motions)
         {
-            if (motion->state_)
+            if (motion->state_) {
                 si_->freeState(motion->state_);
-            if (motion->control_)
+            }
+            if (motion->control_) {
                 siC_->freeControl(motion->control_);
+            }
             delete motion;
         }
     }
@@ -121,7 +123,6 @@ ompl::control::ConstraintRespectingBSST::Motion *ompl::control::ConstraintRespec
     base::Cost bestCost = opt_->infiniteCost();
     nn_->nearestR(sample, selectionRadius_, ret);
 
-    // std::cout << ret.size() << std::endl;
     for (auto &i : ret)
     {
         if (!i->inactive_ && opt_->isCostBetterThan(i->accCost_, bestCost))
@@ -132,7 +133,6 @@ ompl::control::ConstraintRespectingBSST::Motion *ompl::control::ConstraintRespec
     }
     if (selected == nullptr)
     {
-        
         int k = 1;
         while (selected == nullptr)
         {
@@ -150,9 +150,15 @@ ompl::control::ConstraintRespectingBSST::Witness *ompl::control::ConstraintRespe
 {
     if (witnesses_->size() > 0)
     {
+        // std::cout << "154" << std::endl;
         auto *closest = static_cast<Witness *>(witnesses_->nearest(node));
+        // si_->printState(closest->state_, std::cout);
+        // si_->printState(node->state_, std::cout);
+        // std::cout << pruningRadius_ << std::endl;
+        // std::cout << distanceFunction(closest, node) << std::endl;
         if (distanceFunction(closest, node) > pruningRadius_)
         {
+            // std::cout << "here" << std::endl;
             closest = new Witness(siC_);
             closest->linkRep(node);
             si_->copyState(closest->state_, node->state_);
@@ -162,6 +168,7 @@ ompl::control::ConstraintRespectingBSST::Witness *ompl::control::ConstraintRespe
     }
     else
     {
+        // std::cout << "167" << std::endl;
         auto *closest = new Witness(siC_);
         closest->linkRep(node);
         si_->copyState(closest->state_, node->state_);
@@ -220,23 +227,44 @@ ompl::base::PlannerStatus ompl::control::ConstraintRespectingBSST::solve(const b
             goal_s->sampleGoal(rstate);
         else
             sampler_->sampleUniform(rstate);
-
+        // if (si_->getStateSpace()->isCompound()) {
+        //     rmotion->state_->as<base::CompoundStateSpace::StateType>()->as<R2BeliefSpace::StateType>(0)->setSigmaX(rng_.uniform01() * max_eigenvalue_);
+        //     rmotion->state_->as<base::CompoundStateSpace::StateType>()->as<R2BeliefSpace::StateType>(0)->setSigmaY(rng_.uniform01() * max_eigenvalue_);
+        // }
+        // else {
+        rmotion->state_->as<RealVectorBeliefSpace::StateType>()->sigma_(0, 0) = rng_.uniform01() * max_eigenvalue_;
+        rmotion->state_->as<RealVectorBeliefSpace::StateType>()->sigma_(1, 1) = rng_.uniform01() * max_eigenvalue_;
+        // }
+        
         /* find closest state in the tree */
         Motion *nmotion = selectNode(rmotion);
+        // std::cout << "nmotion: " << nmotion << std::endl;
 
         /* sample a random control that attempts to go towards the random state, and also sample a control duration */
+        // std::cout << "sample control" << std::endl;
         controlSampler_->sample(rctrl);
+        // std::cout << "propagate" << std::endl;
         unsigned int cd = rng_.uniformInt(siC_->getMinControlDuration(), siC_->getMaxControlDuration());
         unsigned int propCd = siC_->propagateWhileValid(nmotion->state_, rctrl, cd, rstate);
-
+        // std::cout << "done propagating" << std::endl;
         if (propCd == cd)
         {
             base::Cost incCost = opt_->motionCost(nmotion->state_, rstate);
+            // std::cout << incCost << std::endl;
+            // std::cout << nmotion->accCost_ << std::endl;
             base::Cost cost = opt_->combineCosts(nmotion->accCost_, incCost);
+            // std::cout << cost << std::endl;
             Witness *closestWitness = findClosestWitness(rmotion);
+
+            // std::cout << "rmotion: " << rmotion << std::endl;
+            // std::cout << "closestWitness->rep_: " << closestWitness->rep_ << std::endl;
+            // std::cout << cost << std::endl;
+            // std::cout << closestWitness->rep_->accCost_ << std::endl;
+            // exit(-1);
 
             if (closestWitness->rep_ == rmotion || opt_->isCostBetterThan(cost, closestWitness->rep_->accCost_))
             {
+                // std::cout << "in true" << std::endl;
                 Motion *oldRep = closestWitness->rep_;
                 /* create a motion */
                 auto *motion = new Motion(siC_);
@@ -273,27 +301,17 @@ ompl::base::PlannerStatus ompl::control::ConstraintRespectingBSST::solve(const b
                         closestWitness->linkRep(motion);
 
                         nn_->add(motion);
-
-                        // if (DISTANCE_FUNC_ == 0){
-                        //     if (motion->state_->as<RealVectorBeliefSpaceEuclidean::StateType>()->getCovariance()(0,0) > max_eigenvalue_)
+                        // if (si_->getStateSpace()->isCompound()) {
+                        //     if (motion->state_->as<ob::CompoundState>()->as<R2BeliefSpace::StateType>(0)->getCovariance()(0,0) > max_eigenvalue_)
                         //     {
-                        //         max_eigenvalue_ = motion->state_->as<R2BeliefSpaceEuclidean::StateType>()->getCovariance()(0,0);
+                        //         max_eigenvalue_ = motion->state_->as<ob::CompoundState>()->as<R2BeliefSpace::StateType>(0)->getCovariance()(0,0);
                         //     }
-                        //     else if (motion->state_->as<R2BeliefSpaceEuclidean::StateType>()->getCovariance()(1,1) > max_eigenvalue_)
+                        //     else if (motion->state_->as<ob::CompoundState>()->as<R2BeliefSpace::StateType>(0)->getCovariance()(1,1) > max_eigenvalue_)
                         //     {
-                        //         max_eigenvalue_ = motion->state_->as<R2BeliefSpaceEuclidean::StateType>()->getCovariance()(1,1);
-                        //     }
-                        // }
-                        // else if (DISTANCE_FUNC_ == 1){
-                        //     if (motion->state_->as<R2BeliefSpace::StateType>()->getCovariance()(0,0) > max_eigenvalue_)
-                        //     {
-                        //         max_eigenvalue_ = motion->state_->as<R2BeliefSpace::StateType>()->getCovariance()(0,0);
-                        //     }
-                        //     else if (motion->state_->as<R2BeliefSpace::StateType>()->getCovariance()(1,1) > max_eigenvalue_)
-                        //     {
-                        //         max_eigenvalue_ = motion->state_->as<R2BeliefSpace::StateType>()->getCovariance()(1,1);
+                        //         max_eigenvalue_ = motion->state_->as<ob::CompoundState>()->as<R2BeliefSpace::StateType>(0)->getCovariance()(1,1);
                         //     }
                         // }
+                        // else {
                         if (motion->state_->as<RealVectorBeliefSpace::StateType>()->getCovariance()(0,0) > max_eigenvalue_)
                         {
                             max_eigenvalue_ = motion->state_->as<RealVectorBeliefSpace::StateType>()->getCovariance()(0,0);
@@ -302,6 +320,7 @@ ompl::base::PlannerStatus ompl::control::ConstraintRespectingBSST::solve(const b
                         {
                             max_eigenvalue_ = motion->state_->as<RealVectorBeliefSpace::StateType>()->getCovariance()(1,1);
                         }
+                        // }
 
                         double dist = 0.0;
                         bool solv = goal->isSatisfied(motion->state_, &dist);
@@ -412,6 +431,17 @@ ompl::base::PlannerStatus ompl::control::ConstraintRespectingBSST::solve(const b
                     //         max_eigenvalue_ = motion->state_->as<R2BeliefSpace::StateType>()->getCovariance()(1,1);
                     //     }
                     // }
+                    // if (si_->getStateSpace()->isCompound()) {
+                    //     if (motion->state_->as<ob::CompoundState>()->as<R2BeliefSpace::StateType>(0)->getCovariance()(0,0) > max_eigenvalue_)
+                    //     {
+                    //         max_eigenvalue_ = motion->state_->as<ob::CompoundState>()->as<R2BeliefSpace::StateType>(0)->getCovariance()(0,0);
+                    //     }
+                    //     else if (motion->state_->as<ob::CompoundState>()->as<R2BeliefSpace::StateType>(0)->getCovariance()(1,1) > max_eigenvalue_)
+                    //     {
+                    //         max_eigenvalue_ = motion->state_->as<ob::CompoundState>()->as<R2BeliefSpace::StateType>(0)->getCovariance()(1,1);
+                    //     }
+                    // }
+                    // else {
                     if (motion->state_->as<RealVectorBeliefSpace::StateType>()->getCovariance()(0,0) > max_eigenvalue_)
                     {
                         max_eigenvalue_ = motion->state_->as<RealVectorBeliefSpace::StateType>()->getCovariance()(0,0);
@@ -420,6 +450,7 @@ ompl::base::PlannerStatus ompl::control::ConstraintRespectingBSST::solve(const b
                     {
                         max_eigenvalue_ = motion->state_->as<RealVectorBeliefSpace::StateType>()->getCovariance()(1,1);
                     }
+                    // }
 
                     double dist = 0.0;
                     bool solv = goal->isSatisfied(motion->state_, &dist);
@@ -438,21 +469,21 @@ ompl::base::PlannerStatus ompl::control::ConstraintRespectingBSST::solve(const b
                         prevSolutionControls_.clear();
                         prevSolutionSteps_.clear();
 
-                    Motion *solTrav = solution;
-                    while (solTrav->parent_ != nullptr)
-                    {
+                        Motion *solTrav = solution;
+                        while (solTrav->parent_ != nullptr)
+                        {
+                            prevSolution_.push_back(si_->cloneState(solTrav->state_));
+                            prevSolutionControls_.push_back(siC_->cloneControl(solTrav->control_));
+                            prevSolutionSteps_.push_back(solTrav->steps_);
+                            solTrav = solTrav->parent_;
+                        }
                         prevSolution_.push_back(si_->cloneState(solTrav->state_));
-                        prevSolutionControls_.push_back(siC_->cloneControl(solTrav->control_));
-                        prevSolutionSteps_.push_back(solTrav->steps_);
-                        solTrav = solTrav->parent_;
-                    }
-                    prevSolution_.push_back(si_->cloneState(solTrav->state_));
-                    prevSolutionCost_ = solution->accCost_;
+                        prevSolutionCost_ = solution->accCost_;
 
-                    OMPL_INFORM("Found solution with cost %.2f", solution->accCost_.value());
-                    sufficientlyShort = opt_->isSatisfied(solution->accCost_);
-                    if (sufficientlyShort)
-                        break;
+                        OMPL_INFORM("Found solution with cost %.2f", solution->accCost_.value());
+                        sufficientlyShort = opt_->isSatisfied(solution->accCost_);
+                        if (sufficientlyShort)
+                            break;
                     }
                     // removing the ability to return approximate solutions (HACK)
                     // To-Do: Is there a way to set this behavior inside pdef_?
@@ -481,19 +512,16 @@ ompl::base::PlannerStatus ompl::control::ConstraintRespectingBSST::solve(const b
                     //     }
                     //     prevSolution_.push_back(si_->cloneState(solTrav->state_));
                     // }
-
                     if (oldRep != rmotion)
                     {
                         while (oldRep->inactive_ && oldRep->numChildren_ == 0)
                         {
                             oldRep->inactive_ = true;
                             nn_->remove(oldRep);
-
                             if (oldRep->state_)
                                 si_->freeState(oldRep->state_);
                             if (oldRep->control_)
                                 siC_->freeControl(oldRep->control_);
-
                             oldRep->state_ = nullptr;
                             oldRep->control_ = nullptr;
                             oldRep->parent_->numChildren_--;
@@ -504,6 +532,7 @@ ompl::base::PlannerStatus ompl::control::ConstraintRespectingBSST::solve(const b
                     }
                 }
             }
+            // exit(-1);
         }
         iterations++;
     }

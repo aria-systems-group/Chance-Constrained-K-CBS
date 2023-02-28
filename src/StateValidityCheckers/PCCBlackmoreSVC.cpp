@@ -25,22 +25,28 @@ PCCBlackmoreSVC::PCCBlackmoreSVC(const oc::SpaceInformationPtr &si, InstancePtr 
 
 PCCBlackmoreSVC::~PCCBlackmoreSVC() {}
 
-bool PCCBlackmoreSVC::isValid(const ob::State *state) const {
-    
+bool PCCBlackmoreSVC::isValid(const ob::State *state) const 
+{
+    // std::cout << "isValid" << std::endl;
 	//=========================================================================
 	// Bounds checker
 	//=========================================================================
 	if (!si_->satisfiesBounds(state)) {
 		return false;
 	}
-
-    auto vals = state->as<RealVectorBeliefSpace::StateType>()->values;
-    Eigen::VectorXd mu(si_->getStateSpace()->getDimension());
-    for (int d = 0; d < si_->getStateSpace()->getDimension(); d++) {
+    Eigen::Vector2d mu = Eigen::Vector2d::Zero();
+    Eigen::Matrix2d Sigma;
+    double* vals = state->as<RealVectorBeliefSpace::StateType>()->values;
+    Sigma = state->as<RealVectorBeliefSpace::StateType>()->getCovariance().block<2, 2>(0, 0);
+    // project mean and covariance onto xy-plane
+    for (int d = 0; d < 2; d++) {
         mu[d] = vals[d];
     }
-    Eigen::MatrixXd Sigma = state->as<RealVectorBeliefSpace::StateType>()->getCovariance();
+    
 
+    // std::cout << mu << std::endl;
+    // std::cout << Sigma << std::endl;
+    
 	//=========================================================================
 	// Probabilistic collision checker
 	//=========================================================================
@@ -49,12 +55,12 @@ bool PCCBlackmoreSVC::isValid(const ob::State *state) const {
 			return false;
 		}
 	}
+    // std::cout << "returning valid" << std::endl;
 	return true;
 }
 
-bool PCCBlackmoreSVC::HyperplaneCCValidityChecker_(const Eigen::MatrixXd &A, const Eigen::MatrixXd &B, const double &x_pose, const double &y_pose, const Eigen::MatrixXd &PX) const {
+bool PCCBlackmoreSVC::HyperplaneCCValidityChecker_(const Eigen::MatrixXd &A, const Eigen::MatrixXd &B, const double &x_pose, const double &y_pose, const Eigen::Matrix2d &PX) const {
 	double PV, b_bar;
-	Eigen::MatrixXf Pv_2;
 
 	for (int i = 0; i < 4; i++) {
         double tmp = (A.row(i) * PX * A.row(i).transpose()).value();

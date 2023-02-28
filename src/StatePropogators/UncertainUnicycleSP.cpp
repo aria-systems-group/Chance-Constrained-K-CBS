@@ -13,28 +13,29 @@ UncertainUnicycleStatePropagator::UncertainUnicycleStatePropagator(const oc::Spa
     // Open loop system definition
     //=========================================================================
     Eigen::Matrix4d A_ol;
-    A_ol << 0.0, 1.0, 0.0, 0.0,
-             0.0, 0.0, 0.0, 0.0,
-             0.0, 0.0, 0.0, 1.0,
-             0.0, 0.0, 0.0, 0.0;
+    A_ol <<  1.0, 0.2, 0.0, 0.0,
+             0.0, 1.0, 0.0, 0.0,
+             0.0, 0.0, 1.0, 0.2,
+             0.0, 0.0, 0.0, 1.0;
     Eigen::Matrix<double, 4, 2> B_ol;
-    B_ol << 0.0, 0.0,
-            1.0, 0.0,
-            0.0, 0.0,
-            0.0, 1.0;
+    B_ol << 0.02, 0.0,
+            0.2, 0.0,
+            0.0, 0.02,
+            0.0, 0.2;
 
     //=========================================================================
     // PD controller coefficients (from LQR)
     //=========================================================================
-
-    Eigen::Matrix<double, 2, 4> K;
-    K << 0.0316, 0.3054, 0.0, 0.0,
-         0.0, 0.0, 0.0316, 0.3054;
+    K_ << 1, 1, 0.0, 0.0,
+         0.0, 0.0, 1, 1;
 
     //=========================================================================
     // Close loop system definition
     //=========================================================================
-    A_cl_ = A_ol - B_ol * K;
+    A_cl_ = A_ol - B_ol * K_;
+
+    // std::cout << A_cl_ << std::endl;
+    // exit(-1);
 
     // A_cl_d_.resize(4, 4);
     A_cl_d_ = Eigen::MatrixXd::Identity(4, 4) - A_cl_ * duration_;
@@ -61,9 +62,11 @@ double saturate(double value, const double min_value, const double max_value) {
         return value;
 }
 
-double wrap(double angle) {
+double wrap(double angle) 
+{
     angle = fmod(angle, 2 * M_PI);
-    if (angle > M_PI) angle -= 2 * M_PI;
+    if (angle > M_PI) 
+        angle -= 2 * M_PI;
     return angle;
 }
 
@@ -85,11 +88,13 @@ void UncertainUnicycleStatePropagator::propagate(const ob::State *start, const o
     const double yaw_reference      = control->as<oc::RealVectorControlSpace::ControlType>()->values[2];
     const double surge_reference    = control->as<oc::RealVectorControlSpace::ControlType>()->values[3];
 
+    // std::cout << x_pose_reference
+
     //=========================================================================
     // Compute control inputs (dot(dot(x)) dot(dot(y))) with PD controller
     //=========================================================================
-    double u_0 = controller_parameters_[0] * (x_pose_reference - x_pose) + controller_parameters_[1] * (surge_reference * cos(yaw_reference) - surge * cos(yaw));
-    double u_1 = controller_parameters_[6] * (y_pose_reference - y_pose) + controller_parameters_[7] * (surge_reference * sin(yaw_reference) - surge * sin(yaw));
+    double u_0 = K_(0, 0) * (x_pose_reference - x_pose) + K_(0, 1) * (surge_reference * cos(yaw_reference) - surge * cos(yaw));
+    double u_1 = K_(1, 3) * (y_pose_reference - y_pose) + K_(1, 2) * (surge_reference * sin(yaw_reference) - surge * sin(yaw));
 
     //=========================================================================
     // Get dot(v) and dot(yaw) from dot(dot(x)) dot(dot(y))
@@ -130,10 +135,10 @@ void UncertainUnicycleStatePropagator::propagate(const ob::State *start, const o
     Eigen::MatrixXd sigma_to = (I_ - (K * H_)) * sigma_pred;
     Eigen::MatrixXd lambda_to = lambda_pred + K * H_ * sigma_pred;
 
-    result->as<RealVectorBeliefSpace::StateType>()->sigma_ = 0.00001 * Eigen::MatrixXd::Identity(4, 4);
+    result->as<RealVectorBeliefSpace::StateType>()->sigma_ = 0.00001 * Eigen::MatrixXd::Identity(4, 4);;
     result->as<RealVectorBeliefSpace::StateType>()->sigma_.block<2, 2>(0, 0) = sigma_to;
     
-    result->as<RealVectorBeliefSpace::StateType>()->lambda_ = 0.00001 * Eigen::MatrixXd::Identity(4, 4);
+    result->as<RealVectorBeliefSpace::StateType>()->lambda_ = 0.00001 * Eigen::MatrixXd::Identity(4, 4);;
     result->as<RealVectorBeliefSpace::StateType>()->lambda_.block<2, 2>(0, 0) = lambda_to;
 
     // std::cout << "here"<< std::endl;

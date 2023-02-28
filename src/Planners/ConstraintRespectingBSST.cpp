@@ -532,11 +532,9 @@ ompl::base::PlannerStatus ompl::control::ConstraintRespectingBSST::solve(const b
                     }
                 }
             }
-            // exit(-1);
         }
         iterations++;
     }
-
     bool solved = false;
     bool approximate = false;
     if (solution == nullptr)

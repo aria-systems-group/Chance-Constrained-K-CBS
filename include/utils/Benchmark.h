@@ -21,3 +21,5 @@
 void write_csv(std::string filename, std::tuple<bool, double, double> results);
 
 void run_kcbs_benchmark(InstancePtr mrmp_instance, const double merge_bound, const double comp_time,  std::string filename);
+
+void run_centralized_bsst_benchmark(InstancePtr mrmp_instance, const double comp_time, std::string filename);

@@ -69,9 +69,34 @@ void run_kcbs_benchmark(InstancePtr mrmp_instance, const double merge_bound, con
             (*pdef_itr)->getProblemDefinition()->clearSolutionPaths();// << std::endl; //->clearSolutionPaths()
         }
     }
+}
 
-    for (auto itr = results.begin(); itr != results.end(); itr++) {
-        std::cout << std::get<0>(*itr) << "," << std::get<1>(*itr) << "," << std::get<2>(*itr) << std::endl;
+void run_centralized_bsst_benchmark(InstancePtr mrmp_instance, const double comp_time, std::string filename)
+{
+    // set-up low-level planners
+    std::vector<MotionPlanningProblemPtr> mp_problems = set_up_all_MP_Problems(mrmp_instance);
+    // set-up MRMP Problem Definition
+    MultiRobotProblemDefinitionPtr mrmp_pdef = std::make_shared<MultiRobotProblemDefinition>(mp_problems);
+    mrmp_pdef->setMultiRobotInstance(mrmp_instance);
+    const std::string low_level_planner = mrmp_instance->getLowLevelPlannerName();
+
+    std::vector<std::tuple<bool, double, double>> results; // solved, computation time, path length
+
+    for (int i = 0; i < 50; i++) {
+        // solve with CentralizedBSST instance
+        PlannerPtr p = mrmp_pdef->getRobotMotionPlanningProblemPtr(0)->getPlanner();
+        bool solved = p->solve(comp_time);
+        // fill results
+        std::tuple<bool, double, double> r{solved, p->as<oc::CentralizedBSST>()->getComputationTime(), p->as<oc::CentralizedBSST>()->getSolutionSOC()};
+        results.push_back(r);
+        // update results file with n
+        write_csv(filename, r);
+        // clear memory
+        mrmp_pdef->getRobotMotionPlanningProblemPtr(0)->getPlanner()->clear();
+        auto all_pdefs = mrmp_pdef->getAllProblemInformation();
+        for (auto pdef_itr = all_pdefs.begin(); pdef_itr != all_pdefs.end(); pdef_itr++) {
+            (*pdef_itr)->getProblemDefinition()->clearSolutionPaths();// << std::endl; //->clearSolutionPaths()
+        }
     }
 }
 

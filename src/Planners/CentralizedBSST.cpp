@@ -1,7 +1,8 @@
 #include "Planners/CentralizedBSST.h"
 
 ompl::control::CentralizedBSST::CentralizedBSST(const SpaceInformationPtr &si, const int num_agents) : 
-    base::Planner(si, "CentralizedBSST"), num_agents_(num_agents), dim_(si->getStateSpace()->getDimension() / num_agents)
+    base::Planner(si, "CentralizedBSST"), num_agents_(num_agents), dim_(si->getStateSpace()->getDimension() / num_agents),
+    computation_time_(0), soc_(0)
 {
 
     specs_.approximateSolutions = true;
@@ -238,6 +239,7 @@ ompl::base::PlannerStatus ompl::control::CentralizedBSST::solve(const base::Plan
         controlSampler_ = siC_->allocControlSampler();
 
     OMPL_INFORM("%s: Starting planning with %u states already in datastructure\n", getName().c_str(), nn_->size());
+    auto start = std::chrono::high_resolution_clock::now();
 
     Motion *solution = nullptr;
     Motion *approxsol = nullptr;
@@ -406,7 +408,10 @@ ompl::base::PlannerStatus ompl::control::CentralizedBSST::solve(const base::Plan
         }
         iterations++;
     }
-
+    /* End of main loop. If possible, add solutions to every MotionPlanningProblem */
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    computation_time_ = (duration.count() / 1000000.0);
     bool solved = false;
     bool approximate = false;
     if (solution == nullptr)
@@ -425,6 +430,7 @@ ompl::base::PlannerStatus ompl::control::CentralizedBSST::solve(const base::Plan
         path->append(prevSolution_[0]);
         solved = true;
         pdef_->addSolutionPath(path, approximate, approxdif, getName());
+        soc_ += path->length();
     }
 
     si_->freeState(xstate);

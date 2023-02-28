@@ -65,7 +65,10 @@ int main(int argc, char ** argv)
     }
     else if (vm["benchmark"].as<bool>()) {
         InstancePtr instance = std::make_shared<Instance>(vm);
-        run_kcbs_benchmark(instance, vm["bound"].as<int>(), vm["time"].as<double>(), vm["output"].as<std::string>());
+        if (instance->getPlannerName() == "K-CBS")
+            run_kcbs_benchmark(instance, vm["bound"].as<int>(), vm["time"].as<double>(), vm["output"].as<std::string>());
+        else if (instance->getPlannerName() == "CentralizedBSST")
+            run_centralized_bsst_benchmark(instance, vm["time"].as<double>(), vm["output"].as<std::string>());
         return 1;
     }
 

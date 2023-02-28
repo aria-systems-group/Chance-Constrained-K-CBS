@@ -32,6 +32,10 @@ namespace ompl
 
             void getPlannerDataAndCosts(base::PlannerData &data, std::vector<double > &costs) const;
 
+            double getComputationTime() const {return computation_time_;};
+
+            double getSolutionSOC() const {return soc_;};
+
             /** \brief Clear datastructures. Call this function if the
                 input data to the planner has changed and you do not
                 want to continue planning */
@@ -243,6 +247,10 @@ namespace ompl
             double pruningRadius_{0.1};
 
             double samplingBias_{0.50};
+
+            double computation_time_;
+
+            double soc_;
 
             int DISTANCE_FUNC_{1}; //1 is 
 

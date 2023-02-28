@@ -511,6 +511,104 @@ std::vector<MotionPlanningProblemPtr> set_up_CentralizedBSST_Problem(InstancePtr
             exit(-1);
         }
     }
+    else if (mrmp_instance->getRobots().size() == 4) {
+        Robot* r1 = mrmp_instance->getRobots()[0];
+        Robot* r2 = mrmp_instance->getRobots()[1];
+        Robot* r3 = mrmp_instance->getRobots()[2];
+        Robot* r4 = mrmp_instance->getRobots()[3];
+        if (r1->getDynamicsModel() == "2D-Uncertain-Linear-Model" && 
+                r2->getDynamicsModel() == "2D-Uncertain-Linear-Model" && 
+                r3->getDynamicsModel() == "2D-Uncertain-Linear-Model" &&
+                r4->getDynamicsModel() == "2D-Uncertain-Linear-Model") {
+            // set-up 6D Belief Space
+            ob::StateSpacePtr space = ob::StateSpacePtr(new RealVectorBeliefSpace(8));
+            ob::RealVectorBounds bounds(8);
+            bounds.setLow(0, -1);
+            bounds.setHigh(0, mrmp_instance->getDimensions()[0]);
+            bounds.setLow(1, -1);
+            bounds.setHigh(1, mrmp_instance->getDimensions()[1]);
+            bounds.setLow(2, -1);
+            bounds.setHigh(2, mrmp_instance->getDimensions()[0]);
+            bounds.setLow(3, -1);
+            bounds.setHigh(3, mrmp_instance->getDimensions()[1]);
+            bounds.setLow(4, -1);
+            bounds.setHigh(4, mrmp_instance->getDimensions()[0]);
+            bounds.setLow(5, -1);
+            bounds.setHigh(5, mrmp_instance->getDimensions()[1]);
+            bounds.setLow(6, -1);
+            bounds.setHigh(6, mrmp_instance->getDimensions()[0]);
+            bounds.setLow(7, -1);
+            bounds.setHigh(7, mrmp_instance->getDimensions()[1]);
+
+            space->as<RealVectorBeliefSpace>()->setBounds(bounds);
+
+            // set-up the real vector control space
+            auto cspace(std::make_shared<oc::RealVectorControlSpace>(space, 8));
+            ob::RealVectorBounds c_bounds(8);
+            c_bounds.setLow(-1.0);  // this was [-100.0, 100.0]!
+            c_bounds.setHigh(1.0);
+            cspace->setBounds(c_bounds);
+
+            // construct an instance of space information from this state/control space
+            auto si(std::make_shared<oc::SpaceInformation>(space, cspace));
+
+            si->setPropagationStepSize(stepSize);
+            si->setMinMaxControlDuration(1, 10);
+
+            // set State Propogator
+            si->setStatePropagator(oc::StatePropagatorPtr(new CentralizedUncertainLinearStatePropagator(si)));
+
+            // set State Validity Checker
+            si->setStateValidityChecker(std::make_shared<CentralizedChiSquaredBoundarySVC>(si, mrmp_instance, mrmp_instance->getPsafe()));
+
+            si->setup();
+
+            // create start state
+            ob::State *start = si->allocState();
+            start->as<RealVectorStateSpace::StateType>()->values[0] = r1->getStartLocation().x_;
+            start->as<RealVectorStateSpace::StateType>()->values[1] = r1->getStartLocation().y_;
+            start->as<RealVectorStateSpace::StateType>()->values[2] = r2->getStartLocation().x_;
+            start->as<RealVectorStateSpace::StateType>()->values[3] = r2->getStartLocation().y_;
+            start->as<RealVectorStateSpace::StateType>()->values[4] = r3->getStartLocation().x_;
+            start->as<RealVectorStateSpace::StateType>()->values[5] = r3->getStartLocation().y_;
+            start->as<RealVectorStateSpace::StateType>()->values[6] = r4->getStartLocation().x_;
+            start->as<RealVectorStateSpace::StateType>()->values[7] = r4->getStartLocation().y_;
+            Eigen::MatrixXd Sigma0 = 0.00001 * Eigen::MatrixXd::Identity(8, 8);
+            start->as<RealVectorBeliefSpace::StateType>()->sigma_ = Sigma0;
+
+            // create goal state
+            ob::State *goal_st = si->allocState();
+            goal_st->as<RealVectorStateSpace::StateType>()->values[0] = r1->getGoalLocation().x_;
+            goal_st->as<RealVectorStateSpace::StateType>()->values[1] = r1->getGoalLocation().y_;
+            goal_st->as<RealVectorStateSpace::StateType>()->values[2] = r2->getGoalLocation().x_;
+            goal_st->as<RealVectorStateSpace::StateType>()->values[3] = r2->getGoalLocation().y_;
+            goal_st->as<RealVectorStateSpace::StateType>()->values[4] = r3->getGoalLocation().x_;
+            goal_st->as<RealVectorStateSpace::StateType>()->values[5] = r3->getGoalLocation().y_;
+            goal_st->as<RealVectorStateSpace::StateType>()->values[6] = r4->getGoalLocation().x_;
+            goal_st->as<RealVectorStateSpace::StateType>()->values[7] = r4->getGoalLocation().y_;
+
+            // create goal object
+            ob::GoalPtr goal(new CentralizedCCGoal(si, goal_st, goalTollorance, 0.95));
+
+            // create ProblemDefinition
+            auto pdef(std::make_shared<ob::ProblemDefinition>(si));
+
+            // set the start and goal
+            pdef->addStartState(start);
+            pdef->setGoal(goal);
+
+            // set optimization objective
+            pdef->setOptimizationObjective(getEuclideanPathLengthObjective(si));
+
+            // create (and provide) the motion planner object
+            PlannerPtr planner(std::make_shared<oc::CentralizedBSST>(si, 4));
+            planner->as<oc::CentralizedBSST>()->setProblemDefinition(pdef);
+            planner->as<oc::CentralizedBSST>()->setup();
+            // append to MRMP problem list
+            auto mp = std::make_shared<MotionPlanningProblem>(si, pdef, planner);
+            prob_defs.push_back(mp);
+        }
+    }
     else {
         OMPL_ERROR("Unable to solve centralized instances with >3 robots!");
         exit(-1);

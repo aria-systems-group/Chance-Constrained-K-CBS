@@ -113,78 +113,78 @@ void BeliefCollisionCheckerBenchmark::runBenchmarks()
 
     OMPL_INFORM("Testing collision checkers on %d belief pairs.", num_examples);
 
-    /* Create state validity checker object */
-    auto ChiSquaredPlanValidator = std::make_shared<ChiSquaredBoundaryPVC>(mrmp_pdef_, instance_->getPsafe());
+    // /* Create state validity checker object */
+    // auto ChiSquaredPlanValidator = std::make_shared<ChiSquaredBoundaryPVC>(mrmp_pdef_, instance_->getPsafe());
     
-    /* Iterate through all the states, test for collisions, and save results */
-    for (int idx = 0; idx != num_examples; idx++) {
-        auto start_time = std::chrono::system_clock::now();
-        result = ChiSquaredPlanValidator->independentCheck(agent1_belief_map_[idx], agent2_belief_map_[idx]);
-        if (!result)
-            num_fail++;
-        std::chrono::duration<double> elapsed_time = std::chrono::system_clock::now() - start_time;
-        double execution_time = elapsed_time.count();
-        total_time += execution_time;
-        std::pair<double, bool> p(execution_time, result);
-        chiSquared_results.push_back(p);
-    }
+    // /* Iterate through all the states, test for collisions, and save results */
+    // for (int idx = 0; idx != num_examples; idx++) {
+    //     auto start_time = std::chrono::system_clock::now();
+    //     result = ChiSquaredPlanValidator->independentCheck(agent1_belief_map_[idx], agent2_belief_map_[idx]);
+    //     if (!result)
+    //         num_fail++;
+    //     std::chrono::duration<double> elapsed_time = std::chrono::system_clock::now() - start_time;
+    //     double execution_time = elapsed_time.count();
+    //     total_time += execution_time;
+    //     std::pair<double, bool> p(execution_time, result);
+    //     chiSquared_results.push_back(p);
+    // }
 
-    double stat = (double)num_fail / num_examples;
-    OMPL_INFORM("%s: rejected %0.1f percent of belief pairs in %0.3f seconds", ChiSquaredPlanValidator->getName().c_str(), (stat * 100.0), total_time);
+    // double stat = (double)num_fail / num_examples;
+    // OMPL_INFORM("%s: rejected %0.1f percent of belief pairs in %0.3f seconds", ChiSquaredPlanValidator->getName().c_str(), (stat * 100.0), total_time);
 
-    exportResults_("chi_squared_results.csv", chiSquared_results);
+    // exportResults_("chi_squared_results.csv", chiSquared_results);
 
-    /* Create results data structure */
-    std::vector<std::pair<double, bool>> sumBlackmore_results;
-    num_fail = 0;
-    total_time = 0;
+    // /* Create results data structure */
+    // std::vector<std::pair<double, bool>> sumBlackmore_results;
+    // num_fail = 0;
+    // total_time = 0;
 
-    /* Create state validity checker object */
-    auto MinkowskiSumBlackmorePlanValidator = std::make_shared<MinkowskiSumBlackmorePVC>(mrmp_pdef_, instance_->getPsafe());
+    // /* Create state validity checker object */
+    // auto MinkowskiSumBlackmorePlanValidator = std::make_shared<MinkowskiSumBlackmorePVC>(mrmp_pdef_, instance_->getPsafe());
     
-    /* Iterate through all the states, test for collisions, and save results */
-    for (int idx = 0; idx != num_examples; idx++) {
-        auto start_time = std::chrono::system_clock::now();
-        result = MinkowskiSumBlackmorePlanValidator->independentCheck(agent1_belief_map_[idx], agent2_belief_map_[idx]);
-        if (!result)
-            num_fail++;
-        std::chrono::duration<double> elapsed_time = std::chrono::system_clock::now() - start_time;
-        double execution_time = elapsed_time.count();
-        total_time += execution_time;
-        std::pair<double, bool> p(execution_time, result);
-        sumBlackmore_results.push_back(p);
-    }
+    // /* Iterate through all the states, test for collisions, and save results */
+    // for (int idx = 0; idx != num_examples; idx++) {
+    //     auto start_time = std::chrono::system_clock::now();
+    //     result = MinkowskiSumBlackmorePlanValidator->independentCheck(agent1_belief_map_[idx], agent2_belief_map_[idx]);
+    //     if (!result)
+    //         num_fail++;
+    //     std::chrono::duration<double> elapsed_time = std::chrono::system_clock::now() - start_time;
+    //     double execution_time = elapsed_time.count();
+    //     total_time += execution_time;
+    //     std::pair<double, bool> p(execution_time, result);
+    //     sumBlackmore_results.push_back(p);
+    // }
 
-    stat = (double)num_fail / num_examples;
-    OMPL_INFORM("%s: rejected %0.1f percent of belief pairs in a total of %0.3f seconds", MinkowskiSumBlackmorePlanValidator->getName().c_str(), (stat * 100.0), total_time);
+    // stat = (double)num_fail / num_examples;
+    // OMPL_INFORM("%s: rejected %0.1f percent of belief pairs in a total of %0.3f seconds", MinkowskiSumBlackmorePlanValidator->getName().c_str(), (stat * 100.0), total_time);
 
-    exportResults_("minkowski_sum_results.csv", sumBlackmore_results);
+    // exportResults_("minkowski_sum_results.csv", sumBlackmore_results);
 
-    /* Create results data structure */
-    std::vector<std::pair<double, bool>> Blackmore2_results;
-    num_fail = 0;
-    total_time = 0;
+    // /* Create results data structure */
+    // std::vector<std::pair<double, bool>> Blackmore2_results;
+    // num_fail = 0;
+    // total_time = 0;
 
-    /* Create state validity checker object */
-    auto Blackmore2PlanValidator = std::make_shared<Blackmore2PVC>(mrmp_pdef_, instance_->getPsafe());
+    // /* Create state validity checker object */
+    // auto Blackmore2PlanValidator = std::make_shared<Blackmore2PVC>(mrmp_pdef_, instance_->getPsafe());
     
-    /* Iterate through all the states, test for collisions, and save results */
-    for (int idx = 0; idx != num_examples; idx++) {
-        auto start_time = std::chrono::system_clock::now();
-        result = Blackmore2PlanValidator->independentCheck(agent1_belief_map_[idx], agent2_belief_map_[idx]);
-        if (!result)
-            num_fail++;
-        std::chrono::duration<double> elapsed_time = std::chrono::system_clock::now() - start_time;
-        double execution_time = elapsed_time.count();
-        total_time += execution_time;
-        std::pair<double, bool> p(execution_time, result);
-        Blackmore2_results.push_back(p);
-    }
+    // /* Iterate through all the states, test for collisions, and save results */
+    // for (int idx = 0; idx != num_examples; idx++) {
+    //     auto start_time = std::chrono::system_clock::now();
+    //     result = Blackmore2PlanValidator->independentCheck(agent1_belief_map_[idx], agent2_belief_map_[idx]);
+    //     if (!result)
+    //         num_fail++;
+    //     std::chrono::duration<double> elapsed_time = std::chrono::system_clock::now() - start_time;
+    //     double execution_time = elapsed_time.count();
+    //     total_time += execution_time;
+    //     std::pair<double, bool> p(execution_time, result);
+    //     Blackmore2_results.push_back(p);
+    // }
 
-    stat = (double)num_fail / num_examples;
-    OMPL_INFORM("%s: rejected %0.1f percent of belief pairs in a total of %0.3f seconds", Blackmore2PlanValidator->getName().c_str(), (stat * 100.0), total_time);
+    // stat = (double)num_fail / num_examples;
+    // OMPL_INFORM("%s: rejected %0.1f percent of belief pairs in a total of %0.3f seconds", Blackmore2PlanValidator->getName().c_str(), (stat * 100.0), total_time);
 
-    exportResults_("blackmore_2_results.csv", Blackmore2_results);
+    // exportResults_("blackmore_2_results.csv", Blackmore2_results);
 
     // /* Create results data structure */
     // std::vector<std::pair<double, bool>> boundingBox_results;
@@ -212,31 +212,57 @@ void BeliefCollisionCheckerBenchmark::runBenchmarks()
 
     // exportResults_("bounding_box_blackmore_results.csv", boundingBox_results);
 
+    // /* Create results data structure */
+    // std::vector<std::pair<double, bool>> adaptiveBlackmore_results;
+    // num_fail = 0;
+    // total_time = 0;
+
+    // /* Create state validity checker object */
+    // auto AdaptiveBlackmorePlanValidator = std::make_shared<AdaptiveRiskBlackmorePVC>(mrmp_pdef_, instance_->getPsafe());
+    
+    // /* Iterate through all the states, test for collisions, and save results */
+    // for (int idx = 0; idx != num_examples; idx++) {
+    //     auto start_time = std::chrono::system_clock::now();
+    //     result = AdaptiveBlackmorePlanValidator->independentCheck(agent1_belief_map_[idx], agent2_belief_map_[idx]);
+    //     if (!result)
+    //         num_fail++;
+    //     std::chrono::duration<double> elapsed_time = std::chrono::system_clock::now() - start_time;
+    //     double execution_time = elapsed_time.count();
+    //     total_time += execution_time;
+    //     std::pair<double, bool> p(execution_time, result);
+    //     adaptiveBlackmore_results.push_back(p);
+    // }
+
+    // stat = (double)num_fail / num_examples;
+    // OMPL_INFORM("%s: rejected %0.1f percent of belief pairs in a total of %0.3f seconds", AdaptiveBlackmorePlanValidator->getName().c_str(), (stat * 100.0), total_time);
+
+    // exportResults_("adaptive_blackmore_results.csv", adaptiveBlackmore_results);
+
     /* Create results data structure */
-    std::vector<std::pair<double, bool>> adaptiveBlackmore_results;
+    std::vector<std::pair<double, bool>> cdfGrid2_results;
     num_fail = 0;
     total_time = 0;
 
     /* Create state validity checker object */
-    auto AdaptiveBlackmorePlanValidator = std::make_shared<AdaptiveRiskBlackmorePVC>(mrmp_pdef_, instance_->getPsafe());
-    
+    auto CDFGrid2PlanValidator = std::make_shared<CDFGridPVC>(mrmp_pdef_, instance_->getPsafe(), 2);
+
     /* Iterate through all the states, test for collisions, and save results */
     for (int idx = 0; idx != num_examples; idx++) {
         auto start_time = std::chrono::system_clock::now();
-        result = AdaptiveBlackmorePlanValidator->independentCheck(agent1_belief_map_[idx], agent2_belief_map_[idx]);
+        result = CDFGrid2PlanValidator->independentCheck(agent1_belief_map_[idx], agent2_belief_map_[idx]);
         if (!result)
             num_fail++;
         std::chrono::duration<double> elapsed_time = std::chrono::system_clock::now() - start_time;
         double execution_time = elapsed_time.count();
         total_time += execution_time;
         std::pair<double, bool> p(execution_time, result);
-        adaptiveBlackmore_results.push_back(p);
+        cdfGrid2_results.push_back(p);
     }
 
-    stat = (double)num_fail / num_examples;
-    OMPL_INFORM("%s: rejected %0.1f percent of belief pairs in a total of %0.3f seconds", AdaptiveBlackmorePlanValidator->getName().c_str(), (stat * 100.0), total_time);
+    double stat = (double)num_fail / num_examples;
+    OMPL_INFORM("%s: rejected %0.1f percent of belief pairs in a total of %0.3f seconds", CDFGrid2PlanValidator->getName().c_str(), (stat * 100.0), total_time);
 
-    exportResults_("adaptive_blackmore_results.csv", adaptiveBlackmore_results);
+    exportResults_("cdfGrid(2)_results.csv", cdfGrid2_results);
 
     /* Create results data structure */
     std::vector<std::pair<double, bool>> cdfGrid5_results;

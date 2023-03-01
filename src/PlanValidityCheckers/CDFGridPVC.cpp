@@ -222,6 +222,7 @@ bool CDFGridPVC::isSafe_(const Belief belief_a, const Belief belief_b, std::pair
     }
     bg::correct(V_new_poly);
 
+    // std::cout << "poly points" << std::endl;
     // for (auto &pt: boost::geometry::exterior_ring(V_new_poly)) {
     //     std::cout << bg::get<0>(pt) << "," << bg::get<1>(pt) << std::endl;
     // }
@@ -247,16 +248,38 @@ bool CDFGridPVC::isSafe_(const Belief belief_a, const Belief belief_b, std::pair
             Point pt3(x2, y2);
             Point pt4(x1, y2);
 
-            const std::vector<Point> B{pt1, pt2, pt3, pt4};
+            // std::cout << "Point1: " << x1 << "," << y1 << std::endl;
+            // std::cout << "Point2: " << x2 << "," << y1 << std::endl;
+            // std::cout << "Point3: " << x2 << "," << y2 << std::endl;
+            // std::cout << "Point4: " << x1 << "," << y2 << std::endl;
 
-            for (auto &pt: B) {
-                if (!bg::disjoint(pt, V_new_poly)) {
-                    prob += cdfRect_(B);
+
+            if (disk_steps_ == 2) {
+            	Polygon box;
+            	bg::append(box.outer(), pt1);
+            	bg::append(box.outer(), pt2);
+            	bg::append(box.outer(), pt3);
+            	bg::append(box.outer(), pt4);
+            	if (!bg::disjoint(box, V_new_poly)) {
+            		const std::vector<Point> B{pt1, pt2, pt3, pt4};
+            		prob += cdfRect_(B);
                     break;
+            	}
+
+            }
+            else {
+            	const std::vector<Point> B{pt1, pt2, pt3, pt4};
+            	for (auto &pt: B) {
+                	if (!bg::disjoint(pt, V_new_poly)) {
+                    	prob += cdfRect_(B);
+                    	break;
+                	}
                 }
             }
         }
     }
+    // std::cout << prob << std::endl;
+    // exit(-1);
     if (prob < p_coll_agnts_)
         return true;
     return false;

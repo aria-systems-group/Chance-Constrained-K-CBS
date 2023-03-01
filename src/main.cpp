@@ -107,7 +107,8 @@ int main(int argc, char ** argv)
             // set-up (and include) a PlanValidityChecker for agent-to-agent collision checking
             PlanValidityCheckerPtr planValidator = nullptr;
             if (instance->getPVC() == "ChiSquared") {
-                planValidator = std::make_shared<ChiSquaredBoundaryPVC>(mrmp_pdef, instance->getPsafeAgents());
+                // planValidator = std::make_shared<ChiSquaredBoundaryPVC>(mrmp_pdef, instance->getPsafeAgents());
+                planValidator = std::make_shared<ChiSquaredBoundaryPVC>(mrmp_pdef, 0.9);
             }
             else if (instance->getPVC() == "Blackmore") {
                 planValidator = std::make_shared<MinkowskiSumBlackmorePVC>(mrmp_pdef, instance->getPsafeAgents());

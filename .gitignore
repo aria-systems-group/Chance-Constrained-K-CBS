@@ -38,4 +38,8 @@ Makefile
 K-CBS
 
 # solutions
+._*
+src/._*
+*.sh
+:w
 solution/*

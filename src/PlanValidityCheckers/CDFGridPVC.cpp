@@ -117,7 +117,6 @@ ConflictPtr CDFGridPVC::checkForConflicts_(std::map<std::string, Belief> states_
         boost::tokenizer< boost::char_separator<char> > tok_a(r_a_name, sep);
         beg_a = tok_a.begin();
         beg_a++;
-
         auto itr_b = itr_a;
         std::advance(itr_b, 1);
         for (; itr_b != states_map.end(); itr_b++) {
@@ -135,7 +134,6 @@ ConflictPtr CDFGridPVC::checkForConflicts_(std::map<std::string, Belief> states_
                 int a_idx = std::atoi((*beg_a).c_str());
                 int b_idx = std::atoi((*beg_b).c_str());
                 c = std::make_shared<Conflict>(a_idx, b_idx, step);
-                // std::cout << "found conflict between " << a_idx << "," << b_idx << std::endl;
                 // std::cout << (*itr_a).second.first << std::endl;
                 // std::cout << (*itr_a).second.second << std::endl;
                 // std::cout << (*itr_b).second.first << std::endl;
@@ -214,10 +212,7 @@ bool CDFGridPVC::isSafe_(const Belief belief_a, const Belief belief_b, std::pair
         V_mat(0, i) = bg::get<0>(P_pts[i]);
         V_mat(1, i) = bg::get<1>(P_pts[i]);
     }
-    
     Eigen::MatrixXd V_new = R.transpose() * ((-V_mat).colwise() + T);
-
-    // std::cout << V_new << std::endl;
 
     Polygon V_new_poly;
     // construct the rectangular polygon w/ ref in the center
@@ -239,7 +234,6 @@ bool CDFGridPVC::isSafe_(const Belief belief_a, const Belief belief_b, std::pair
 
     std::vector<double> Xgrid = linspace_(x_low, x_high, disk_steps_);
     std::vector<double> Ygrid = linspace_(y_low, y_high, disk_steps_);
-
     double prob = 0;
     for (int ix = 0; ix != disk_steps_ - 1; ix++) {
         for (int iy = 0; iy != disk_steps_ - 1; iy++) {

@@ -39,7 +39,7 @@ void parse_cmd_line(int &argc, char ** &argv, po::variables_map &vm, po::options
         ("p_safe,p", po::value<double>()->default_value(0.95), "Probability of safe in decimal form (only used for non-deterministic planning sequences)")
         ("pvc,c", po::value<std::string>()->default_value("ChiSquaredBoundary"), "The Collision-Checker to be used."
             "This is only used for non-deterministic planning instances."
-            "(ChiSquared, Blackmore, AdaptiveBlackmore, CDFGrid-x")
+            "(ChiSquared, Blackmore, AdaptiveBlackmore, CDFGrid-x, BoundingBox")
         ("svc,v", po::value<std::string>()->default_value("Blackmore"), "The Low-Level collision-checker to be used."
             "This is only used for non-deterministic planning instances."
             "(Blackmore, AdaptiveBlackmore, ChiSquared)")
@@ -112,9 +112,9 @@ int main(int argc, char ** argv)
             else if (instance->getPVC() == "Blackmore") {
                 planValidator = std::make_shared<MinkowskiSumBlackmorePVC>(mrmp_pdef, instance->getPsafeAgents());
             }
-            // else if (instance->getPVC() == "BoundingBoxBlackmore") {
-            //     planValidator = std::make_shared<BoundingBoxBlackmorePVC>(mrmp_pdef, instance->getPsafeAgents());
-            // }
+            else if (instance->getPVC() == "BoundingBox") {
+                planValidator = std::make_shared<BoundingBoxBlackmorePVC>(mrmp_pdef, instance->getPsafeAgents());
+            }
             else if (instance->getPVC() == "AdaptiveBlackmore") {
                 planValidator = std::make_shared<AdaptiveRiskBlackmorePVC>(mrmp_pdef, instance->getPsafeAgents());
             }

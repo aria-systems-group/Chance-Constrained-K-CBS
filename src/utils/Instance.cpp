@@ -127,6 +127,7 @@ bool Instance::load_agents_()
     {
         // extract the start Location and goal Location for robot i
         getline(myfile, line);
+        // std::cout << line << std::endl;
         if (line.empty())
         {
             OMPL_ERROR("%s: The instance has only %d robots.", (name_.c_str(), i));
@@ -159,8 +160,10 @@ bool Instance::load_agents_()
             robots_.emplace_back(new PointRobot(name, dyn_model, start, goal));
         else if (shape == "Rectangle")
             robots_.emplace_back(new RectangularRobot(name, dyn_model, start, goal, 0.25, 0.25)); // manual size To-Do!
-        else
-            OMPL_WARN("%s: %sRobot class not yet implemented!", name_.c_str());        
+        else {
+            OMPL_WARN("%s: %sRobot class ``%s`` not yet implemented!", name_.c_str(), shape.c_str());
+            exit(-1);
+        }
     }
     myfile.close();
     return true;

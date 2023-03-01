@@ -1,5 +1,6 @@
 # Mac Finder Cache
 .DS_Store
+*.zip
 
 # Everything related to yml
 *.py

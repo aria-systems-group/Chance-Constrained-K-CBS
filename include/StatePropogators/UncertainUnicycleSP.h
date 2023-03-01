@@ -60,13 +60,12 @@ class UncertainUnicycleStatePropagator : public oc::StatePropagator {
     private:
         double duration_;
         // int dimensions_ = 2;
-        std::vector<double> controller_parameters_{0.0316, 0.3054, 0.0, 0.0, 0.0, 0.0, 0.3054, 0.0316};
+        // std::vector<double> controller_parameters_{0.0316, 0.3054, 0.0, 0.0, 0.0, 0.0, 0.0316, 0.3054};
         std::vector<double> forward_acceleration_bounds_{-0.5, 0.5};
         std::vector<double> turning_rate_bounds_{-0.5, 0.5};
         std::vector<double> surge_bounds_{0.05, 5.0};
-        std::vector<double> system_noise_{0.1, 0.0, 0.0, 0.1};
-
         
+        Eigen::Matrix<double, 2, 4> K_;
         Eigen::Matrix4d A_cl_;
         Eigen::Matrix4d B_cl_;
         Eigen::Matrix4d A_cl_d_;
@@ -105,7 +104,7 @@ class UncertainUnicycleStatePropagator : public oc::StatePropagator {
         
 
         // Eigen::Matrix2d Q, R, Ak;
-        double K_ = 0.3;
+        // double K_ = 0.3;
 
         // mutable const R2BeliefSpace::StateType *result_css;
         // ob::RealVectorStateSpace::StateType *result_css_rvs_pose;

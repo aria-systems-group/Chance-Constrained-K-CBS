@@ -184,9 +184,7 @@ double Blackmore2PVC::ImprovedHyperplaneCCValidityChecker(const Eigen::MatrixXd 
     for (int i = 0; i < nrows; i++) {
         Eigen::MatrixXd Pv_2 = A.row(i) * PX * A.row(i).transpose();
         double PV = sqrt(2 * Pv_2(0, 0));
-
         double p_collision_constraint = 0.5 + 0.5 * boost::math::erf((B(i, 0) - (x_pose * A(i, 0) + y_pose * A(i, 1))) / PV);
-
         if (p_collision_constraint < p_collision_obstacle) 
             p_collision_obstacle = p_collision_constraint;
     }

@@ -220,7 +220,7 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
                 si->setStateValidityChecker(std::make_shared<ChiSquaredBoundarySVC>(si, mrmp_instance, (*itr), 0.9));
             }
 
-            si->setPropagationStepSize(stepSize);
+            si->setPropagationStepSize(0.05);
             si->setMinMaxControlDuration(1, 10);
             
             // construct (and include) an instance of 2D-Uncertain-Linear State Propogator

@@ -25,22 +25,25 @@ Instance::Instance(po::variables_map &vm, std::string name):
     }
     if (mrmp_planner_ == "K-CBS") {
         // divide p_coll amongst PVC & SVC
-        double obs_area = 0;
-        for (auto o: obstacles_) {
-            obs_area += bg::area(o->getPolygon());
-        }
-        double agnt_area = 0;
-        for (auto r: robots_) {
-            agnt_area += bg::area(r->getShape());
-        }
+        // double obs_area = 0;
+        // for (auto o: obstacles_) {
+        //     obs_area += bg::area(o->getPolygon());
+        // }
+        // double agnt_area = 0;
+        // for (auto r: robots_) {
+        //     agnt_area += bg::area(r->getShape());
+        // }
 
-        const double total_area = obs_area + agnt_area;
+        // const double total_area = obs_area + agnt_area;
+        const double total_things = obstacles_.size() + robots_.size();
 
         const double p_coll = 1 - p_safe_;
-        const double p_coll_obs = (p_coll * obs_area) / total_area;
-        const double p_coll_agnts = (p_coll * agnt_area) / total_area;
+        const double p_coll_obs = (p_coll * obstacles_.size()) / total_things;
+        const double p_coll_agnts = (p_coll * robots_.size()) / total_things;
         p_safe_agnts_ = 1 - p_coll_agnts;
         p_safe_obs_ = 1 - p_coll_obs;
+        std::cout << p_safe_obs_ << std::endl;
+        std::cout << p_safe_agnts_ << std::endl;
     }
 }
 

@@ -231,6 +231,8 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
             ob::State *start = si->allocState();
             start->as<RealVectorBeliefSpace::StateType>()->values[0] = (*itr)->getStartLocation().x_;
             start->as<RealVectorBeliefSpace::StateType>()->values[1] = (*itr)->getStartLocation().y_;
+            Eigen::MatrixXd Sigma0 = 0.01 * Eigen::MatrixXd::Identity(2, 2);
+            start->as<RealVectorBeliefSpace::StateType>()->sigma_ = Sigma0;
 
             // // create goal
             ob::GoalPtr goal(new ChanceConstrainedGoal(si, (*itr)->getGoalLocation(), goalTollorance, 0.95));
@@ -284,7 +286,8 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
                 si->setStateValidityChecker(std::make_shared<AdaptiveRiskBlackmoreSVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
             }
             else if (mrmp_instance->getSVC() == "ChiSquared") {
-                si->setStateValidityChecker(std::make_shared<ChiSquaredBoundarySVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
+                // si->setStateValidityChecker(std::make_shared<ChiSquaredBoundarySVC>(si, mrmp_instance, (*itr), mrmp_instance->getPsafeObs()));
+                si->setStateValidityChecker(std::make_shared<ChiSquaredBoundarySVC>(si, mrmp_instance, (*itr), 0.9));
             }
 
             si->setPropagationStepSize(stepSize);

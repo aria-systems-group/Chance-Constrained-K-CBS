@@ -36,7 +36,7 @@ void parse_cmd_line(int &argc, char ** &argv, po::variables_map &vm, po::options
         ("bound,b", po::value<int>()->default_value(std::numeric_limits<int>::max()), "The merge bound of K-CBS.")
         ("time,t", po::value<double>()->default_value(300), "cutoff time (seconds)")
         ("output,o", po::value<std::string>()->default_value("results"), "output file name (e.g. results.csv)")
-        ("p_safe,p", po::value<double>()->default_value(0.95), "Probability of safe in decimal form (only used for non-deterministic planning sequences)")
+        ("p_safe,p", po::value<double>()->default_value(0.9), "Probability of safe in decimal form (only used for non-deterministic planning sequences)")
         ("pvc,c", po::value<std::string>()->default_value("ChiSquaredBoundary"), "The Collision-Checker to be used."
             "This is only used for non-deterministic planning instances."
             "(ChiSquared, Blackmore, AdaptiveBlackmore, CDFGrid-x, BoundingBox")
@@ -74,7 +74,7 @@ int main(int argc, char ** argv)
 
     // set-up planning instance
     InstancePtr instance = std::make_shared<Instance>(vm);
-    // instance->print(); // print the map (for debugging etc.)
+    instance->print(); // print the map (for debugging etc.)
 
     // set-up low-level planners
     std::vector<MotionPlanningProblemPtr> mp_problems = set_up_all_MP_Problems(instance);

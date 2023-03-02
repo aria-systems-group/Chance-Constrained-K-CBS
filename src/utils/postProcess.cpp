@@ -385,14 +385,19 @@ void exportBeliefPlan(const std::vector<oc::PathControl*> plan, const std::strin
     fs::create_directories(sol_dir);
     for (int i = 0; i < plan.size(); i++)
     {
-        std::string fileName = "agent" + std::to_string(i) + ".txt";
+    	std::string num;
+    	if (i < 10)
+    		num = "0" + std::to_string(i);
+    	else
+    		num = std::to_string(i);
+        std::string fileName = "agent" + num + ".txt";
         auto filePath = fs::current_path() / sol_dir / fs::path(fileName);
         std::ofstream file(filePath);
         plan[i]->printAsMatrix(file);
         file.close();
 
         // print covariances
-        std::string covName = "agent" + std::to_string(i) + "_covs.txt";
+        std::string covName = "agent" + num + "_covs.txt";
         auto covFilePath = fs::current_path() / sol_dir / fs::path(covName);
         std::ofstream MyFile(covFilePath);
         std::vector<ob::State*> states = plan[i]->getStates();

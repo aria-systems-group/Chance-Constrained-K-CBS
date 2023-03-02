@@ -17,3 +17,5 @@ RUN apt-get update && apt-get install -y build-essential \
 										screen \
 										vim \
 										valgrind
+
+# container set-up: docker run -v `pwd`:/home/K-CBS -it ompl-1.4-image

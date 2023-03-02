@@ -39,7 +39,7 @@ R2_UncertainLinearStatePropagator::R2_UncertainLinearStatePropagator(const oc::S
     // double measurementNoise = 0.333;
     // R_ = pow(measurementNoise, 2) * I_;
     // use for narrow passage
-    Q_ << 0.05, 0.0,
+    Q_ << 0.08, 0.0,
 		   0.0, 0.1;
     R_ = Q_;
 }

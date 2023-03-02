@@ -11,6 +11,7 @@
 #include "PlanValidityCheckers/DeterministicPVC.h"
 #include "PlanValidityCheckers/MinkowskiSumBlackmorePVC.h"
 #include "PlanValidityCheckers/AdaptiveRiskBlackmorePVC.h"
+#include "PlanValidityCheckers/AdaptiveRiskBoundingBoxPVC.h"
 #include "PlanValidityCheckers/ChiSquaredBoundaryPVC.h"
 #include "PlanValidityCheckers/BoundingBoxBlackmorePVC.h"
 #include "PlanValidityCheckers/CDFGridPVC.h"

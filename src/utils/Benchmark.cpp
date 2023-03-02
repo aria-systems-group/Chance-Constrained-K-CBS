@@ -37,6 +37,9 @@ void run_kcbs_benchmark(InstancePtr mrmp_instance, const double merge_bound, con
         else if (mrmp_instance->getPVC() == "BoundingBox") {
             planValidator = std::make_shared<BoundingBoxBlackmorePVC>(mrmp_pdef, mrmp_instance->getPsafeAgents());
         }
+        else if (mrmp_instance->getPVC() == "AdaptiveBoundingBox") {
+            planValidator = std::make_shared<AdaptiveRiskBoundingBoxPVC>(mrmp_pdef, mrmp_instance->getPsafeAgents());
+        }
         else if (mrmp_instance->getPVC().find("CDFGrid") != std::string::npos) {
             boost::char_separator<char> sep("-");
             boost::tokenizer< boost::char_separator<char> > tok(mrmp_instance->getPVC(), sep);
@@ -100,6 +103,7 @@ void run_centralized_bsst_benchmark(InstancePtr mrmp_instance, const double comp
         auto all_pdefs = mrmp_pdef->getAllProblemInformation();
         for (auto pdef_itr = all_pdefs.begin(); pdef_itr != all_pdefs.end(); pdef_itr++) {
             (*pdef_itr)->getProblemDefinition()->clearSolutionPaths();// << std::endl; //->clearSolutionPaths()
+            (*pdef_itr)->getPlanner()->clear();
         }
     }
 }

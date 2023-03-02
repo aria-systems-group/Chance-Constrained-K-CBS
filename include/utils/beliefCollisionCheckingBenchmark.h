@@ -6,6 +6,7 @@
 #include "PlanValidityCheckers/AdaptiveRiskBlackmorePVC.h"
 #include "PlanValidityCheckers/ChiSquaredBoundaryPVC.h"
 #include "PlanValidityCheckers/BoundingBoxBlackmorePVC.h"
+#include "PlanValidityCheckers/AdaptiveRiskBoundingBoxPVC.h"
 #include "PlanValidityCheckers/CDFGridPVC.h"
 #include "PlanValidityCheckers/Blackmore2PVC.h"
 #include <chrono>

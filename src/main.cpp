@@ -116,6 +116,9 @@ int main(int argc, char ** argv)
             else if (instance->getPVC() == "BoundingBox") {
                 planValidator = std::make_shared<BoundingBoxBlackmorePVC>(mrmp_pdef, instance->getPsafeAgents());
             }
+            else if (instance->getPVC() == "AdaptiveBoundingBox") {
+            	planValidator = std::make_shared<AdaptiveRiskBoundingBoxPVC>(mrmp_pdef, instance->getPsafeAgents());
+        	}
             else if (instance->getPVC() == "AdaptiveBlackmore") {
                 planValidator = std::make_shared<AdaptiveRiskBlackmorePVC>(mrmp_pdef, instance->getPsafeAgents());
             }

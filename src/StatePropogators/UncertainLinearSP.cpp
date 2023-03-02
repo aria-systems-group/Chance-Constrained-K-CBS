@@ -33,9 +33,9 @@ R2_UncertainLinearStatePropagator::R2_UncertainLinearStatePropagator(const oc::S
     B_cl_d_.resize(2, 2);
     B_cl_d_ = A_cl_d_.inverse() * (A_cl_d_ - I_) * B_cl_;
 
-    double processNoise = 0.1;
+    double processNoise = 1;
     Q_ = pow(processNoise, 2) * I_;
-    double measurementNoise = 0.1;
+    double measurementNoise = 1;
     R_ = pow(measurementNoise, 2) * I_;
 }
 

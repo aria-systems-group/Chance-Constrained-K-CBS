@@ -26,7 +26,8 @@ void run_kcbs_benchmark(InstancePtr mrmp_instance, const double merge_bound, con
         // set-up (and include) a PlanValidityChecker for agent-to-agent collision checking
         PlanValidityCheckerPtr planValidator = nullptr;
         if (mrmp_instance->getPVC() == "ChiSquared") {
-            planValidator = std::make_shared<ChiSquaredBoundaryPVC>(mrmp_pdef, mrmp_instance->getPsafeAgents());
+            // planValidator = std::make_shared<ChiSquaredBoundaryPVC>(mrmp_pdef, mrmp_instance->getPsafeAgents());
+            planValidator = std::make_shared<ChiSquaredBoundaryPVC>(mrmp_pdef, 0.9);
         }
         else if (mrmp_instance->getPVC() == "Blackmore") {
             planValidator = std::make_shared<MinkowskiSumBlackmorePVC>(mrmp_pdef, mrmp_instance->getPsafeAgents());

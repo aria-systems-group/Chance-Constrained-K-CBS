@@ -3,10 +3,6 @@ project(K-CBS)
 cmake_minimum_required (VERSION 3.16)
 set (CMAKE_CXX_STANDARD 17)
 
-IF(NOT CMAKE_BUILD_TYPE)
-    SET(CMAKE_BUILD_TYPE "RELEASE")
-ENDIF()
-
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED COMPONENTS program_options system filesystem)
 find_package(ompl REQUIRED)
@@ -24,12 +20,12 @@ file(GLOB SOURCES "src/*.cpp" "src/Spaces/*.cpp" "src/utils/*.cpp"
     "src/Mergers/*.cpp" "src/PlanValidityCheckers/*.cpp" "src/Constraints/*.cpp"
     "src/ConstraintValidityCheckers/*.cpp")
 
-add_library (k_cbs_lib ${SOURCES})
+add_library (multi-agent-ompl ${SOURCES})
 
-add_executable(K-CBS src/main.cpp)
+add_executable(K-CBS demos/main.cpp)
 
 target_link_libraries (K-CBS
-    k_cbs_lib
+    multi-agent-ompl
     ${Boost_LIBRARIES}
     ${EIGEN3_LIBRARIES}
     ${OMPL_LIBRARIES}

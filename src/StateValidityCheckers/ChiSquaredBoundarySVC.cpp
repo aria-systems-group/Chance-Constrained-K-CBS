@@ -22,6 +22,9 @@ bool ChiSquaredBoundarySVC::isValid(const ob::State *state) const
         return false;
     }
 
+    if (obs_list_.empty())
+        return true;
+
     /* get Belief from state */
     double* vals = state->as<RealVectorBeliefSpace::StateType>()->values;
     Eigen::Vector2d mu(2);

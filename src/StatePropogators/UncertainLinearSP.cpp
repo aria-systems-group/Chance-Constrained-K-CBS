@@ -34,14 +34,14 @@ R2_UncertainLinearStatePropagator::R2_UncertainLinearStatePropagator(const oc::S
     B_cl_d_ = A_cl_d_.inverse() * (A_cl_d_ - I_) * B_cl_;
 
     // uncommment for general benchmarks
-    // double processNoise = 0.1;
-    // Q_ = pow(processNoise, 2) * I_;
-    // double measurementNoise = 0.1;
-    // R_ = pow(measurementNoise, 2) * I_;
+    double processNoise = 0.1;
+    Q_ = pow(processNoise, 2) * I_;
+    double measurementNoise = 0.1;
+    R_ = pow(measurementNoise, 2) * I_;
     // use for narrow passage
-    Q_ << 0.05, 0.0,
-		   0.0, 0.1;
-    R_ = Q_;
+    // Q_ << 0.05, 0.0,
+	// 	   0.0, 0.1;
+    // R_ = Q_;
 }
 
 // void saturate(double &value, const double &min_value, const double &max_value) {

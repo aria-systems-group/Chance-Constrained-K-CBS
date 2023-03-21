@@ -3,10 +3,10 @@ version 1
 0	empty-8-8.map	8	8	1	0	3	2	Rectangle	2D-Uncertain-Linear-Model	2.82842712
 1	empty-8-8.map	8	8	1	6	6	7	Rectangle	2D-Uncertain-Linear-Model	5.41421356
 1	empty-8-8.map	8	8	4	6	5	1	Rectangle	2D-Uncertain-Linear-Model	5.41421356
-0	empty-8-8.map	8	8	7	2	4	0	Rectangle	2D-Uncertain-Linear-Model	3.82842712
+0	empty-8-8.map	8	8	6	2	4	0	Rectangle	2D-Uncertain-Linear-Model	3.82842712
 0	empty-8-8.map	8	8	0	1	2	0	Rectangle	2D-Uncertain-Linear-Model	2.41421356
-1	empty-8-8.map	8	8	7	6	0	5	Rectangle	2D-Uncertain-Linear-Model	7.41421356
-1	empty-8-8.map	8	8	7	7	3	4	Rectangle	2D-Uncertain-Linear-Model	5.24264069
+1	empty-8-8.map	8	8	6	4	0	5	Rectangle	2D-Uncertain-Linear-Model	7.41421356
+1	empty-8-8.map	8	8	6	6	3	4	Rectangle	2D-Uncertain-Linear-Model	5.24264069
 0	empty-8-8.map	8	8	0	4	2	1	Rectangle	2D-Uncertain-Linear-Model	3.82842712
 1	empty-8-8.map	8	8	6	0	6	5	Rectangle	2D-Uncertain-Linear-Model	5.00000000
 1	empty-8-8.map	8	8	4	2	3	6	Rectangle	2D-Uncertain-Linear-Model	4.41421356

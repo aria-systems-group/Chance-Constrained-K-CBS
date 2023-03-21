@@ -6,7 +6,8 @@ PCCBlackmoreSVC::PCCBlackmoreSVC(const oc::SpaceInformationPtr &si, InstancePtr 
 
 	std::vector<Obstacle*> obs_list = mrmp_instance_->getObstacles();
 	n_obstacles_ = obs_list.size();
-	erf_inv_result_ = computeInverseErrorFunction_(1 - 2 * (p_collision_ / n_obstacles_));
+	if (n_obstacles_ > 0)
+		erf_inv_result_ = computeInverseErrorFunction_(1 - 2 * (p_collision_ / n_obstacles_));
 
 
 	/* 	Generate half-planes for robot to avoid obstacles.

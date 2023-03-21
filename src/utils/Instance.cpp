@@ -24,7 +24,7 @@ Instance::Instance(po::variables_map &vm, std::string name):
         exit(-1);
     }
     if (mrmp_planner_ == "K-CBS") {
-        // divide p_coll amongst PVC & SVC
+        // // divide p_coll amongst PVC & SVC
         // double obs_area = 0;
         // for (auto o: obstacles_) {
         //     obs_area += bg::area(o->getPolygon());

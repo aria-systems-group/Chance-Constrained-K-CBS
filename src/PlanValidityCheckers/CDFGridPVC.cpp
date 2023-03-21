@@ -2,8 +2,13 @@
 
 
 CDFGridPVC::CDFGridPVC(MultiRobotProblemDefinitionPtr pdef, const double p_safe, int nSteps):
-    sc_(chi_squared_quantile_(2, p_safe_agnts_)), disk_steps_(nSteps), BeliefPVC(pdef, "CDFGridPVC", p_safe)
+    sc_(-1), disk_steps_(nSteps), BeliefPVC(pdef, "CDFGridPVC", p_safe)
 {
+	if (p_safe_agnts_ == 1)
+		sc_ = chi_squared_quantile_(2, 0.90);
+	else
+		sc_ = chi_squared_quantile_(2, p_safe_agnts_);
+
     std::string name = "CDFGridPVC(" + std::to_string(nSteps) + ")";
     this->name_ = name;
 

@@ -51,6 +51,9 @@ UncertainUnicycleStatePropagator::UncertainUnicycleStatePropagator(const oc::Spa
     Q_ = pow(processNoise, 2) * I_;
     double measurementNoise = 0.1;
     R_ = pow(measurementNoise, 2) * I_;
+    // Q_ << 0.05, 0.0,
+           // 0.0, 0.1;
+    // R_ = Q_;
 }
 
 double saturate(double value, const double min_value, const double max_value) {

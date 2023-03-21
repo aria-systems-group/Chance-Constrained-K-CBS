@@ -181,7 +181,7 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintRRT_MP_Problems(InstanceP
 
 std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(InstancePtr mrmp_instance)
 {
-    const double goalTollorance = 2.0;
+    const double goalTollorance = 1.5;
     const double stepSize = 0.2;
     
     std::vector<MotionPlanningProblemPtr> prob_defs{};
@@ -231,8 +231,8 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
             ob::State *start = si->allocState();
             start->as<RealVectorBeliefSpace::StateType>()->values[0] = (*itr)->getStartLocation().x_;
             start->as<RealVectorBeliefSpace::StateType>()->values[1] = (*itr)->getStartLocation().y_;
-            Eigen::MatrixXd Sigma0 = 0.01 * Eigen::MatrixXd::Identity(2, 2);
-            start->as<RealVectorBeliefSpace::StateType>()->sigma_ = Sigma0;
+            // Eigen::MatrixXd Sigma0 = 0.01 * Eigen::MatrixXd::Identity(2, 2);
+            // start->as<RealVectorBeliefSpace::StateType>()->sigma_ = Sigma0;
 
             // // create goal
             ob::GoalPtr goal(new ChanceConstrainedGoal(si, (*itr)->getGoalLocation(), goalTollorance, 0.95));

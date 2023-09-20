@@ -14,20 +14,22 @@ RUN apt-get update && apt-get install -y build-essential \
 										libeigen3-dev \
 										libboost-all-dev \
 										libode-dev \
+                                        libompl-dev \
+                                        ompl-demos \
 										screen \
 										vim \
 										valgrind \
                                         git
 
-# clone most recent OMPL Repository
-RUN git clone https://github.com/ompl/ompl.git
+# # clone most recent OMPL Repository
+# RUN git clone https://github.com/ompl/ompl.git
 
-# build OMPL
-WORKDIR ompl/
-RUN mkdir -p build/Release
-RUN cmake .
-RUN make -j 4
+# # build OMPL
+# WORKDIR ompl/
+# RUN mkdir -p build/Release
+# RUN cmake .
+# RUN make -j 4
 
-WORKDIR /
+# WORKDIR /
 
-# container set-up: docker run -v `pwd`:/home/K-CBS -it ompl-1.4-image
+# container set-up: docker run -v `pwd`:/home/K-CBS -it ompl-1.6-image

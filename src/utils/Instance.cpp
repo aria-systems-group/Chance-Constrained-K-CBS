@@ -90,12 +90,12 @@ bool Instance::load_map_()
         boost::tokenizer< boost::char_separator<char> > tok(line, sep);
         beg = tok.begin();
         beg++;
-        y_max_ = atoi((*beg).c_str()) - 1; // read number of rows (i.e. y max value)
+        y_max_ = atoi((*beg).c_str()); // read number of rows (i.e. y max value)
         getline(myfile, line);
         boost::tokenizer< boost::char_separator<char> > tok2(line, sep);
         beg = tok2.begin();
         beg++;
-        x_max_ = atoi((*beg).c_str()) - 1; // read number of cols (i.e. x max value)
+        x_max_ = atoi((*beg).c_str()); // read number of cols (i.e. x max value)
         getline(myfile, line); // skip "map"
     }
     assert((x_max_ > 0 && y_max_ > 0));
@@ -104,6 +104,7 @@ bool Instance::load_map_()
     while (getline(myfile, line)) {
         for (int r = 0; r < x_max_; r++) {
             if (line[r] != '.') {
+                std::cout << r << "\t" << c << std::endl;
                 obstacles_.emplace_back(new RectangularObstacle(r, c, 1, 1));
             }
         }

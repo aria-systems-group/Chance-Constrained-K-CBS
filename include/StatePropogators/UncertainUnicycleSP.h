@@ -33,12 +33,16 @@
 *********************************************************************/
 /* Author: Ali-akbar Agha-mohammadi, Saurav Agarwal */
 
-#pragma once
+#ifndef UNICYCLE_STATE_PROPAGATOR_
+#define UNICYCLE_STATE_PROPAGATOR_
+
+// #include "SpaceInformation/SpaceInformation.h"
 #include "ompl/control/SpaceInformation.h"
 #include <ompl/control/spaces/RealVectorControlSpace.h>
 #include <ompl/base/spaces/SE2StateSpace.h>
-// #include "../Spaces/R2BeliefSpace.h"
+
 #include "Spaces/RealVectorBeliefSpace.h"
+// #include "../Spaces/R2BeliefSpaceEuclidean.h"
 
 namespace ob = ompl::base;
 namespace oc = ompl::control;
@@ -49,40 +53,38 @@ namespace oc = ompl::control;
 // typedef Eigen::Matrix<double, 4, 2, Eigen::DontAlign> Mat42;
 
 /** \brief State propagation for a Unicycle motion model. */
-class UncertainUnicycleStatePropagator : public oc::StatePropagator {
+class DynUnicycleControlSpace : public oc::StatePropagator {
     public:
-        UncertainUnicycleStatePropagator(const oc::SpaceInformationPtr &si);
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        DynUnicycleControlSpace(const oc::SpaceInformationPtr &si);
 
-        void propagate(const ob::State *state, const oc::Control* control, const double duration, ob::State *result) const override;
+        virtual ~DynUnicycleControlSpace(void)
+        {
 
-        bool canPropagateBackward(void) const override;
+        }
+
+        virtual void propagate(const ob::State *state, const oc::Control* control, const double duration, ob::State *result) const;
+
+        virtual bool canPropagateBackward(void) const;
 
     private:
+
+
         double duration_;
-        // int dimensions_ = 2;
-        // std::vector<double> controller_parameters_{0.0316, 0.3054, 0.0, 0.0, 0.0, 0.0, 0.0316, 0.3054};
-        std::vector<double> forward_acceleration_bounds_{-0.5, 0.5};
-        std::vector<double> turning_rate_bounds_{-0.5, 0.5};
-        std::vector<double> surge_bounds_{0.05, 5.0};
-        
-        Eigen::Matrix<double, 2, 4> K_;
-        Eigen::Matrix4d A_cl_;
-        Eigen::Matrix4d B_cl_;
-        Eigen::Matrix4d A_cl_d_;
-        Eigen::Matrix4d B_cl_d_;
-        Eigen::Matrix2d A_cl_d_22_;
+        std::vector<double> controller_parameters_, forward_acceleration_bounds_, turning_rate_bounds_, surge_bounds_, system_noise_;
+        // Eigen::MatrixXd A_ol_, B_ol_, Pw_22_, K_, A_cl_, A_cl_d_;
 
-        // Mat44 A_ol_;
-        // Mat42 B_ol_;
+        Eigen::Matrix4d A_ol_;
+        Eigen::Matrix<double, 4, 2> B_ol_;
         // Eigen::Matrix2d  Pw_22_;
-        // Mat24 K_;
+        Eigen::Matrix<double, 2, 4> K_;
 
-        // Eigen::Matrix4d A_cl_, A_cl_d_;
+        Eigen::Matrix4d A_cl_, A_cl_d_;
         
         // Eigen::Matrix2d A_cl_d_22_;
 
 
-        // Eigen::Matrix2d B_cl_d_;
+        Eigen::Matrix2d B_cl_d_;
 
         // mutable double x_pose, x_pose_reference, y_pose, y_pose_reference;
 
@@ -96,21 +98,31 @@ class UncertainUnicycleStatePropagator : public oc::StatePropagator {
 
         // const Eigen::Vector2d start_css_rvs_pose;
         // const Eigen::Matrix2d start_css_rvs_cov;
-        Eigen::Matrix2d I_ = Eigen::Matrix2d::Identity();
-        Eigen::Matrix2d H_ = Eigen::Matrix2d::Identity();
-        Eigen::Matrix2d F_ = Eigen::Matrix2d::Identity();
-        Eigen::Matrix2d Q_ = Eigen::Matrix2d::Identity();
-        Eigen::Matrix2d R_ = Eigen::Matrix2d::Identity();
+
+        Eigen::Matrix4d I = Eigen::Matrix4d::Identity();
+        // Eigen::Matrix2d I = Eigen::MatrixXd::Identity(2, 2);
+        Eigen::Matrix4d H = Eigen::Matrix4d::Identity();
+        Eigen::Matrix4d F = Eigen::Matrix4d::Identity();
         
 
-        // Eigen::Matrix2d Q, R, Ak;
-        // double K_ = 0.3;
+        Eigen::Matrix4d Q, R, Ak;
+        double myK_ = 0.3;
 
-        // mutable const R2BeliefSpace::StateType *result_css;
-        // ob::RealVectorStateSpace::StateType *result_css_rvs_pose;
-        // Eigen::Matrix2d result_css_rvs_cov;
+        mutable const RealVectorBeliefSpace::StateType *result_css;
+        ob::RealVectorStateSpace::StateType *result_css_rvs_pose;
+        Eigen::Matrix2d result_css_rvs_cov;
 
-        // mutable double u_bar_0, u_bar_1, surge_final;
+        mutable double u_bar_0, u_bar_1, surge_final;
 
-        
+    protected:
+
+        int dimensions_ = 2;
+
+
+    /**
+    You can add a simulated environment here where the controls can get applied, useful for
+    showing the graphics, very similar to the concept of ActuationSystem in PMPL.
+    */
 };
+
+#endif

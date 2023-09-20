@@ -46,6 +46,7 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintRRT_MP_Problems(InstanceP
             bounds.setLow(1, -1);
             bounds.setHigh(1, mrmp_instance->getDimensions()[1]);
             space->setBounds(bounds);
+            
 
             // set-up the real vector control space 
             auto cspace(std::make_shared<oc::RealVectorControlSpace>(space, 2));
@@ -182,7 +183,7 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintRRT_MP_Problems(InstanceP
 std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(InstancePtr mrmp_instance)
 {
     const double goalTollorance = 2.0;
-    const double stepSize = 0.2;
+    const double stepSize = 0.15; // 0.15
     
     std::vector<MotionPlanningProblemPtr> prob_defs{};
 
@@ -231,8 +232,8 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
             ob::State *start = si->allocState();
             start->as<RealVectorBeliefSpace::StateType>()->values[0] = (*itr)->getStartLocation().x_;
             start->as<RealVectorBeliefSpace::StateType>()->values[1] = (*itr)->getStartLocation().y_;
-            // Eigen::MatrixXd Sigma0 = 0.01 * Eigen::MatrixXd::Identity(2, 2);
-            // start->as<RealVectorBeliefSpace::StateType>()->sigma_ = Sigma0;
+            Eigen::MatrixXd Sigma0 = 0.01 * Eigen::MatrixXd::Identity(2, 2);
+            start->as<RealVectorBeliefSpace::StateType>()->sigma_ = Sigma0;
 
             // // create goal
             ob::GoalPtr goal(new ChanceConstrainedGoal(si, (*itr)->getGoalLocation(), goalTollorance, 0.95));
@@ -260,20 +261,32 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
         else if ((*itr)->getDynamicsModel() == "Uncertain-Unicycle-Model") {
             // set-up Belief Space
             ob::StateSpacePtr space = ob::StateSpacePtr(new RealVectorBeliefSpace(4));
-            ob::RealVectorBounds bounds(4);
-            bounds.setLow(0, -1); // x low
-            bounds.setHigh(0, mrmp_instance->getDimensions()[0]); // x high
-            bounds.setLow(1, -1); // y low
-            bounds.setHigh(1, mrmp_instance->getDimensions()[1]); // y high
-            bounds.setLow(2, -M_PI); // yaw low
-            bounds.setHigh(2, M_PI); // yaw high
-            bounds.setLow(3, 0.05); // surge low
-            bounds.setHigh(3, 5.0); // surge high
-            space->as<RealVectorBeliefSpace>()->setBounds(bounds);
+            // ob::RealVectorBounds bounds(4);
+            // bounds.setLow(0, -1); // x low
+            // bounds.setHigh(0, mrmp_instance->getDimensions()[0]); // x high
+            // bounds.setLow(1, -1); // y low
+            // bounds.setHigh(1, mrmp_instance->getDimensions()[1]); // y high
+            // bounds.setLow(2, -1); // xdot
+            // bounds.setHigh(2, 1); // xdot
+            // bounds.setLow(3, -1); // ydot
+            // bounds.setHigh(3, 1); // ydot
+            // space->as<RealVectorBeliefSpace>()->setBounds(bounds);
+
+            ob::RealVectorBounds cbounds(4);
+            cbounds.setLow(0, -1); // x low
+            cbounds.setHigh(0, mrmp_instance->getDimensions()[0]); // x high
+            cbounds.setLow(1, -1); // y low
+            cbounds.setHigh(1, mrmp_instance->getDimensions()[1]); // y high
+            cbounds.setLow(2, -M_PI); // yaw low
+            cbounds.setHigh(2, M_PI); // yaw high
+            cbounds.setLow(3, 0.01); // surge low
+            cbounds.setHigh(3, 10.0); // surge high
 
             // set-up the real vector control space
             auto cspace(std::make_shared<oc::RealVectorControlSpace>(space, 4));
-            cspace->setBounds(bounds); // cspace bounds are identical to state space bounds
+            cspace->setBounds(cbounds); // cspace bounds are identical to state space bounds
+
+            space->as<RealVectorBeliefSpace>()->setBounds(cbounds);
 
             // construct an instance of space information from this state/control space
             auto si(std::make_shared<oc::SpaceInformation>(space, cspace));
@@ -294,7 +307,7 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
             si->setMinMaxControlDuration(1, 10);
             
             // construct (and include) an instance of 2D-Uncertain-Linear State Propogator
-            si->setStatePropagator(oc::StatePropagatorPtr(new UncertainUnicycleStatePropagator(si)));
+            si->setStatePropagator(oc::StatePropagatorPtr(new DynUnicycleControlSpace(si)));
 
             si->setup();
 
@@ -303,7 +316,9 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(Instance
             start->as<RealVectorBeliefSpace::StateType>()->values[1] = (*itr)->getStartLocation().y_;
             start->as<RealVectorBeliefSpace::StateType>()->values[2] = 0; // initial yaw
             start->as<RealVectorBeliefSpace::StateType>()->values[3] = 0.1; // initial surge
-            
+            Eigen::MatrixXd Sigma0 = 0.01 * Eigen::MatrixXd::Identity(4, 4);
+            start->as<RealVectorBeliefSpace::StateType>()->sigma_ = Sigma0;
+
             // // create goal
             ob::GoalPtr goal(new ChanceConstrainedGoal(si, (*itr)->getGoalLocation(), goalTollorance, 0.95));
 

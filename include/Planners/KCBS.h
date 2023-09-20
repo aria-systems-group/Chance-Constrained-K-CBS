@@ -223,7 +223,7 @@ namespace ompl
 
             bool ready_;
 
-            double mp_comp_time_{1};  // seconds
+            double mp_comp_time_{5};  // seconds
 
             double prop_step_size_{-1};
 

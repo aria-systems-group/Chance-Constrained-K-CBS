@@ -1,4 +1,9 @@
 #include "Goals/BeliefSpaceGoals.h"
+#include <boost/geometry.hpp>
+#include <boost/geometry/strategies/buffer.hpp>
+#include <boost/math/distributions/chi_squared.hpp>
+#include <boost/geometry/multi/geometries/multi_polygon.hpp>
+#include <Eigen/Eigenvalues> 
 
 
 ChanceConstrainedGoal::ChanceConstrainedGoal(const oc::SpaceInformationPtr &si, const Location goal, const double toll, const double p_safe):
@@ -12,6 +17,12 @@ ChanceConstrainedGoal::ChanceConstrainedGoal(const oc::SpaceInformationPtr &si, 
     Point bott_right(	goal.x_ + (threshold_ / 2), 	goal.y_ - (threshold_ / 2));
     Point top_left(		goal.x_ - (threshold_ / 2), 	goal.y_ + (threshold_ / 2));
     Point top_right(	goal.x_ + (threshold_ / 2), 	goal.y_ + (threshold_ / 2));
+
+
+    // std::cout << goal.x_ - (threshold_ / 2) << " " << goal.y_ - (threshold_ / 2) << std::endl;
+    // std::cout << goal.x_ + (threshold_ / 2) << " " << goal.y_ - (threshold_ / 2) << std::endl;
+    // std::cout << goal.x_ + (threshold_ / 2) << " " << goal.y_ + (threshold_ / 2) << std::endl;
+    // std::cout << goal.x_ - (threshold_ / 2) << " " << goal.y_ + (threshold_ / 2) << std::endl;
 
     Polygon goal_poly;
     bg::append(goal_poly.outer(), bott_left);
@@ -88,18 +99,64 @@ bool ChanceConstrainedGoal::isSafe_(const ob::State* st, double *distance) const
         const double dx = (belief.first(0, 0) - goal_(0, 0));
         const double dy = (belief.first(1, 0) - goal_(1, 0));
         *distance = (dx*dx + dy*dy);
+        if (*distance < 2.0)
+            std::cout << *distance << std::endl;
     }
 
-    auto const n_rows = A_.rows();
-    for (int i = 0; i < n_rows; i++) {
-        const double tmp = (A_.row(i) * Sigma_ab * A_.row(i).transpose()).value();
-        const double Pv = sqrt(tmp);
-        const double vbar = sqrt(2) * Pv * bm::erf_inv(1 - (2 * p_safe_));
-        if( (A_(i, 0) * mu_ab[0] + A_(i, 1) * mu_ab[1] - B_(i, 0) >= vbar) ) {
-            return false;
-        };
-    }
-    return true;
+
+    /* Find maximum eigenvalues of the covariances */
+    Eigen::EigenSolver<Eigen::Matrix2d> eigensolver_a;
+    eigensolver_a.compute(Sigma_ab);
+
+    const double max_lambda = eigensolver_a.eigenvalues().real().maxCoeff();
+    double sc_ = quantile(bm::chi_squared(2), p_safe_);
+    double max_rad_ = 0.0;
+    const double boundary = (max_lambda * sc_ + max_rad_);
+
+    bg::strategy::buffer::distance_symmetric<double> distance_strategy(boundary);
+
+    Point center = Point(mu_ab[0], mu_ab[1]);
+    bg::model::multi_polygon<Polygon> tmp;  // buffer generates multipolygons
+    Polygon disk;
+
+    const std::size_t points_per_circle_ = 10;
+    bg::strategy::buffer::join_round join_strategy{points_per_circle_};
+    boost::geometry::strategy::buffer::end_flat end_strategy;
+    bg::strategy::buffer::point_circle circle_strategy{points_per_circle_};
+    bg::strategy::buffer::side_straight side_strategy;
+
+    // make disk centered on `center` and of correct `radius`
+    bg::buffer(center, tmp, distance_strategy, side_strategy,
+               join_strategy, end_strategy, circle_strategy);
+
+    Point center2 = Point(goal_(0, 0), goal_(1, 0));
+    bg::model::multi_polygon<Polygon> tmp2;  // buffer generates multipolygons
+    Polygon goal_disk;
+    bg::strategy::buffer::distance_symmetric<double> distance_strategy2(threshold_);
+
+    // make disk centered on `center` and of correct `radius`
+    bg::buffer(center2, tmp2, distance_strategy2, side_strategy,
+               join_strategy, end_strategy, circle_strategy);
+    
+    // convert the MultiPolygon output to a simple polygon
+    disk = Polygon(tmp[0]);
+    goal_disk = Polygon(tmp2[0]);
+    if (bg::within(disk, goal_disk))
+        return true;
+    return false;
+
+
+
+    // auto const n_rows = A_.rows();
+    // for (int i = 0; i < n_rows; i++) {
+    //     const double tmp = (A_.row(i) * Sigma_ab * A_.row(i).transpose()).value();
+    //     const double Pv = sqrt(tmp);
+    //     const double vbar = sqrt(2) * Pv * bm::erf_inv(1 - (2 * p_safe_));
+    //     if( (A_(i, 0) * mu_ab[0] + A_(i, 1) * mu_ab[1] - B_(i, 0) >= vbar) ) {
+    //         return false;
+    //     };
+    // }
+    // return true;
 }
 
 CentralizedCCGoal::CentralizedCCGoal(const oc::SpaceInformationPtr &si, const ob::State* goal, const double toll, const double p_safe):

@@ -19,11 +19,18 @@ ChiSquaredBoundarySVC::~ChiSquaredBoundarySVC(){};
 bool ChiSquaredBoundarySVC::isValid(const ob::State *state) const
 {
     if (!si_->satisfiesBounds(state)) {
+        // double* vals = state->as<RealVectorBeliefSpace::StateType>()->values;
+        // for (int d = 0; d < 4; d++) {
+            // std::cout << vals[d] << ",";
+        // }
+        // std::cout << std::endl;
         return false;
     }
 
     if (obs_list_.empty())
+    {
         return true;
+    }
 
     /* get Belief from state */
     double* vals = state->as<RealVectorBeliefSpace::StateType>()->values;
@@ -33,7 +40,7 @@ bool ChiSquaredBoundarySVC::isValid(const ob::State *state) const
     }
 
     Eigen::Matrix2d Sigma = state->as<RealVectorBeliefSpace::StateType>()->getCovariance().block<2, 2>(0, 0);
-
+    // std::cout << Sigma << std::endl;
     /* Find maximum eigenvalues of the covariances */
     Eigen::EigenSolver<Eigen::Matrix2d> eigensolver_a;
     eigensolver_a.compute(Sigma);

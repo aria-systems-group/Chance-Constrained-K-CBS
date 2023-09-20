@@ -40,25 +40,25 @@ double RealVectorBeliefSpace::distance(const State* state1, const State *state2)
     auto cov3_sqrt = es3.operatorSqrt();
 
     double t = mu_diff.squaredNorm() + (cov1 + cov2 - (2 * cov3_sqrt)).trace();
-    if (t < 0) {
-        // printState(state1, std::cout);
-        // printState(state2, std::cout);
-        // std::cout << mu_diff.squaredNorm() << std::endl;
-        // std::cout << cov1_sqrt << std::endl;
-        // std::cout << cov2_sqrt << std::endl;
-        // std::cout << (cov2_sqrt * cov1 * cov2_sqrt) << std::endl;
-        // auto t1 = (cov2_sqrt * cov1 * cov2_sqrt);
-        // Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> es3(t1);
-        // auto cov3_sqrt = es3.operatorSqrt();
-        // std::cout << cov3_sqrt << std::endl;
-        // std::cout << 2 * cov3_sqrt << std::endl;
-        // std::cout << cov1 + cov2 - 2*(cov3_sqrt) << std::endl;
-        std::cout << "ERROR in DISTANCE" << std::endl;
-        std::cout << t << std::endl;
-        exit(-1);
-    }
+    // if (t < 0) {
+    //     // printState(state1, std::cout);
+    //     // printState(state2, std::cout);
+    //     // std::cout << mu_diff.squaredNorm() << std::endl;
+    //     // std::cout << cov1_sqrt << std::endl;
+    //     // std::cout << cov2_sqrt << std::endl;
+    //     // std::cout << (cov2_sqrt * cov1 * cov2_sqrt) << std::endl;
+    //     // auto t1 = (cov2_sqrt * cov1 * cov2_sqrt);
+    //     // Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> es3(t1);
+    //     // auto cov3_sqrt = es3.operatorSqrt();
+    //     // std::cout << cov3_sqrt << std::endl;
+    //     // std::cout << 2 * cov3_sqrt << std::endl;
+    //     // std::cout << cov1 + cov2 - 2*(cov3_sqrt) << std::endl;
+    //     std::cout << "ERROR in DISTANCE" << std::endl;
+    //     std::cout << t << std::endl;
+    //     exit(-1);
+    // }
     // std::cout << "out " << t  << std::endl;
-    return t;
+    return abs(t);
 }
 
 void RealVectorBeliefSpace::copyState(State *destination, const State *source) const

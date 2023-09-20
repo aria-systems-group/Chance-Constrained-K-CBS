@@ -37,7 +37,8 @@ class RealVectorBeliefSpace : public ompl::base::RealVectorStateSpace
 
             const Eigen::MatrixXd getCovariance(void) const
             {
-                return sigma_ + lambda_;
+                auto sum = sigma_ + lambda_;
+                return sum;
             } 
 
             // void setMatrixData(const Eigen::Vector2d &x)

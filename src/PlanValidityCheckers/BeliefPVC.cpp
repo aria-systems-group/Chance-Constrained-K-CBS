@@ -87,7 +87,12 @@ Belief BeliefPVC::getDistribution_(const ob::State* st)
     Eigen::VectorXd mu(2);
     mu[0] = all_vals[0];
     mu[1] = all_vals[1];
-    Eigen::Matrix2d Sigma = st->as<RealVectorBeliefSpace::StateType>()->getCovariance().block<2, 2>(0, 0);
-    Belief b(mu, Sigma);
+    Eigen::Matrix2d Sigma = st->as<RealVectorBeliefSpace::StateType>()->getCovariance();
+    Eigen::Matrix2d Sigma_xy;
+    Sigma_xy(0, 0) = Sigma(0, 0);
+    Sigma_xy(0, 1) = Sigma(0, 2);
+    Sigma_xy(1, 0) = Sigma(2, 0);
+    Sigma_xy(1, 1) = Sigma(2, 2);
+    Belief b(mu, Sigma_xy);
     return b;
 }

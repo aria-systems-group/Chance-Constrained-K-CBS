@@ -183,7 +183,7 @@ std::vector<MotionPlanningProblemPtr> set_up_ConstraintRRT_MP_Problems(InstanceP
 std::vector<MotionPlanningProblemPtr> set_up_ConstraintBSST_MP_Problems(InstancePtr mrmp_instance)
 {
     const double goalTollorance = 2.0;
-    const double stepSize = 0.15; // 0.15
+    const double stepSize = 0.2; // 0.15
     
     std::vector<MotionPlanningProblemPtr> prob_defs{};
 

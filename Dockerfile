@@ -14,22 +14,13 @@ RUN apt-get update && apt-get install -y build-essential \
 										libeigen3-dev \
 										libboost-all-dev \
 										libode-dev \
-                                        libompl-dev \
-                                        ompl-demos \
 										screen \
 										vim \
 										valgrind \
-                                        git
+                                        git \
+                                        wget
 
-# # clone most recent OMPL Repository
-# RUN git clone https://github.com/ompl/ompl.git
-
-# # build OMPL
-# WORKDIR ompl/
-# RUN mkdir -p build/Release
-# RUN cmake .
-# RUN make -j 4
-
-# WORKDIR /
-
-# container set-up: docker run -v `pwd`:/home/K-CBS -it ompl-1.6-image
+# get installation script from ompl website
+RUN wget https://ompl.kavrakilab.org/install-ompl-ubuntu.sh
+RUN chmod u+x install-ompl-ubuntu.sh
+RUN ./install-ompl-ubuntu.sh

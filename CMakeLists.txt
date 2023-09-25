@@ -3,6 +3,10 @@ project(K-CBS)
 cmake_minimum_required (VERSION 3.16)
 set (CMAKE_CXX_STANDARD 17)
 
+IF(NOT CMAKE_BUILD_TYPE)
+    SET(CMAKE_BUILD_TYPE "RELEASE")
+ENDIF()
+
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED COMPONENTS program_options system filesystem)
 find_package(ompl REQUIRED)
